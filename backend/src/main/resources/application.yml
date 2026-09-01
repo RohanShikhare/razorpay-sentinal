@@ -1,0 +1,46 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: razorpay-sentinel
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/razorpay_sentinel}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # 'update' is intentional while the schema is still taking shape
+      # across modules; revisit (e.g. a migration tool) once it stabilizes.
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+          batch_size: 50
+        order_inserts: true
+
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+        one-indexed-parameters: false
+
+sentinel:
+  cors:
+    allowed-origins: ${SENTINEL_CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  payments:
+    # How far back synthetic payment timestamps are spread. Wide enough for
+    # later modules to compute a meaningful baseline vs. current failure rate.
+    generation-window-hours: ${SENTINEL_PAYMENT_GENERATION_WINDOW_HOURS:48}
+
+logging:
+  level:
+    com.sentinelpulse: INFO
