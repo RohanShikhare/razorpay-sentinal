@@ -23,6 +23,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -172,7 +173,7 @@ public class IncidentSimulationService {
         Random random = new Random(SimulationScenario.BANK_X_UPI_DEGRADATION.name().hashCode());
         return degradeSegment(segment, BANK_X_UPI_TARGET_FAILURE_RATE, random,
                 errorCodeDistributionDominatedByBankTimeout(),
-                Banks.BANK_X, PaymentMethod.UPI, null);
+                Banks.BANK_X, PaymentMethod.UPI, null, true);
     }
 
     // ---------------------------------------------------------------
@@ -198,7 +199,7 @@ public class IncidentSimulationService {
         Random random = new Random((SimulationScenario.MERCHANT_SPECIFIC_DEGRADATION.name() + merchantId).hashCode());
         return degradeSegment(segment, MERCHANT_TARGET_FAILURE_RATE, random,
                 errorCodeDistributionWithoutBankBlame(),
-                null, null, merchantId);
+                null, null, merchantId, true);
     }
 
     // ---------------------------------------------------------------
@@ -220,7 +221,7 @@ public class IncidentSimulationService {
         Random random = new Random(SimulationScenario.NORMAL_RANDOM_FAILURES.name().hashCode());
         return degradeSegment(segment, target, random,
                 generalErrorCodeDistribution(),
-                null, null, null);
+                null, null, null, false);
     }
 
     // ---------------------------------------------------------------
@@ -229,15 +230,24 @@ public class IncidentSimulationService {
 
     /**
      * Raises the failure rate of {@code segment} toward {@code targetRate}
-     * (a fraction, e.g. 0.32 for 32%) by converting a shuffled subset of its
+     * (a fraction, e.g. 0.32 for 32%) by converting a subset of its
      * SUCCESS/PENDING payments to FAILED, assigning error codes from
      * {@code errorCodeWeights}. Amount, customer, merchant, and timestamp
      * are left untouched - only status and error code change.
+     *
+     * When {@code concentrateInRecentTraffic} is true, the most recent
+     * eligible payments are chosen first - a real incident degrades recent
+     * traffic, not transactions from days ago, and this is also what makes
+     * the degradation visible to a time-window-based detector (Module 3)
+     * comparing a recent window against an older baseline. When false (the
+     * "normal random failures" control scenario), the affected payments are
+     * spread uniformly across the whole timeline instead, representing
+     * constant background noise rather than a new, detectable event.
      */
     private ScenarioOutcome degradeSegment(List<Payment> segment, double targetRate, Random random,
                                             List<Weighted<ErrorCode>> errorCodeWeights,
                                             String targetBank, PaymentMethod targetPaymentMethod,
-                                            String targetMerchantId) {
+                                            String targetMerchantId, boolean concentrateInRecentTraffic) {
         long total = segment.size();
         long alreadyFailed = segment.stream().filter(p -> p.getStatus() == PaymentStatus.FAILED).count();
         double before = rate(alreadyFailed, total);
@@ -245,7 +255,12 @@ public class IncidentSimulationService {
         List<Payment> eligible = segment.stream()
                 .filter(p -> p.getStatus() != PaymentStatus.FAILED)
                 .collect(Collectors.toCollection(ArrayList::new));
-        Collections.shuffle(eligible, random);
+
+        if (concentrateInRecentTraffic) {
+            eligible.sort(Comparator.comparing(Payment::getTimestamp).reversed());
+        } else {
+            Collections.shuffle(eligible, random);
+        }
 
         long targetFailedCount = (long) Math.ceil(targetRate * total);
         long needed = Math.max(0, targetFailedCount - alreadyFailed);

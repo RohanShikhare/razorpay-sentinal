@@ -15,7 +15,7 @@ export default function DashboardPage() {
           aria-hidden
         />
         <div className="relative mx-auto max-w-6xl px-6 py-16">
-          <p className="font-mono text-xs text-signal-wire">Module 2 · Incident Simulator</p>
+          <p className="font-mono text-xs text-signal-wire">Module 3 · Monitoring &amp; Incident Detection</p>
           <h1 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
             Payment failures, explained before they become losses.
           </h1>
@@ -46,13 +46,20 @@ export default function DashboardPage() {
               <a href="/payments" className="text-signal-wire underline underline-offset-2">
                 Payments
               </a>
-              ) and deliberately degrade it into reproducible incident scenarios (
+              ), deliberately degrade it into reproducible scenarios (
               <a href="/simulator" className="text-signal-wire underline underline-offset-2">
                 Simulator
               </a>
-              ). Incident detection, revenue-at-risk, AI diagnosis, policy gates, and recovery
-              execution are not implemented yet — the pipeline above describes where they&apos;ll
-              sit.
+              ), and deterministically detect abnormal behavior (
+              <a href="/monitoring" className="text-signal-wire underline underline-offset-2">
+                Monitoring
+              </a>{" "}
+              /{" "}
+              <a href="/incidents" className="text-signal-wire underline underline-offset-2">
+                Incidents
+              </a>
+              ). AI diagnosis, policy gates, and recovery execution are not implemented yet — the
+              pipeline above describes where they&apos;ll sit.
             </p>
           </div>
 

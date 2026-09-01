@@ -7,11 +7,11 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 2 — Incident Simulator.** The foundation, a realistic
-> synthetic payment dataset, and a deterministic incident simulator are
-> implemented. Incident *detection*, AI diagnosis, policy gating, and
-> recovery execution described below are **not implemented yet**. See
-> [Current implementation status](#current-implementation-status).
+> **Status: Module 3 — Monitoring & Incident Detection Engine.** The
+> foundation, a realistic synthetic payment dataset, a deterministic
+> incident simulator, and a deterministic detection engine are implemented.
+> AI diagnosis, policy gating, and recovery execution described below are
+> **not implemented yet**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
 
@@ -34,8 +34,8 @@ Detect → Diagnose → Quantify → Decide → Gate → Recover → Audit
 **Backend** — Java 17, Spring Boot 3, Maven, Spring Web, Spring Data JPA,
 PostgreSQL, Bean Validation.
 
-**Frontend** — Next.js 14 (App Router), React, TypeScript, Tailwind CSS.
-Recharts will be added when the dashboard module needs charting.
+**Frontend** — Next.js 14 (App Router), React, TypeScript, Tailwind CSS,
+Recharts (charts on the Monitoring and Incident Detail pages).
 
 **Database** — PostgreSQL, configured entirely through environment
 variables.
@@ -95,16 +95,38 @@ Docker in this module.
 - Integration tests covering scenario concentration, merchant isolation,
   normal-noise non-concentration, reset, and idempotency under repeated runs.
 
+**Module 3 — Monitoring & Incident Detection Engine**
+
+- `Incident` entity plus `IncidentType`, `IncidentSeverity`, `IncidentStatus`
+  enums. `rootCause` stays null — assigning one is a future AI module's job
+  (see [Monitoring & Incident Detection Engine](#monitoring--incident-detection-engine) below).
+- `PaymentStatistics` / `SegmentAnalyzer` — pure statistics helpers comparing
+  baseline vs. current-window failure rates, globally and per bank / payment
+  method / bank+method / merchant.
+- `IncidentDetectionService` — adaptive window widening, segment-level
+  detection, configurable severity thresholds, a documented revenue-at-risk
+  formula, a deterministic confidence score, and duplicate suppression.
+- `POST /api/v1/monitoring/detect`, `GET /api/v1/monitoring/summary`,
+  `GET /api/v1/incidents`, `GET /api/v1/incidents/{id}`.
+- `/monitoring` (command center) and `/incidents` + `/incidents/[id]` pages
+  in the frontend, with Recharts visualizations.
+- Unit tests for the statistics/segment helpers, plus an H2-backed
+  integration suite covering all three simulator scenarios, duplicate
+  suppression, pagination, and the monitoring summary.
+- A refinement to Module 2's simulator: degradation is now concentrated in
+  recent transactions instead of spread uniformly across the whole 48h
+  span — both more realistic and necessary for this module's time-window
+  comparison to actually see it (details in `docs/architecture.md`).
+
 ### Not implemented yet
 
 - Authentication (intentionally out of scope for this internal tool for now).
-- Incident *detection* (the simulator creates conditions; deciding whether
-  they constitute an incident is Module 4's job — see
-  [Incident Simulator](#incident-simulator)).
-- Revenue-at-risk calculation.
-- AI root-cause diagnosis and recovery recommendation.
+- AI root-cause diagnosis and recovery recommendation (the detector never
+  guesses `rootCause` — see
+  [Monitoring & Incident Detection Engine](#monitoring--incident-detection-engine)).
 - Policy/guardrail validation.
 - Recovery execution (simulated), audit trail, and evaluation.
+- Incident lifecycle beyond `DETECTED` (no resolution workflow yet).
 
 See `docs/development-roadmap.md` for the full 16-module plan.
 
@@ -118,28 +140,28 @@ razorpay-sentinel/
 │       ├── main/
 │       │   ├── java/com/sentinelpulse/
 │       │   │   ├── RazorpaySentinelApplication.java
-│       │   │   ├── config/         # CORS, cross-cutting Spring config
+│       │   │   ├── config/         # CORS, monitoring thresholds/config
 │       │   │   ├── controller/     # HTTP endpoints only
 │       │   │   ├── dto/            # request/response shapes
-│       │   │   ├── entity/         # Payment, Simulation* + enums (Modules 1-2)
+│       │   │   ├── entity/         # Payment, Simulation*, Incident + enums (Modules 1-3)
 │       │   │   ├── exception/      # SentinelException + global handler
-│       │   │   ├── repository/     # PaymentRepository, Simulation*Repository
-│       │   │   ├── service/        # business logic
-│       │   │   ├── monitoring/     # incident detection (empty — future modules)
+│       │   │   ├── repository/     # PaymentRepository, Simulation*Repository, IncidentRepository
+│       │   │   ├── service/        # business logic (payments, simulation)
+│       │   │   ├── monitoring/     # deterministic detection engine (Module 3)
 │       │   │   ├── recovery/       # recovery execution (empty — future modules)
 │       │   │   ├── ai/             # AI diagnosis/recommendation (empty — future modules)
 │       │   │   ├── policy/         # guardrail validation (empty — future modules)
 │       │   │   └── audit/          # audit trail (empty — future modules)
 │       │   └── resources/application.yml
 │       └── test/
-│           ├── java/com/sentinelpulse/    # generator + integration tests
+│           ├── java/com/sentinelpulse/    # unit + integration tests
 │           └── resources/application.yml # test-only H2 datasource override
 ├── frontend/
 │   ├── package.json
 │   └── src/
-│       ├── app/                # Next.js App Router pages (/, /payments, /simulator)
-│       ├── components/         # UI components (payments/, simulator/)
-│       └── lib/                # api.ts, payments.ts, simulations.ts, config.ts, navigation.ts
+│       ├── app/                # Next.js App Router pages (/, /payments, /simulator, /monitoring, /incidents, /incidents/[id])
+│       ├── components/         # UI components (payments/, simulator/, monitoring/)
+│       └── lib/                # api.ts, payments.ts, simulations.ts, monitoring.ts, config.ts, navigation.ts
 ├── docs/
 │   ├── architecture.md
 │   └── development-roadmap.md
@@ -171,6 +193,12 @@ development against a local Postgres install on default settings.
 | `SERVER_PORT` | `8080` | Backend HTTP port |
 | `SENTINEL_CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Comma-separated list of allowed frontend origins |
 | `SENTINEL_PAYMENT_GENERATION_WINDOW_HOURS` | `48` | How far back synthetic payment timestamps are spread |
+| `SENTINEL_MONITORING_DEFAULT_WINDOW_MINUTES` | `60` | Default "current" monitoring window size |
+| `SENTINEL_MONITORING_MIN_SAMPLE_SIZE` | `100` | Minimum transactions required in the current window before the adaptive widening stops |
+| `SENTINEL_MONITORING_MIN_SEGMENT_SAMPLE_SIZE` | `15` | Minimum combined baseline+current volume for a segment to be evaluated |
+| `SENTINEL_MONITORING_MAX_WINDOW_MINUTES` | `2880` | Cap on adaptive window widening (default: 48h) |
+| `SENTINEL_MONITORING_THRESHOLD_MINIMUM` | `5.0` | Percentage-point increase below which nothing is flagged |
+| `SENTINEL_MONITORING_THRESHOLD_LOW` / `_MEDIUM` / `_HIGH` / `_CRITICAL` | `5.0` / `12.0` / `20.0` / `30.0` | Severity band boundaries (percentage points) |
 
 Example (macOS/Linux shell):
 
@@ -381,19 +409,93 @@ curl -X POST localhost:8080/api/v1/simulations/reset
 
 Or use the `/simulator` page in the frontend.
 
+## Monitoring & Incident Detection Engine
+
+**The current engine detects abnormal payment behavior deterministically.
+Root-cause diagnosis is intentionally separated and will be handled by the
+AI investigation module.** See `docs/architecture.md` for the full design
+writeup (baseline calculation, adaptive window widening, segment detection,
+severity thresholds, the revenue-at-risk formula, and the confidence score) —
+this section covers the APIs and how to run the primary demo end-to-end.
+
+### Run detection
+
+```
+POST /api/v1/monitoring/detect
+```
+
+Optional body (omit for the default window):
+
+```json
+{ "windowMinutes": 60 }
+```
+
+Returns whether an incident was detected, its type/severity if so, the
+baseline/current failure rates and the increase between them, affected
+transactions and value, revenue at risk, a deterministic confidence score,
+the effective monitoring window used, and up to 8 top affected segments. If
+no incident is detected, `incidentDetected: false` and `message` explains why
+— this is a normal 200 response, not an error.
+
+### Monitoring summary
+
+```
+GET /api/v1/monitoring/summary
+```
+
+Current health at a glance: `paymentHealth` (`NORMAL` or the highest
+severity among active incidents), success/failure rates, baseline failure
+rate and the change from it, total revenue at risk, and active incident /
+affected transaction counts across all currently-active incidents.
+
+### Incidents
+
+```
+GET /api/v1/incidents            # paginated list, most recent first
+GET /api/v1/incidents/{id}       # detail, with live-recomputed top segments
+```
+
+No update endpoints yet — `rootCause` assignment and lifecycle transitions
+(`INVESTIGATING`, `RECOVERY_PENDING`, ...) belong to later modules.
+
+### Running the primary demo scenario end-to-end
+
+```bash
+curl -X POST localhost:8080/api/v1/payments/generate -H 'Content-Type: application/json' -d '{"count":3000}'
+curl -X POST localhost:8080/api/v1/simulations/run -H 'Content-Type: application/json' -d '{"scenario":"BANK_X_UPI_DEGRADATION"}'
+curl -X POST localhost:8080/api/v1/monitoring/detect -H 'Content-Type: application/json' -d '{}'
+```
+
+Or use the `/simulator` page to trigger the scenario and the `/monitoring`
+page's "Run Detection" button in the frontend.
+
 ## Build verification notes
 
 - **Frontend**: `npm install` and `npm run build` were run against this
-  exact project (including the new `/simulator` page and the simulation
-  indicator on `/payments`) and completed successfully with no TypeScript
-  or lint errors.
-- **Backend**: the Module 2 code (entities, repositories, `IncidentSimulationService`,
-  controller, tests) was written and carefully reviewed against standard
-  Spring Boot 3 / Java 17 / Spring Data JPA patterns, but `mvn compile` /
-  `mvn test` could not actually be executed in the environment this project
-  was built in, because that environment's network access does not include
-  Maven Central (`repo.maven.apache.org`). Run `mvn clean test` locally to
-  fetch dependencies and confirm both the build and the full test suite
-  (Module 0 through Module 2) before relying on them. Tests run against an
-  in-memory H2 database (test scope only — see `pom.xml`), so `mvn test`
-  does not require a live PostgreSQL instance; running the app itself still does.
+  exact project (including the new `/monitoring`, `/incidents`, and
+  `/incidents/[id]` pages and the Recharts dependency) and completed
+  successfully with no TypeScript or lint errors — all routes generated.
+- **Backend**: the Module 3 code (`Incident` entity, `PaymentStatistics`,
+  `SegmentAnalyzer`, `IncidentDetectionService`, controllers, tests) was
+  written and carefully reviewed against standard Spring Boot 3 / Java 17 /
+  Spring Data JPA patterns. `mvn compile` / `mvn test` could not actually be
+  executed end-to-end in the environment this project was built in, because
+  that environment's network access does not include Maven Central
+  (`repo.maven.apache.org`) — confirmed again this module (the request was
+  rejected at the network layer). One real bug *was* caught locally despite
+  this: an unescaped `&` in `pom.xml`'s description broke Maven's XML
+  parsing; it's fixed, and `mvn -q compile` now gets past POM parsing and
+  fails only on the expected dependency-download network block, not on
+  malformed XML. Run `mvn clean test` locally to fetch dependencies and
+  confirm both the build and the full test suite (Module 0 through Module 3)
+  before relying on them. Tests run against an in-memory H2 database (test
+  scope only — see `pom.xml`), so `mvn test` does not require a live
+  PostgreSQL instance; running the app itself still does.
+- **A note on Module 2's simulator**: while building this module, comparing
+  a recent "current window" against an older "baseline" only works if
+  simulated degradation actually shows up more in recent transactions than
+  old ones. The original simulator spread its changes uniformly across the
+  whole 48-hour dataset, which a time-window comparison couldn't see. Fixed
+  in `IncidentSimulationService` — see `docs/architecture.md` for details.
+  This didn't change any public API or existing test's assertions, only
+  *which* transactions within a segment get selected.

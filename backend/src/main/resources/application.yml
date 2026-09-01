@@ -40,6 +40,17 @@ sentinel:
     # How far back synthetic payment timestamps are spread. Wide enough for
     # later modules to compute a meaningful baseline vs. current failure rate.
     generation-window-hours: ${SENTINEL_PAYMENT_GENERATION_WINDOW_HOURS:48}
+  monitoring:
+    default-window-minutes: ${SENTINEL_MONITORING_DEFAULT_WINDOW_MINUTES:60}
+    minimum-sample-size: ${SENTINEL_MONITORING_MIN_SAMPLE_SIZE:100}
+    minimum-segment-sample-size: ${SENTINEL_MONITORING_MIN_SEGMENT_SAMPLE_SIZE:15}
+    max-window-minutes: ${SENTINEL_MONITORING_MAX_WINDOW_MINUTES:2880}
+    thresholds:
+      minimum-increase-points: ${SENTINEL_MONITORING_THRESHOLD_MINIMUM:5.0}
+      low-increase-points: ${SENTINEL_MONITORING_THRESHOLD_LOW:5.0}
+      medium-increase-points: ${SENTINEL_MONITORING_THRESHOLD_MEDIUM:12.0}
+      high-increase-points: ${SENTINEL_MONITORING_THRESHOLD_HIGH:20.0}
+      critical-increase-points: ${SENTINEL_MONITORING_THRESHOLD_CRITICAL:30.0}
 
 logging:
   level:

@@ -9,8 +9,8 @@ document tracks the planned sequence and what "done" means for each one.
 | 1 | Project Foundation | **Done** | Monolith skeleton: Spring Boot backend with health endpoint, Next.js frontend, environment-based DB config, docs. |
 | 2 | Payment Data Engine | **Done** | Synthetic payment generation, persistence, filtered/paginated query API, and an aggregate summary endpoint. |
 | 3 | Incident Simulator | **Done** | Deterministic, reproducible payment-degradation scenarios (Bank X UPI, merchant-specific, normal noise) with reset. |
-| 4 | Monitoring & Incident Detection | Planned | Deterministic rules that flag abnormal failure patterns as incidents. |
-| 5 | Revenue-at-Risk Engine | Planned | Quantify the financial exposure of an open incident. |
+| 4 | Monitoring & Incident Detection | **Done** | Deterministic baseline-vs-current comparison, segment analysis, revenue-at-risk, confidence scoring, and Incident persistence with duplicate suppression. |
+| 5 | Revenue-at-Risk Engine | Superseded | First version delivered as part of Module 4 (see above); may be extended later. |
 | 6 | Command Center Dashboard | Planned | Real dashboard UI: live incidents, charts (Recharts), and system state. |
 | 7 | AI Diagnostic Agent | Planned | AI-driven root-cause analysis of a detected incident. |
 | 8 | Root-Cause Investigation | Planned | Deeper diagnostic tooling and evidence gathering behind the AI agent's conclusions. |
@@ -23,7 +23,7 @@ document tracks the planned sequence and what "done" means for each one.
 | 15 | Final Command Center | Planned | Fully integrated dashboard tying together monitoring, AI, policy, recovery, and audit. |
 | 16 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 2)
+## Current state (Module 3)
 
 Implemented in Module 0:
 
@@ -76,16 +76,48 @@ Added in Module 2:
 - Integration tests covering the Bank X UPI concentration, the merchant
   scenario's isolation, the normal-noise scenario's lack of concentration,
   reset restoring the pre-simulation state, and idempotency under repeated runs.
+- Refinement: simulated degradation is now concentrated in the most recent
+  transactions rather than spread uniformly across the whole 48h dataset -
+  both more realistic (a real incident affects recent traffic, not
+  retroactively altered old transactions) and necessary for Module 4's
+  time-window-based baseline/current comparison to actually see it. The
+  `NORMAL_RANDOM_FAILURES` control scenario intentionally stays uniform, so
+  it reads as constant background noise rather than a new event.
+
+Added in Module 3:
+
+- `Incident` entity plus `IncidentType`, `IncidentSeverity`, `IncidentStatus`
+  enums. `rootCause` stays null - assigning one is a future AI module's job.
+- `MonitoringProperties` - every threshold, window, and sample-size number
+  the detector uses, bound from `sentinel.monitoring.*` in application.yml.
+- `PaymentStatistics` and `SegmentAnalyzer` - pure, side-effect-free
+  statistics helpers (bank / payment method / bank+method / merchant
+  baseline-vs-current comparison).
+- `IncidentDetectionService` - the deterministic detection engine: adaptive
+  window widening (so a narrow window over a sparse dataset doesn't
+  produce meaningless swings), segment-level detection, severity
+  classification, a documented revenue-at-risk formula, a deterministic
+  confidence score, and duplicate suppression (refreshes an existing
+  active incident instead of creating a new row for the same condition).
+- `MonitoringController` - `POST /api/v1/monitoring/detect`,
+  `GET /api/v1/monitoring/summary`.
+- `IncidentController` - `GET /api/v1/incidents` (paginated),
+  `GET /api/v1/incidents/{id}` (with live-recomputed segment breakdowns).
+- `/monitoring` (command center: health banner, metrics, failure-rate and
+  segment charts via Recharts) and `/incidents` + `/incidents/[id]` pages
+  in the frontend.
+- Unit tests for the statistics/segment-analysis helpers, plus an H2-backed
+  integration suite covering all three simulator scenarios, duplicate
+  suppression, pagination, and the monitoring summary.
 
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- Incident *detection* (the simulator creates conditions; it never declares
-  an incident - see Module 4).
-- Revenue-at-risk calculation.
-- AI root-cause diagnosis and recovery recommendation.
+- AI root-cause diagnosis and recovery recommendation (this module's
+  detector never guesses `rootCause` - see `docs/architecture.md`).
 - Policy/guardrail validation.
 - Recovery execution (simulated), audit trail, and evaluation.
+- Incident lifecycle transitions beyond `DETECTED` (no resolution workflow yet).
 
 ## Working agreement for future modules
 
