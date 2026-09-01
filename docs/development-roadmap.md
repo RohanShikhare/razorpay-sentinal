@@ -8,7 +8,7 @@ document tracks the planned sequence and what "done" means for each one.
 |---|--------|--------|---------|
 | 1 | Project Foundation | **Done** | Monolith skeleton: Spring Boot backend with health endpoint, Next.js frontend, environment-based DB config, docs. |
 | 2 | Payment Data Engine | **Done** | Synthetic payment generation, persistence, filtered/paginated query API, and an aggregate summary endpoint. |
-| 3 | Incident Simulator | Planned | Inject abnormal payment-failure patterns into the synthetic stream for testing detection. |
+| 3 | Incident Simulator | **Done** | Deterministic, reproducible payment-degradation scenarios (Bank X UPI, merchant-specific, normal noise) with reset. |
 | 4 | Monitoring & Incident Detection | Planned | Deterministic rules that flag abnormal failure patterns as incidents. |
 | 5 | Revenue-at-Risk Engine | Planned | Quantify the financial exposure of an open incident. |
 | 6 | Command Center Dashboard | Planned | Real dashboard UI: live incidents, charts (Recharts), and system state. |
@@ -23,7 +23,7 @@ document tracks the planned sequence and what "done" means for each one.
 | 15 | Final Command Center | Planned | Fully integrated dashboard tying together monitoring, AI, policy, recovery, and audit. |
 | 16 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 1)
+## Current state (Module 2)
 
 Implemented in Module 0:
 
@@ -55,10 +55,34 @@ Added in Module 1:
 - Unit tests for generation distributions and an H2-backed integration test
   suite covering generation, persistence, filtering, pagination, and summary math.
 
+Added in Module 2:
+
+- `SimulationScenario` enum and lightweight `SimulationRun`/`SimulationChange`
+  simulation records (deliberately *not* an "Incident" entity - see
+  `docs/architecture.md` for why that distinction matters).
+- `IncidentSimulationService` - deterministically degrades the synthetic
+  dataset via three scenarios (`BANK_X_UPI_DEGRADATION`,
+  `MERCHANT_SPECIFIC_DEGRADATION`, `NORMAL_RANDOM_FAILURES`), each
+  reproducible and concentrated so later root-cause analysis has something
+  real to find.
+- `SimulationController` - `POST /api/v1/simulations/run`,
+  `POST /api/v1/simulations/reset`, `GET /api/v1/simulations/status`.
+- Reset support via recorded pre-simulation values (no dataset regeneration
+  needed), and automatic reset-then-reapply if a simulation is already
+  active, so repeated runs never compound.
+- A `/simulator` page in the frontend: scenario selector, Simulate/Reset
+  controls, and a HEALTHY / SIMULATION ACTIVE status panel. The `/payments`
+  page now shows a small "simulation active" indicator when applicable.
+- Integration tests covering the Bank X UPI concentration, the merchant
+  scenario's isolation, the normal-noise scenario's lack of concentration,
+  reset restoring the pre-simulation state, and idempotency under repeated runs.
+
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- Incident detection, revenue-at-risk calculation.
+- Incident *detection* (the simulator creates conditions; it never declares
+  an incident - see Module 4).
+- Revenue-at-risk calculation.
 - AI root-cause diagnosis and recovery recommendation.
 - Policy/guardrail validation.
 - Recovery execution (simulated), audit trail, and evaluation.

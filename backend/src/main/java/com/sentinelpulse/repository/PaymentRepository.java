@@ -59,4 +59,13 @@ public interface PaymentRepository extends JpaRepository<Payment, Long>, JpaSpec
      */
     @Query("select sum(p.amount) from Payment p")
     BigDecimal sumAllAmount();
+
+    /**
+     * Merchant IDs ranked by transaction volume, highest first. Used by the
+     * Incident Simulator to pick a merchant with enough volume for
+     * {@code MERCHANT_SPECIFIC_DEGRADATION} to be statistically meaningful.
+     * Each result is {@code [String merchantId, Long count]}.
+     */
+    @Query("select p.merchantId, count(p) from Payment p group by p.merchantId order by count(p) desc")
+    List<Object[]> merchantVolumeRanking();
 }

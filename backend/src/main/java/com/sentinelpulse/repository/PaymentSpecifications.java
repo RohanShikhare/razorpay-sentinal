@@ -36,6 +36,11 @@ public final class PaymentSpecifications {
         return (root, query, cb) -> errorCode == null ? null : cb.equal(root.get("errorCode"), errorCode);
     }
 
+    public static Specification<Payment> hasMerchantId(String merchantId) {
+        return (root, query, cb) -> (merchantId == null || merchantId.isBlank())
+                ? null : cb.equal(root.get("merchantId"), merchantId);
+    }
+
     public static Specification<Payment> timestampFrom(Instant from) {
         return (root, query, cb) -> from == null ? null : cb.greaterThanOrEqualTo(root.get("timestamp"), from);
     }

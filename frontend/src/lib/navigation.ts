@@ -12,6 +12,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/", available: true },
   { label: "Payments", href: "/payments", available: true },
+  { label: "Simulator", href: "/simulator", available: true },
   { label: "Incidents", href: "/incidents", available: false },
   { label: "Recovery", href: "/recovery", available: false },
   { label: "Audit Trail", href: "/audit", available: false },

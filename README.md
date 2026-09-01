@@ -7,10 +7,11 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 1 — Payment Data Engine.** The foundation plus a
-> realistic synthetic payment dataset are implemented. Incident detection,
-> AI diagnosis, policy gating, and recovery execution described below are
-> **not implemented yet**. See [Current implementation status](#current-implementation-status).
+> **Status: Module 2 — Incident Simulator.** The foundation, a realistic
+> synthetic payment dataset, and a deterministic incident simulator are
+> implemented. Incident *detection*, AI diagnosis, policy gating, and
+> recovery execution described below are **not implemented yet**. See
+> [Current implementation status](#current-implementation-status).
 
 ## Core workflow
 
@@ -75,12 +76,32 @@ Docker in this module.
   integration test suite covering generation, persistence, filtering,
   pagination, and summary math (see [Build verification notes](#build-verification-notes)).
 
+**Module 2 — Incident Simulator**
+
+- `SimulationScenario` enum plus lightweight `SimulationRun`/`SimulationChange`
+  simulation records — explicitly *not* an "Incident" entity (see
+  [Incident Simulator](#incident-simulator) below).
+- `IncidentSimulationService` — deterministically degrades the dataset via
+  three reproducible scenarios: `BANK_X_UPI_DEGRADATION` (primary demo),
+  `MERCHANT_SPECIFIC_DEGRADATION`, and `NORMAL_RANDOM_FAILURES`.
+- `POST /api/v1/simulations/run`, `POST /api/v1/simulations/reset`,
+  `GET /api/v1/simulations/status`.
+- Reset restores affected payments to their pre-simulation values without
+  regenerating the dataset. Starting a new simulation while one is active
+  automatically resets the previous one first, so repeated runs never compound.
+- A `/simulator` page in the frontend with a scenario selector, Simulate/Reset
+  controls, and a HEALTHY / SIMULATION ACTIVE status panel. The `/payments`
+  page shows a small indicator when a simulation is active.
+- Integration tests covering scenario concentration, merchant isolation,
+  normal-noise non-concentration, reset, and idempotency under repeated runs.
+
 ### Not implemented yet
 
 - Authentication (intentionally out of scope for this internal tool for now).
-- Synthetic incident simulation (payment *generation* exists; deliberately
-  manipulating the stream into an incident is Module 2).
-- Incident detection, revenue-at-risk calculation.
+- Incident *detection* (the simulator creates conditions; deciding whether
+  they constitute an incident is Module 4's job — see
+  [Incident Simulator](#incident-simulator)).
+- Revenue-at-risk calculation.
 - AI root-cause diagnosis and recovery recommendation.
 - Policy/guardrail validation.
 - Recovery execution (simulated), audit trail, and evaluation.
@@ -100,9 +121,9 @@ razorpay-sentinel/
 │       │   │   ├── config/         # CORS, cross-cutting Spring config
 │       │   │   ├── controller/     # HTTP endpoints only
 │       │   │   ├── dto/            # request/response shapes
-│       │   │   ├── entity/         # Payment + enums (Module 1)
+│       │   │   ├── entity/         # Payment, Simulation* + enums (Modules 1-2)
 │       │   │   ├── exception/      # SentinelException + global handler
-│       │   │   ├── repository/     # PaymentRepository + specifications
+│       │   │   ├── repository/     # PaymentRepository, Simulation*Repository
 │       │   │   ├── service/        # business logic
 │       │   │   ├── monitoring/     # incident detection (empty — future modules)
 │       │   │   ├── recovery/       # recovery execution (empty — future modules)
@@ -116,9 +137,9 @@ razorpay-sentinel/
 ├── frontend/
 │   ├── package.json
 │   └── src/
-│       ├── app/                # Next.js App Router pages (/, /payments)
-│       ├── components/         # UI components (incl. components/payments/)
-│       └── lib/                # api.ts, payments.ts, config.ts, navigation.ts
+│       ├── app/                # Next.js App Router pages (/, /payments, /simulator)
+│       ├── components/         # UI components (payments/, simulator/)
+│       └── lib/                # api.ts, payments.ts, simulations.ts, config.ts, navigation.ts
 ├── docs/
 │   ├── architecture.md
 │   └── development-roadmap.md
@@ -284,18 +305,95 @@ every row): `totalTransactions`, `successfulTransactions`,
 `failureRate`, plus breakdowns `byPaymentMethod`, `byBank`, and
 `byErrorCode`.
 
+## Incident Simulator
+
+### Why it exists
+
+Later modules (root-cause analysis, recovery) need a real incident to work
+with, but we can't wait for production traffic to misbehave on demand. The
+Incident Simulator deliberately degrades the synthetic payment dataset in
+controlled, reproducible ways so those modules — and the future Monitoring
+& Incident Detection Engine — have something concrete to detect, diagnose,
+and recover from.
+
+**The simulator creates conditions in the data. It never declares that an
+incident has been detected.** That judgment belongs to the Monitoring &
+Incident Detection Engine (planned for a later module), which will read the
+same `payments` table the simulator modifies — regardless of whether the
+abnormal state came from the simulator or from real traffic. See
+`docs/architecture.md` for the full explanation of this boundary.
+
+### Available scenarios
+
+| Scenario | What it does |
+|---|---|
+| `BANK_X_UPI_DEGRADATION` | **Primary demo scenario.** Bank X's UPI traffic develops a sharply elevated failure rate (roughly 25–40%, exact value depends on the dataset), dominated by `BANK_TIMEOUT`. Every other bank/payment-method combination is left alone. |
+| `MERCHANT_SPECIFIC_DEGRADATION` | One auto-selected, high-volume merchant develops an elevated failure rate with a non-bank-flavored error mix (`ISSUER_DECLINED`, `INSUFFICIENT_FUNDS`, ...). Other merchants stay normal — designed to test whether later root-cause analysis wrongly blames a bank. |
+| `NORMAL_RANDOM_FAILURES` | A small, broadly-spread increase in failures across the whole dataset — ordinary operational noise, not concentrated on any one segment. A negative/control case for future incident detection. |
+
+### API endpoints
+
+**Run a scenario**
+
+```
+POST /api/v1/simulations/run
+```
+
+```json
+{ "scenario": "BANK_X_UPI_DEGRADATION" }
+```
+
+Response includes `affectedTransactions`, `modifiedTransactions`,
+`targetBank`/`targetPaymentMethod`/`targetMerchantId` (whichever apply),
+`failureRateBefore`, `failureRateAfter`, `simulationTimestamp`, and
+`previousSimulationReset` (true if an already-active simulation was reset
+before this one was applied — starting a new simulation while one is
+active always does this automatically, so repeated runs never compound).
+
+**Check status**
+
+```
+GET /api/v1/simulations/status
+```
+
+Returns `active: false` if nothing is running, or the active run's scenario,
+start time, and current metrics if one is.
+
+**Reset**
+
+```
+POST /api/v1/simulations/reset
+```
+
+Restores every payment the active simulation touched to its pre-simulation
+`status`/`errorCode` — no dataset regeneration needed — and marks the
+simulation inactive. Safe to call even if nothing is active (returns
+`reset: false`).
+
+### Running the primary demo scenario
+
+```bash
+curl -X POST localhost:8080/api/v1/payments/generate -H 'Content-Type: application/json' -d '{"count":1000}'
+curl -X POST localhost:8080/api/v1/simulations/run -H 'Content-Type: application/json' -d '{"scenario":"BANK_X_UPI_DEGRADATION"}'
+curl localhost:8080/api/v1/simulations/status
+curl -X POST localhost:8080/api/v1/simulations/reset
+```
+
+Or use the `/simulator` page in the frontend.
+
 ## Build verification notes
 
 - **Frontend**: `npm install` and `npm run build` were run against this
-  exact project (including the new `/payments` page) and completed
-  successfully with no TypeScript errors.
-- **Backend**: the Module 1 code (entity, repository, specifications,
-  services, controller, tests) was written and carefully reviewed against
-  standard Spring Boot 3 / Java 17 / Spring Data JPA patterns, but `mvn
-  compile` / `mvn test` could not actually be executed in the environment
-  this project was built in, because that environment's network access does
-  not include Maven Central (`repo.maven.apache.org`). Run `mvn clean test`
-  locally to fetch dependencies and confirm both the build and the test
-  suite before relying on them. Tests are written against an in-memory H2
-  database (test scope only — see `pom.xml`), so `mvn test` does not require
-  a live PostgreSQL instance; running the app itself still does.
+  exact project (including the new `/simulator` page and the simulation
+  indicator on `/payments`) and completed successfully with no TypeScript
+  or lint errors.
+- **Backend**: the Module 2 code (entities, repositories, `IncidentSimulationService`,
+  controller, tests) was written and carefully reviewed against standard
+  Spring Boot 3 / Java 17 / Spring Data JPA patterns, but `mvn compile` /
+  `mvn test` could not actually be executed in the environment this project
+  was built in, because that environment's network access does not include
+  Maven Central (`repo.maven.apache.org`). Run `mvn clean test` locally to
+  fetch dependencies and confirm both the build and the full test suite
+  (Module 0 through Module 2) before relying on them. Tests run against an
+  in-memory H2 database (test scope only — see `pom.xml`), so `mvn test`
+  does not require a live PostgreSQL instance; running the app itself still does.

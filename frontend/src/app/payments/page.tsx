@@ -14,6 +14,7 @@ import {
   type PaymentFilters,
   type PaymentSummary,
 } from "@/lib/payments";
+import { fetchSimulationStatus, type SimulationStatusResponse } from "@/lib/simulations";
 
 const PAGE_SIZE = 20;
 
@@ -24,6 +25,7 @@ export default function PaymentsPage() {
   const [totalElements, setTotalElements] = useState(0);
   const [page, setPage] = useState(0);
   const [filters, setFilters] = useState<PaymentFilters>({});
+  const [simulationStatus, setSimulationStatus] = useState<SimulationStatusResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -53,6 +55,12 @@ export default function PaymentsPage() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    fetchSimulationStatus()
+      .then(setSimulationStatus)
+      .catch(() => setSimulationStatus(null));
+  }, []);
+
   async function handleGenerate(count: number) {
     setGenerating(true);
     setError(null);
@@ -77,7 +85,17 @@ export default function PaymentsPage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <p className="font-mono text-xs text-signal-wire">Module 1 · Payment Data Engine</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Payments</h1>
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">Payments</h1>
+        {simulationStatus?.active && (
+          <a
+            href="/simulator"
+            className="bg-signal-critical/15 px-2 py-0.5 text-xs font-medium tracking-wide text-signal-critical hover:bg-signal-critical/25"
+          >
+            SIMULATION ACTIVE — {simulationStatus.scenario}
+          </a>
+        )}
+      </div>
       <p className="mt-2 max-w-xl text-sm text-ink-muted">
         Synthetic payment traffic used as the baseline for every later module — incident
         detection, revenue-at-risk, and recovery all read from this dataset.

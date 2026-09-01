@@ -1,7 +1,7 @@
 const MODULES = [
   { name: "Project Foundation", state: "done" as const },
   { name: "Payment Data Engine", state: "done" as const },
-  { name: "Incident Simulator", state: "queued" as const },
+  { name: "Incident Simulator", state: "done" as const },
   { name: "Monitoring & Incident Detection", state: "queued" as const },
   { name: "Revenue-at-Risk Engine", state: "queued" as const },
   { name: "Command Center Dashboard", state: "queued" as const },

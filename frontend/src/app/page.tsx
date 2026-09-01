@@ -15,7 +15,7 @@ export default function DashboardPage() {
           aria-hidden
         />
         <div className="relative mx-auto max-w-6xl px-6 py-16">
-          <p className="font-mono text-xs text-signal-wire">Module 1 · Payment Data Engine</p>
+          <p className="font-mono text-xs text-signal-wire">Module 2 · Incident Simulator</p>
           <h1 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
             Payment failures, explained before they become losses.
           </h1>
@@ -42,14 +42,17 @@ export default function DashboardPage() {
           <div className="border border-base-border bg-base-panel p-6">
             <h2 className="text-sm font-medium text-ink">What exists right now</h2>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-muted">
-              The foundation is in place, and Sentinel can now generate and query a realistic
-              synthetic payment dataset — see the{" "}
+              Sentinel can generate and query synthetic payment data (
               <a href="/payments" className="text-signal-wire underline underline-offset-2">
                 Payments
-              </a>{" "}
-              section. Incident detection, revenue-at-risk, AI diagnosis, policy gates, and
-              recovery execution are not implemented yet — the pipeline above describes where
-              they&apos;ll sit.
+              </a>
+              ) and deliberately degrade it into reproducible incident scenarios (
+              <a href="/simulator" className="text-signal-wire underline underline-offset-2">
+                Simulator
+              </a>
+              ). Incident detection, revenue-at-risk, AI diagnosis, policy gates, and recovery
+              execution are not implemented yet — the pipeline above describes where they&apos;ll
+              sit.
             </p>
           </div>
 
