@@ -2,7 +2,7 @@ import { WorkflowChain } from "@/components/WorkflowChain";
 import { BackendStatus } from "@/components/BackendStatus";
 import { ModuleStatus } from "@/components/ModuleStatus";
 
-export default function DashboardPage() {
+export default function HomePage() {
   return (
     <main>
       <section className="relative overflow-hidden border-b border-base-border">
@@ -15,7 +15,7 @@ export default function DashboardPage() {
           aria-hidden
         />
         <div className="relative mx-auto max-w-6xl px-6 py-16">
-          <p className="font-mono text-xs text-signal-wire">Module 3 · Monitoring &amp; Incident Detection</p>
+          <p className="font-mono text-xs text-signal-wire">Module 5 · Command Center Dashboard</p>
           <h1 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
             Payment failures, explained before they become losses.
           </h1>
@@ -24,6 +24,12 @@ export default function DashboardPage() {
             they&apos;re happening and what revenue is at risk, then proposes a recovery strategy
             that a deterministic policy engine has to approve before anything runs.
           </p>
+          <a
+            href="/dashboard"
+            className="mt-6 inline-block border border-signal-wire/50 bg-signal-wire/10 px-4 py-2 text-sm font-medium text-signal-wire hover:bg-signal-wire/20"
+          >
+            Open Command Center →
+          </a>
         </div>
       </section>
 
@@ -58,7 +64,8 @@ export default function DashboardPage() {
               <a href="/incidents" className="text-signal-wire underline underline-offset-2">
                 Incidents
               </a>
-              ). AI diagnosis, policy gates, and recovery execution are not implemented yet — the
+              ) — including a per-incident revenue-at-risk and recoverability breakdown. AI
+              diagnosis, policy gates, and recovery execution are not implemented yet — the
               pipeline above describes where they&apos;ll sit.
             </p>
           </div>

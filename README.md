@@ -7,10 +7,11 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 3 — Monitoring & Incident Detection Engine.** The
-> foundation, a realistic synthetic payment dataset, a deterministic
-> incident simulator, and a deterministic detection engine are implemented.
-> AI diagnosis, policy gating, and recovery execution described below are
+> **Status: Module 5 — Command Center Dashboard.** The foundation, a
+> realistic synthetic payment dataset, a deterministic incident simulator,
+> a deterministic detection engine, a deterministic financial-impact
+> engine, and a consolidated operations dashboard are implemented. AI
+> diagnosis, policy gating, and recovery execution described below are
 > **not implemented yet**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
@@ -118,6 +119,53 @@ Docker in this module.
   span — both more realistic and necessary for this module's time-window
   comparison to actually see it (details in `docs/architecture.md`).
 
+**Module 4 — Revenue-at-Risk & Financial Impact Engine**
+
+- `financial/` package: `RecoverabilityLevel`, `RecoverabilityClassifier`
+  (fixed, documented error-code → recoverability mapping), and
+  `FinancialImpactService` — reads Module 3's `revenueAtRisk` rather than
+  recomputing it (see
+  [Monitoring & Incident Detection Engine](#monitoring--incident-detection-engine)
+  and `docs/architecture.md` for why that keeps it an explainable snapshot).
+- `RecoverabilityProperties` — configurable numeric rate per recoverability
+  level (`sentinel.financial.recoverability-rates.*`).
+- Affected-batch reconstruction straight from `payments` (no duplicated
+  transaction storage) using each incident's own target criteria.
+- `GET /api/v1/incidents/{id}/financial-impact`,
+  `/financial-impact/breakdown` (by bank / payment method / error code /
+  merchant), and `/evidence` (structured, map-shaped data ready for a
+  future AI module — no LLM call happens here).
+- `GET /api/v1/monitoring/summary` extended with `estimatedRecoverableRevenue`
+  and `affectedTransactionValue`.
+- A financial-impact section on the incident detail page (summary cards,
+  a recoverable-vs-at-risk progress bar, and revenue-at-risk-by-segment
+  charts), plus the extra fields surfaced on the Monitoring command center.
+- Unit tests using hand-built, controlled-amount payments to verify the
+  formulas exactly, plus integration tests tying together simulate →
+  detect → financial-impact for the Bank X UPI and merchant scenarios.
+
+**Module 5 — Command Center Dashboard**
+
+- `/dashboard` — the new primary operations console, consolidating data
+  already exposed by Modules 1–4 (no parallel data path): KPI cards
+  (success rate vs. baseline, revenue at risk, estimated recoverable
+  revenue, active incidents, affected payments), an active-incident hero
+  card, bank/payment-method/error-code breakdown tables, a financial
+  exposure section, a recent-incidents table, and a quick-operations panel
+  (simulate/detect/reset).
+- `PaymentSummaryResponse`'s breakdowns extended with per-segment failure
+  count/value/rate (`byBank`/`byPaymentMethod`) and value/percentage-of-failures
+  (`byErrorCode`) — an additive extension of the existing Module 1 endpoint,
+  not a new aggregation service, so the dashboard's breakdown tables work
+  even in the healthy state.
+- A shared `IncidentsTable` component used by both `/incidents` and
+  `/dashboard` (no duplicate table implementation).
+- Manual refresh plus 20-second auto-refresh polling, guarded against
+  overlapping requests; proper loading/error/empty states throughout.
+- `/`, `/payments`, `/simulator`, `/monitoring`, and `/incidents` remain
+  fully intact — the Command Center consolidates and links to them, it
+  doesn't replace them.
+
 ### Not implemented yet
 
 - Authentication (intentionally out of scope for this internal tool for now).
@@ -125,7 +173,8 @@ Docker in this module.
   guesses `rootCause` — see
   [Monitoring & Incident Detection Engine](#monitoring--incident-detection-engine)).
 - Policy/guardrail validation.
-- Recovery execution (simulated), audit trail, and evaluation.
+- Recovery execution (simulated), audit trail, and evaluation — so there is
+  no "actually recovered" figure yet, only `estimatedRecoverableRevenue`.
 - Incident lifecycle beyond `DETECTED` (no resolution workflow yet).
 
 See `docs/development-roadmap.md` for the full 16-module plan.
@@ -140,7 +189,7 @@ razorpay-sentinel/
 │       ├── main/
 │       │   ├── java/com/sentinelpulse/
 │       │   │   ├── RazorpaySentinelApplication.java
-│       │   │   ├── config/         # CORS, monitoring thresholds/config
+│       │   │   ├── config/         # CORS, monitoring thresholds, recoverability rates
 │       │   │   ├── controller/     # HTTP endpoints only
 │       │   │   ├── dto/            # request/response shapes
 │       │   │   ├── entity/         # Payment, Simulation*, Incident + enums (Modules 1-3)
@@ -148,6 +197,7 @@ razorpay-sentinel/
 │       │   │   ├── repository/     # PaymentRepository, Simulation*Repository, IncidentRepository
 │       │   │   ├── service/        # business logic (payments, simulation)
 │       │   │   ├── monitoring/     # deterministic detection engine (Module 3)
+│       │   │   ├── financial/      # deterministic financial-impact engine (Module 4)
 │       │   │   ├── recovery/       # recovery execution (empty — future modules)
 │       │   │   ├── ai/             # AI diagnosis/recommendation (empty — future modules)
 │       │   │   ├── policy/         # guardrail validation (empty — future modules)
@@ -159,9 +209,9 @@ razorpay-sentinel/
 ├── frontend/
 │   ├── package.json
 │   └── src/
-│       ├── app/                # Next.js App Router pages (/, /payments, /simulator, /monitoring, /incidents, /incidents/[id])
-│       ├── components/         # UI components (payments/, simulator/, monitoring/)
-│       └── lib/                # api.ts, payments.ts, simulations.ts, monitoring.ts, config.ts, navigation.ts
+│       ├── app/                # Next.js App Router pages (/, /dashboard, /payments, /simulator, /monitoring, /incidents, /incidents/[id])
+│       ├── components/         # UI components (dashboard/, payments/, simulator/, monitoring/, financial/)
+│       └── lib/                # api.ts, payments.ts, simulations.ts, monitoring.ts, financial.ts, config.ts, navigation.ts
 ├── docs/
 │   ├── architecture.md
 │   └── development-roadmap.md
@@ -199,6 +249,7 @@ development against a local Postgres install on default settings.
 | `SENTINEL_MONITORING_MAX_WINDOW_MINUTES` | `2880` | Cap on adaptive window widening (default: 48h) |
 | `SENTINEL_MONITORING_THRESHOLD_MINIMUM` | `5.0` | Percentage-point increase below which nothing is flagged |
 | `SENTINEL_MONITORING_THRESHOLD_LOW` / `_MEDIUM` / `_HIGH` / `_CRITICAL` | `5.0` / `12.0` / `20.0` / `30.0` | Severity band boundaries (percentage points) |
+| `SENTINEL_RECOVERABILITY_HIGH` / `_MEDIUM` / `_LOW` / `_UNKNOWN` | `0.70` / `0.35` / `0.10` / `0.25` | Recovery rate applied per recoverability level (see `docs/architecture.md`) |
 
 Example (macOS/Linux shell):
 
@@ -332,6 +383,14 @@ every row): `totalTransactions`, `successfulTransactions`,
 `successfulTransactionValue`, `failedTransactionValue`, `successRate`,
 `failureRate`, plus breakdowns `byPaymentMethod`, `byBank`, and
 `byErrorCode`.
+
+`byPaymentMethod` and `byBank` entries (`key`, `count`, `value`) were
+extended in Module 5 with `failedCount`, `failedValue`, and `failureRate`
+per segment. `byErrorCode` entries (`key`, `count`) were extended with
+`value` and `percentageOfFailures`. Both extensions reuse the existing
+Module 1 aggregation service (`PaymentService`/`PaymentRepository`) —
+additive fields only, nothing removed — so the Command Center's breakdown
+tables work from a single endpoint even when no incident is active.
 
 ## Incident Simulator
 
@@ -469,25 +528,134 @@ curl -X POST localhost:8080/api/v1/monitoring/detect -H 'Content-Type: applicati
 Or use the `/simulator` page to trigger the scenario and the `/monitoring`
 page's "Run Detection" button in the frontend.
 
+## Revenue-at-Risk & Financial Impact Engine
+
+**Revenue-at-risk is calculated from the actual affected transaction
+population. No financial values are hardcoded into the dashboard.**
+
+This builds on the `revenueAtRisk` figure the Monitoring engine already
+computes and persists on each `Incident` — this module reads that value
+rather than recomputing it (see `docs/architecture.md` for why that keeps
+it an explainable snapshot), and adds a recoverable/non-recoverable split
+plus per-segment breakdowns derived live from the affected transaction
+population.
+
+### Financial impact
+
+```
+GET /api/v1/incidents/{id}/financial-impact
+```
+
+```json
+{
+  "incidentId": 123,
+  "affectedTransactions": 1847,
+  "affectedTransactionValue": 2470000.00,
+  "failedTransactionValue": 985000.00,
+  "revenueAtRisk": 812000.00,
+  "estimatedRecoverableRevenue": 552160.00,
+  "nonRecoverableRevenue": 259840.00,
+  "averageTransactionValue": 1337.30,
+  "largestAffectedTransaction": 148500.00,
+  "recoverablePercentage": 68.0
+}
+```
+
+Formulas (full detail in `docs/architecture.md`):
+
+```
+affectedTransactionValue = Σ amount over the affected population
+failedTransactionValue   = Σ amount over the FAILED subset
+revenueAtRisk             = read from the Incident (Monitoring engine's formula)
+estimatedRecoverableRevenue = revenueAtRisk × (value-weighted recoverability rate across the failed population's error-code mix)
+nonRecoverableRevenue       = revenueAtRisk − estimatedRecoverableRevenue
+```
+
+`estimatedRecoverableRevenue` and `nonRecoverableRevenue` always sum
+exactly to `revenueAtRisk` (computed by subtraction, not independently).
+
+### Financial breakdown
+
+```
+GET /api/v1/incidents/{id}/financial-impact/breakdown
+```
+
+Returns `byBank`, `byPaymentMethod`, `byErrorCode`, and `byMerchant` — each
+entry has `transactionCount`, `transactionValue`, `failedValue`,
+`revenueAtRisk`, and `estimatedRecoverableRevenue`. Segment `revenueAtRisk`
+values within one dimension sum back to the incident's total.
+
+### Evidence (for the future AI module)
+
+```
+GET /api/v1/incidents/{id}/evidence
+```
+
+The same numbers, shaped as map-keyed breakdowns instead of lists — ready
+for a future AI investigation module to consume directly. No LLM call
+happens here; this only proves the data is ready.
+
+### Recoverability rates
+
+| Error code | Level | Default rate |
+|---|---|---|
+| `BANK_TIMEOUT`, `NETWORK_ERROR`, `RATE_LIMIT` | HIGH_RECOVERABILITY | 0.70 |
+| `ISSUER_DECLINED` | MEDIUM_RECOVERABILITY | 0.35 |
+| `INSUFFICIENT_FUNDS` | LOW_RECOVERABILITY | 0.10 |
+| `UNKNOWN` | UNKNOWN | 0.25 |
+
+Illustrative business assumptions, configurable via
+`sentinel.financial.recoverability-rates.*` — see Environment Variables above.
+
+## Command Center Dashboard
+
+```
+/dashboard
+```
+
+The project's primary operations view, built entirely on the existing
+Modules 1–4 APIs — no financial or statistical values are computed
+client-side:
+
+| Section | Data source |
+|---|---|
+| KPI cards (success rate, revenue at risk, estimated recoverable, active incidents, affected payments) | `GET /api/v1/monitoring/summary` |
+| Active incident hero card | `GET /api/v1/incidents` (most severe/recent) + `GET /api/v1/incidents/{id}/financial-impact` |
+| Failure rate chart | `GET /api/v1/monitoring/summary` (baseline vs. current) |
+| Financial exposure section | `GET /api/v1/incidents/{id}/financial-impact` (reuses the same `FinancialImpactSummary` component as the incident detail page) |
+| Bank / payment-method / error-code breakdown tables | `GET /api/v1/payments/summary` (extended in Module 5, see above) |
+| Recent incidents table | `GET /api/v1/incidents` (shared `IncidentsTable` component, also used by `/incidents`) |
+| Quick operations panel | `POST /api/v1/simulations/run`, `POST /api/v1/monitoring/detect`, `POST /api/v1/simulations/reset` |
+
+The dashboard auto-refreshes every 20 seconds (guarded against overlapping
+in-flight requests) and has a manual refresh button. `Root Cause: Not yet
+investigated` is always shown on the active-incident hero card — the
+deterministic detector never guesses a root cause, and the UI doesn't
+either, even for the Bank X UPI demo scenario. `/`, `/payments`,
+`/simulator`, `/monitoring`, and `/incidents` remain fully functional and
+reachable from navigation; the Command Center consolidates and links to
+them rather than replacing them.
+
 ## Build verification notes
 
 - **Frontend**: `npm install` and `npm run build` were run against this
-  exact project (including the new `/monitoring`, `/incidents`, and
-  `/incidents/[id]` pages and the Recharts dependency) and completed
-  successfully with no TypeScript or lint errors — all routes generated.
-- **Backend**: the Module 3 code (`Incident` entity, `PaymentStatistics`,
-  `SegmentAnalyzer`, `IncidentDetectionService`, controllers, tests) was
-  written and carefully reviewed against standard Spring Boot 3 / Java 17 /
-  Spring Data JPA patterns. `mvn compile` / `mvn test` could not actually be
-  executed end-to-end in the environment this project was built in, because
-  that environment's network access does not include Maven Central
-  (`repo.maven.apache.org`) — confirmed again this module (the request was
-  rejected at the network layer). One real bug *was* caught locally despite
-  this: an unescaped `&` in `pom.xml`'s description broke Maven's XML
-  parsing; it's fixed, and `mvn -q compile` now gets past POM parsing and
-  fails only on the expected dependency-download network block, not on
-  malformed XML. Run `mvn clean test` locally to fetch dependencies and
-  confirm both the build and the full test suite (Module 0 through Module 3)
+  exact project (including the new `/dashboard` route, the shared
+  `IncidentsTable` component, and the extended `/incidents` page) and
+  completed successfully with no TypeScript or lint errors — all 8 routes
+  generated.
+- **Backend**: the Module 5 code (extended `PaymentRepository`/`PaymentService`/
+  `PaymentSummaryResponse` for per-segment failure breakdowns, plus a new
+  integration test) was written and carefully reviewed against standard
+  Spring Boot 3 / Java 17 / Spring Data JPA patterns, including a manual
+  brace-balance and cross-reference check of every changed file, and a
+  check that no other file still referenced the old (pre-Module-5) method/DTO
+  shapes. `mvn compile` / `mvn test` could not actually be executed
+  end-to-end in the environment this project was built in — Maven Central
+  (`repo.maven.apache.org`) is network-blocked there, confirmed again this
+  module (403 Forbidden at the proxy). `pom.xml` itself parses correctly
+  (Maven gets past POM resolution and fails only on the dependency-download
+  network block). Run `mvn clean test` locally to fetch dependencies and
+  confirm both the build and the full test suite (Module 0 through Module 5)
   before relying on them. Tests run against an in-memory H2 database (test
   scope only — see `pom.xml`), so `mvn test` does not require a live
   PostgreSQL instance; running the app itself still does.

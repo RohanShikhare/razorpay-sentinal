@@ -59,11 +59,16 @@ export interface CountValueBreakdown {
   key: string;
   count: number;
   value: string;
+  failedCount: number;
+  failedValue: string;
+  failureRate: number;
 }
 
 export interface CountBreakdown {
   key: string;
   count: number;
+  value: string;
+  percentageOfFailures: number;
 }
 
 export interface PaymentSummary {

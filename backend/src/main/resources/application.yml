@@ -51,6 +51,15 @@ sentinel:
       medium-increase-points: ${SENTINEL_MONITORING_THRESHOLD_MEDIUM:12.0}
       high-increase-points: ${SENTINEL_MONITORING_THRESHOLD_HIGH:20.0}
       critical-increase-points: ${SENTINEL_MONITORING_THRESHOLD_CRITICAL:30.0}
+  financial:
+    # Illustrative recovery-rate assumptions per RecoverabilityLevel - see
+    # RecoverabilityClassifier for which error codes map to which level, and
+    # the README for the full formula this feeds into.
+    recoverability-rates:
+      HIGH_RECOVERABILITY: ${SENTINEL_RECOVERABILITY_HIGH:0.70}
+      MEDIUM_RECOVERABILITY: ${SENTINEL_RECOVERABILITY_MEDIUM:0.35}
+      LOW_RECOVERABILITY: ${SENTINEL_RECOVERABILITY_LOW:0.10}
+      UNKNOWN: ${SENTINEL_RECOVERABILITY_UNKNOWN:0.25}
 
 logging:
   level:

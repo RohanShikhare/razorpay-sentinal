@@ -16,6 +16,8 @@ public record MonitoringSummaryResponse(
         double baselineFailureRate,
         double failureRateChange,
         BigDecimal revenueAtRisk,
+        BigDecimal estimatedRecoverableRevenue,
+        BigDecimal affectedTransactionValue,
         long activeIncidents,
         long affectedTransactions
 ) {

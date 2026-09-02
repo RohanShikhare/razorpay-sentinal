@@ -19,6 +19,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,20 +74,46 @@ public class PaymentService {
         double successRate = rate(successful, total);
         double failureRate = rate(failed, total);
 
+        Map<String, Long> failedCountByPaymentMethod = new HashMap<>();
+        Map<String, BigDecimal> failedValueByPaymentMethod = new HashMap<>();
+        for (Object[] row : paymentRepository.aggregateFailedByPaymentMethod()) {
+            String key = ((PaymentMethod) row[0]).name();
+            failedCountByPaymentMethod.put(key, (Long) row[1]);
+            failedValueByPaymentMethod.put(key, nullToZero((BigDecimal) row[2]));
+        }
+
+        Map<String, Long> failedCountByBank = new HashMap<>();
+        Map<String, BigDecimal> failedValueByBank = new HashMap<>();
+        for (Object[] row : paymentRepository.aggregateFailedByBank()) {
+            String key = (String) row[0];
+            failedCountByBank.put(key, (Long) row[1]);
+            failedValueByBank.put(key, nullToZero((BigDecimal) row[2]));
+        }
+
         List<CountValueBreakdown> byPaymentMethod = new ArrayList<>();
         for (Object[] row : paymentRepository.aggregateByPaymentMethod()) {
+            String key = ((PaymentMethod) row[0]).name();
+            long count = (Long) row[1];
+            long segmentFailed = failedCountByPaymentMethod.getOrDefault(key, 0L);
+            BigDecimal segmentFailedValue = failedValueByPaymentMethod.getOrDefault(key, zero());
             byPaymentMethod.add(new CountValueBreakdown(
-                    ((PaymentMethod) row[0]).name(), (Long) row[1], nullToZero((BigDecimal) row[2])));
+                    key, count, nullToZero((BigDecimal) row[2]), segmentFailed, segmentFailedValue, rate(segmentFailed, count)));
         }
 
         List<CountValueBreakdown> byBank = new ArrayList<>();
         for (Object[] row : paymentRepository.aggregateByBank()) {
-            byBank.add(new CountValueBreakdown((String) row[0], (Long) row[1], nullToZero((BigDecimal) row[2])));
+            String key = (String) row[0];
+            long count = (Long) row[1];
+            long segmentFailed = failedCountByBank.getOrDefault(key, 0L);
+            BigDecimal segmentFailedValue = failedValueByBank.getOrDefault(key, zero());
+            byBank.add(new CountValueBreakdown(
+                    key, count, nullToZero((BigDecimal) row[2]), segmentFailed, segmentFailedValue, rate(segmentFailed, count)));
         }
 
         List<CountBreakdown> byErrorCode = new ArrayList<>();
-        for (Object[] row : paymentRepository.countGroupedByErrorCodeExcludingNone()) {
-            byErrorCode.add(new CountBreakdown(((ErrorCode) row[0]).name(), (Long) row[1]));
+        for (Object[] row : paymentRepository.aggregateByErrorCodeExcludingNone()) {
+            byErrorCode.add(new CountBreakdown(
+                    ((ErrorCode) row[0]).name(), (Long) row[1], nullToZero((BigDecimal) row[2]), rate((Long) row[1], failed)));
         }
 
         return new PaymentSummaryResponse(
@@ -99,6 +126,10 @@ public class PaymentService {
 
     private static BigDecimal nullToZero(BigDecimal value) {
         return value == null ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP) : value;
+    }
+
+    private static BigDecimal zero() {
+        return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
     }
 
     private static double rate(long part, long total) {

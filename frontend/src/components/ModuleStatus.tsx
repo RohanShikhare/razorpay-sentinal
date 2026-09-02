@@ -3,7 +3,7 @@ const MODULES = [
   { name: "Payment Data Engine", state: "done" as const },
   { name: "Incident Simulator", state: "done" as const },
   { name: "Monitoring & Incident Detection", state: "done" as const },
-  { name: "Revenue-at-Risk Engine", state: "queued" as const },
+  { name: "Revenue-at-Risk & Financial Impact", state: "done" as const },
   { name: "Command Center Dashboard", state: "queued" as const },
 ];
 

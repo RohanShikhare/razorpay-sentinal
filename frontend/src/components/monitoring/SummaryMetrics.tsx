@@ -29,6 +29,12 @@ export function SummaryMetrics({ summary }: { summary: MonitoringSummary }) {
         accent={changeAccent}
       />
       <Metric label="Revenue at risk" value={formatInr(summary.revenueAtRisk)} accent="text-signal-critical" />
+      <Metric
+        label="Estimated recoverable"
+        value={formatInr(summary.estimatedRecoverableRevenue)}
+        accent="text-signal-nominal"
+      />
+      <Metric label="Affected transaction value" value={formatInr(summary.affectedTransactionValue)} />
       <Metric label="Active incidents" value={summary.activeIncidents.toLocaleString("en-IN")} />
       <Metric label="Affected transactions" value={summary.affectedTransactions.toLocaleString("en-IN")} />
     </div>

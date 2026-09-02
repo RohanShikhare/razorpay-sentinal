@@ -4,8 +4,8 @@ Razorpay Sentinel is a **monolith**, deliberately. Detection, diagnosis, policy
 gating, recovery, and audit all live in one deployable backend so the
 workflow can stay a single, traceable pipeline instead of a distributed
 system with its own failure modes. This document describes the shape of that
-monolith as of Module 3 (Monitoring & Incident Detection Engine) and where
-each future layer will sit.
+monolith as of Module 4 (Revenue-at-Risk & Financial Impact Engine) and
+where each future layer will sit.
 
 ## Overview
 
@@ -37,6 +37,16 @@ each future layer will sit.
   `NEXT_PUBLIC_API_BASE_URL`.
 - Recharts (added in Module 3) powers the failure-rate and segment charts on
   `/monitoring` and `/incidents/[id]`.
+- `/dashboard` (Module 5) is the Command Center - the project's primary
+  operations view. It is a *consolidation* layer: it calls the same
+  Modules 1-4 endpoints the standalone `/payments`, `/simulator`,
+  `/monitoring`, and `/incidents` pages already use, and reuses their
+  components where the shape matches exactly (`ScenarioSelector`,
+  `FailureRateComparisonChart`, `FinancialImpactSummary`). It introduces no
+  new data path and computes no financial or statistical values
+  client-side. `components/monitoring/IncidentsTable.tsx` was extracted
+  as a shared component used by both `/incidents` and `/dashboard`,
+  avoiding a duplicate table implementation.
 
 ## Backend
 
@@ -52,6 +62,12 @@ each future layer will sit.
   any exception into a consistent `ErrorResponse` JSON body. Later modules
   should throw domain exceptions rather than handling errors ad hoc.
 - All backend routes are namespaced under `/api/v1`.
+- Module 5 extended `PaymentService.getSummary()`/`PaymentRepository`
+  (Module 1) with per-segment failure count/value/rate rather than adding a
+  new aggregation service - the Command Center dashboard's bank/payment-method/
+  error-code breakdown tables read from the same, now-richer,
+  `GET /api/v1/payments/summary` response. Purely additive fields; nothing
+  existing was removed or renamed.
 
 ## Database
 
@@ -74,6 +90,10 @@ each future layer will sit.
 - Module 3 added `incidents`, backing the `Incident` entity - the first
   table that represents something the system *concluded* rather than raw
   or simulated transaction data.
+- Module 4 added no new tables. Financial impact is deliberately computed
+  on demand from `payments` + the `Incident` row's own stored fields,
+  rather than persisted anywhere new - see "Financial Impact Engine" below
+  for why.
 - Tests run against an in-memory H2 database (test scope only, see
   `pom.xml`) so the full JPA/Hibernate stack can be exercised without a
   live PostgreSQL instance. Production configuration uses PostgreSQL
@@ -174,6 +194,89 @@ unchanged condition don't pile up duplicate incidents.
 **What this engine does not do:** call an LLM, assign `rootCause`,
 recommend or execute recovery. See "Future layers" below.
 
+## Financial Impact Engine (Module 4)
+
+**Revenue-at-risk is calculated from the actual affected transaction
+population. No financial values are hardcoded into the dashboard.**
+
+Lives in the `financial/` package: `RecoverabilityLevel` and
+`RecoverabilityClassifier` are pure classification logic; `FinancialImpactService`
+is the only piece that touches the database. All monetary values are
+`BigDecimal` throughout - never `double`/`float`.
+
+**Core flow:** detected incident → affected transaction population →
+financial exposure analysis → revenue at risk → recoverable revenue
+estimate → batch-level metrics.
+
+**Revenue at risk is read, not recomputed.** `Incident.revenueAtRisk` is a
+value Module 3's `IncidentDetectionService` computes and persists at
+(re)detection time (see the Monitoring section above for its formula). This
+module treats that value as the historical snapshot of "how much revenue
+was at risk when this was detected" and never overwrites it — only a
+genuine re-detection event (`Incident.refresh`) does. That is precisely
+what keeps the top-line financial-impact numbers explainable even if the
+underlying payment data changes later (e.g. a future recovery module, or a
+simulation reset) — the incident snapshot requirement from Module 4's spec
+is satisfied by *not* recomputing this number here, rather than by adding a
+new snapshot table.
+
+**Affected batch reconstruction.** No transactions are duplicated into a
+second table. `FinancialImpactService.resolveAffectedBatch` derives the
+population on demand from the existing `payments` table using the
+incident's own deterministic criteria — `targetBank` / `targetPaymentMethod`
+/ `targetMerchantId` (whichever apply to that incident's type) plus every
+payment from `startTime` onward. Segment breakdowns and the recoverability
+estimate are computed *live* from this batch each call, so — unlike the
+top-line revenue-at-risk — they reflect the current state of the data.
+
+**Recoverability classification** (`RecoverabilityClassifier`, fixed
+business rules in code):
+
+| Error code | Level | Reasoning |
+|---|---|---|
+| `BANK_TIMEOUT`, `NETWORK_ERROR`, `RATE_LIMIT` | HIGH_RECOVERABILITY | Transient infrastructure/rail issues, often resolved by a retry |
+| `ISSUER_DECLINED` | MEDIUM_RECOVERABILITY | Sometimes a temporary risk hold, often not |
+| `INSUFFICIENT_FUNDS` | LOW_RECOVERABILITY | Customer-side condition unlikely to resolve on immediate retry |
+| `UNKNOWN` (and anything unmapped) | UNKNOWN | Not enough information to judge |
+
+The numeric rate applied per level is configuration
+(`sentinel.financial.recoverability-rates.*`, defaults 0.70 / 0.35 / 0.10 /
+0.25) — illustrative business assumptions, not empirically derived, which
+is exactly why they're tunable rather than embedded in the formula.
+
+**Formulas** (see `FinancialImpactResponse`'s Javadoc for the authoritative
+version):
+```
+affectedTransactionValue = Σ amount over the affected population (any status)
+failedTransactionValue   = Σ amount over the FAILED subset of that population
+revenueAtRisk             = read from Incident (Module 3's formula)
+weightedRate               = Σ(failedValue[errorCode] × rate[level(errorCode)]) / totalFailedValue
+estimatedRecoverableRevenue = revenueAtRisk × weightedRate
+nonRecoverableRevenue       = revenueAtRisk − estimatedRecoverableRevenue   (by subtraction, so the two always sum exactly)
+averageTransactionValue     = affectedTransactionValue / affectedTransactions (0 if none)
+recoverablePercentage        = estimatedRecoverableRevenue / revenueAtRisk × 100 (0 if revenueAtRisk is 0)
+```
+Per-segment `revenueAtRisk` (in the breakdown endpoint) apportions the
+incident's total by that segment's share of the population's total failed
+value, so segment values sum back to the incident total.
+
+**Distinction between revenue-at-risk and actual recovered revenue.**
+`estimatedRecoverableRevenue` is exactly that — an estimate, computed
+deterministically from error-code composition. There is no "actually
+recovered" figure yet, because no recovery module exists yet; that
+distinction (estimate vs. actual) is preserved deliberately so a future
+recovery module has an unambiguous baseline to report against.
+
+**Structured evidence for the future AI module.** `FinancialImpactService.getEvidence`
+(exposed at `GET /api/v1/incidents/{id}/evidence`) packages the same
+numbers as map-keyed breakdowns (`bankBreakdown`, `paymentMethodBreakdown`,
+`errorCodeBreakdown`, `merchantBreakdown`) rather than lists, which tends to
+be a more convenient shape for prompt construction. No LLM call happens
+here — this only proves the data is ready to hand off.
+
+**What this engine does not do:** execute recovery, retry transactions,
+route to alternate rails, or call an LLM.
+
 ## Incident lifecycle (as implemented so far)
 
 `IncidentStatus` has six values (`DETECTED`, `INVESTIGATING`,
@@ -187,21 +290,24 @@ doesn't need to change when they land.
 
 These packages exist as empty, documented placeholders (`package-info.java`)
 so later modules slot in without restructuring the project. `monitoring/`
-graduated from placeholder to implemented in Module 3 (see above) - the
-remaining ones are still ahead:
+graduated from placeholder to implemented in Module 3, and the standalone
+`financial/` package (Module 4) was added the same way — the remaining
+placeholders are still ahead:
 
 - **`ai/`** — the AI layer. Root-cause analysis over a detected incident, and
   a bounded recovery recommendation. This is where an LLM call will live,
   isolated behind a service interface so the rest of the system doesn't
   depend on a specific provider. Will read `Incident` rows Module 3 produces
-  and write to `Incident.rootCause`, which the detector deliberately never
-  touches.
+  plus the structured evidence `FinancialImpactService.getEvidence`
+  (Module 4) already packages for it, and write to `Incident.rootCause`,
+  which the detector deliberately never touches.
 - **`policy/`** — deterministic guardrails that validate whatever the AI
   layer recommends before anything is allowed to execute. This is the gate
   in Detect → Diagnose → Quantify → Decide → **Gate** → Recover → Audit, and
   it is intentionally *not* AI — it's rules a human can read and trust.
 - **`recovery/`** — simulated execution of an approved recovery strategy,
-  and the resulting money-recovered accounting.
+  and the resulting money-recovered accounting. Will report against
+  `estimatedRecoverableRevenue` (Module 4) as its baseline.
 - **`audit/`** — a complete, queryable record of every detection, diagnosis,
   decision, policy check, and recovery action, for after-the-fact review and
   evaluation.

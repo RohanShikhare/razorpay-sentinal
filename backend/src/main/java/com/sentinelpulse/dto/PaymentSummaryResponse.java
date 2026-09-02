@@ -24,9 +24,23 @@ public record PaymentSummaryResponse(
         List<CountValueBreakdown> byBank,
         List<CountBreakdown> byErrorCode
 ) {
-    public record CountValueBreakdown(String key, long count, BigDecimal value) {
+    /**
+     * A segment's totals plus its own failure count/value/rate - added in
+     * Module 5 so the dashboard's bank and payment-method breakdown tables
+     * can show a failure rate per segment without extra round trips.
+     */
+    public record CountValueBreakdown(
+            String key, long count, BigDecimal value,
+            long failedCount, BigDecimal failedValue, double failureRate
+    ) {
     }
 
-    public record CountBreakdown(String key, long count) {
+    /**
+     * An error code's count, total value, and share of all failures across
+     * the dataset (not the same as {@code failureRate} above - every row
+     * here is already a failure, so this is "what fraction of failures are
+     * this error code", useful for the dashboard's error-code breakdown).
+     */
+    public record CountBreakdown(String key, long count, BigDecimal value, double percentageOfFailures) {
     }
 }

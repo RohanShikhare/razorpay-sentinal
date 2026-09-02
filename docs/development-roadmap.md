@@ -10,8 +10,8 @@ document tracks the planned sequence and what "done" means for each one.
 | 2 | Payment Data Engine | **Done** | Synthetic payment generation, persistence, filtered/paginated query API, and an aggregate summary endpoint. |
 | 3 | Incident Simulator | **Done** | Deterministic, reproducible payment-degradation scenarios (Bank X UPI, merchant-specific, normal noise) with reset. |
 | 4 | Monitoring & Incident Detection | **Done** | Deterministic baseline-vs-current comparison, segment analysis, revenue-at-risk, confidence scoring, and Incident persistence with duplicate suppression. |
-| 5 | Revenue-at-Risk Engine | Superseded | First version delivered as part of Module 4 (see above); may be extended later. |
-| 6 | Command Center Dashboard | Planned | Real dashboard UI: live incidents, charts (Recharts), and system state. |
+| 5 | Revenue-at-Risk Engine | **Done** | Rigorous financial-impact engine: recoverability classification, batch reconstruction, per-segment breakdowns, and structured evidence for the future AI module. |
+| 6 | Command Center Dashboard | **Done** | Consolidated `/dashboard` operations console: KPI cards, active-incident hero, financial exposure, bank/method/error-code breakdowns, incident list, and quick simulate/detect/reset controls, with auto-refresh. |
 | 7 | AI Diagnostic Agent | Planned | AI-driven root-cause analysis of a detected incident. |
 | 8 | Root-Cause Investigation | Planned | Deeper diagnostic tooling and evidence gathering behind the AI agent's conclusions. |
 | 9 | Recovery Strategy Engine | Planned | AI-generated, bounded recovery recommendations. |
@@ -20,10 +20,10 @@ document tracks the planned sequence and what "done" means for each one.
 | 12 | Audit Trail | Planned | Full, queryable record of every detection, decision, gate check, and recovery action. |
 | 13 | Safety & Failure Scenarios | Planned | Deliberate failure-mode testing: bad AI recommendations, policy rejections, escalation paths. |
 | 14 | Evaluation & Benchmarking | Planned | Measurable evaluation of detection accuracy, recovery effectiveness, and system behavior over time. |
-| 15 | Final Command Center | Planned | Fully integrated dashboard tying together monitoring, AI, policy, recovery, and audit. |
+| 15 | Final Command Center | Planned | Will extend the Command Center Dashboard (`/dashboard`, row 6 above) once AI diagnosis, policy, recovery, and audit exist to surface — not a separate rebuild. |
 | 16 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 3)
+## Current state (Module 5)
 
 Implemented in Module 0:
 
@@ -110,13 +110,71 @@ Added in Module 3:
   integration suite covering all three simulator scenarios, duplicate
   suppression, pagination, and the monitoring summary.
 
+Added in Module 4:
+
+- `financial/` package: `RecoverabilityLevel` enum, `RecoverabilityClassifier`
+  (fixed, documented error-code → recoverability-level mapping), and
+  `FinancialImpactService` - the orchestrating engine.
+- `RecoverabilityProperties` - configurable numeric rate per recoverability
+  level, bound from `sentinel.financial.recoverability-rates.*`.
+- Affected-batch reconstruction directly from the `payments` table (no
+  duplicated transaction storage), using each incident's own target
+  bank/payment-method/merchant + start time as deterministic criteria.
+- A documented recoverable/non-recoverable split on top of Module 3's
+  existing revenue-at-risk figure - read, not recomputed, so it stays an
+  explainable snapshot of "what was at risk when this was detected" even
+  if the underlying payment data changes later.
+- `GET /api/v1/incidents/{id}/financial-impact` and
+  `/financial-impact/breakdown` (by bank / payment method / error code /
+  merchant), plus `GET /api/v1/incidents/{id}/evidence` - structured,
+  map-shaped evidence ready for the future AI investigation module to
+  consume directly, without exposing it via an actual AI call.
+- `GET /api/v1/monitoring/summary` extended with `estimatedRecoverableRevenue`
+  and `affectedTransactionValue`, aggregated across active incidents.
+- A financial-impact section (summary cards, a recoverable-vs-at-risk
+  progress bar, and revenue-at-risk-by-segment charts) added to the
+  incident detail page.
+- Unit tests using hand-built, controlled-amount payments to verify the
+  formulas exactly, plus integration tests tying together simulate →
+  detect → financial-impact for the Bank X UPI and merchant scenarios.
+
+Added in Module 5:
+
+- `/dashboard` — the new Command Center route, the project's primary
+  operations view. Consolidates data already exposed by Modules 1-4
+  (`GET /api/v1/monitoring/summary`, `/incidents`, `/incidents/{id}/financial-impact`,
+  `/payments/summary`) rather than introducing a parallel data path.
+- `PaymentSummaryResponse`'s `byBank`/`byPaymentMethod` breakdown entries
+  extended with `failedCount`, `failedValue`, and `failureRate`; `byErrorCode`
+  extended with `value` and `percentageOfFailures` - a small, additive,
+  reused-service extension (`PaymentRepository`/`PaymentService`, Module 1)
+  rather than a new aggregation service, so the dashboard's bank/method/error-code
+  breakdown tables work even in the healthy state, not just per-incident.
+- `GET /api/v1/monitoring/summary` was already extended in Module 4;
+  no further backend change was needed for the dashboard's top KPI cards.
+- KPI cards (payment success rate vs. baseline, revenue at risk, estimated
+  recoverable revenue, active incidents, affected payments), an active-incident
+  hero card (reusing the same fields as the incident detail page - explicitly
+  still shows "Root Cause: Not yet investigated"), a shared `IncidentsTable`
+  component (used by both `/incidents` and `/dashboard`, avoiding a
+  duplicate table implementation), bank/payment-method/error-code breakdown
+  tables, and a quick-operations panel (simulate/detect/reset, reusing the
+  same `ScenarioSelector` component and API functions the `/simulator` page
+  already uses).
+- Manual refresh plus 20-second auto-refresh polling, guarded against
+  overlapping in-flight requests.
+- Proper loading, error (with retry), and empty states throughout; the
+  existing `/`, `/payments`, `/simulator`, `/monitoring`, and `/incidents`
+  pages remain fully intact and reachable from navigation.
+
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
 - AI root-cause diagnosis and recovery recommendation (this module's
   detector never guesses `rootCause` - see `docs/architecture.md`).
 - Policy/guardrail validation.
-- Recovery execution (simulated), audit trail, and evaluation.
+- Recovery execution (simulated), audit trail, and evaluation - so there is
+  no "actually recovered" figure yet, only the estimate.
 - Incident lifecycle transitions beyond `DETECTED` (no resolution workflow yet).
 
 ## Working agreement for future modules

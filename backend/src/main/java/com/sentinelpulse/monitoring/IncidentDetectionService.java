@@ -14,6 +14,7 @@ import com.sentinelpulse.entity.IncidentType;
 import com.sentinelpulse.entity.Payment;
 import com.sentinelpulse.entity.PaymentMethod;
 import com.sentinelpulse.exception.ResourceNotFoundException;
+import com.sentinelpulse.financial.FinancialImpactService;
 import com.sentinelpulse.monitoring.PaymentStatistics.SegmentStats;
 import com.sentinelpulse.monitoring.SegmentAnalyzer.SegmentSignal;
 import com.sentinelpulse.repository.IncidentRepository;
@@ -101,12 +102,14 @@ public class IncidentDetectionService {
     private final PaymentRepository paymentRepository;
     private final IncidentRepository incidentRepository;
     private final MonitoringProperties properties;
+    private final FinancialImpactService financialImpactService;
 
     public IncidentDetectionService(PaymentRepository paymentRepository, IncidentRepository incidentRepository,
-                                     MonitoringProperties properties) {
+                                     MonitoringProperties properties, FinancialImpactService financialImpactService) {
         this.paymentRepository = paymentRepository;
         this.incidentRepository = incidentRepository;
         this.properties = properties;
+        this.financialImpactService = financialImpactService;
     }
 
     @Transactional
@@ -191,6 +194,14 @@ public class IncidentDetectionService {
                 .map(Incident::getRevenueAtRisk)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalAffectedValue = active.stream()
+                .map(Incident::getAffectedTransactionValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalRecoverable = active.stream()
+                .map(i -> financialImpactService.getFinancialImpact(i.getId()).estimatedRecoverableRevenue())
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
         long totalAffected = active.stream().mapToLong(Incident::getAffectedTransactions).sum();
         String health = active.stream()
                 .map(Incident::getSeverity)
@@ -201,7 +212,7 @@ public class IncidentDetectionService {
         return new MonitoringSummaryResponse(
                 health, snapshot.currentGlobal().successRate(), snapshot.currentGlobal().failureRate(),
                 snapshot.baselineGlobal().failureRate(), snapshot.globalIncrease(),
-                totalRevenueAtRisk, active.size(), totalAffected
+                totalRevenueAtRisk, totalRecoverable, totalAffectedValue, active.size(), totalAffected
         );
     }
 

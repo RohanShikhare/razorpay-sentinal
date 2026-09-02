@@ -5,12 +5,15 @@ export interface NavItem {
 }
 
 /**
- * Primary navigation. Only Dashboard exists in Module 0 - the rest are
- * listed so the header's structure doesn't need to change as later modules
- * (Incidents, Recovery, Audit Trail, Evaluation) land.
+ * Primary navigation. "Command Center" (Module 5) is the flagship
+ * consolidated operations view; "Home" (formerly "Dashboard", Module 0) is
+ * preserved as the project overview/foundation page. The focused
+ * single-purpose pages (Payments, Simulator, Monitoring, Incidents) all
+ * remain available for drill-down.
  */
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/", available: true },
+  { label: "Command Center", href: "/dashboard", available: true },
+  { label: "Home", href: "/", available: true },
   { label: "Payments", href: "/payments", available: true },
   { label: "Simulator", href: "/simulator", available: true },
   { label: "Monitoring", href: "/monitoring", available: true },

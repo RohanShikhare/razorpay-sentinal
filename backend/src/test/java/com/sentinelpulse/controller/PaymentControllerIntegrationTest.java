@@ -125,6 +125,50 @@ class PaymentControllerIntegrationTest {
                 "successRate must equal successful/total * 100");
     }
 
+    @Test
+    void summaryBreakdownsIncludeFailureRatePerSegment() throws Exception {
+        generate(2_000, 66L);
+
+        String body = mockMvc.perform(get("/api/v1/payments/summary"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        var summary = objectMapper.readTree(body);
+        long totalFailed = summary.get("failedTransactions").asLong();
+
+        long sumOfSegmentFailedByBank = 0;
+        for (var segment : summary.get("byBank")) {
+            long count = segment.get("count").asLong();
+            long failedCount = segment.get("failedCount").asLong();
+            double failureRate = segment.get("failureRate").asDouble();
+            sumOfSegmentFailedByBank += failedCount;
+
+            double expectedRate = count == 0 ? 0.0 : Math.round((failedCount / (double) count) * 100 * 100) / 100.0;
+            assertEquals(expectedRate, failureRate, 0.02,
+                    "per-bank failureRate should equal failedCount/count * 100");
+        }
+        assertEquals(totalFailed, sumOfSegmentFailedByBank,
+                "failed counts across all banks should sum to the total failed count");
+
+        long sumOfSegmentFailedByMethod = 0;
+        for (var segment : summary.get("byPaymentMethod")) {
+            sumOfSegmentFailedByMethod += segment.get("failedCount").asLong();
+        }
+        assertEquals(totalFailed, sumOfSegmentFailedByMethod,
+                "failed counts across all payment methods should sum to the total failed count");
+
+        long sumOfErrorCodeCounts = 0;
+        double sumOfErrorCodePercentages = 0.0;
+        for (var segment : summary.get("byErrorCode")) {
+            sumOfErrorCodeCounts += segment.get("count").asLong();
+            sumOfErrorCodePercentages += segment.get("percentageOfFailures").asDouble();
+        }
+        assertEquals(totalFailed, sumOfErrorCodeCounts,
+                "error code counts should sum to the total failed count (every failure has a real error code)");
+        assertEquals(100.0, sumOfErrorCodePercentages, 0.5,
+                "error code percentages should sum to ~100%");
+    }
+
     private void generate(int count, long seed) throws Exception {
         mockMvc.perform(post("/api/v1/payments/generate")
                         .contentType("application/json")

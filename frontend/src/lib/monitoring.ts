@@ -51,6 +51,8 @@ export interface MonitoringSummary {
   baselineFailureRate: number;
   failureRateChange: number;
   revenueAtRisk: string;
+  estimatedRecoverableRevenue: string;
+  affectedTransactionValue: string;
   activeIncidents: number;
   affectedTransactions: number;
 }
