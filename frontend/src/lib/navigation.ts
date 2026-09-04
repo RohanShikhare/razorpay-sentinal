@@ -12,15 +12,13 @@ export interface NavItem {
  * remain available for drill-down.
  */
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Command Center", href: "/dashboard", available: true },
+  { label: "Command Center", href: "/command-center", available: true },
   { label: "Home", href: "/", available: true },
-  { label: "Payments", href: "/payments", available: true },
-  { label: "Simulator", href: "/simulator", available: true },
-  { label: "Monitoring", href: "/monitoring", available: true },
   { label: "Incidents", href: "/incidents", available: true },
+  { label: "Monitoring", href: "/monitoring", available: true },
+  { label: "Simulator", href: "/simulator", available: true },
+  { label: "Payments", href: "/payments", available: true },
   { label: "Safety Lab", href: "/safety", available: true },
-  { label: "Recovery", href: "/recovery", available: false },
-  { label: "Audit Trail", href: "/audit", available: false },
   { label: "Evaluation", href: "/evaluation", available: true },
 ];
 

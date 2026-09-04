@@ -3,8 +3,8 @@
 Razorpay Sentinel is a **monolith**, deliberately. Detection, diagnosis, policy
 gating, recovery, audit, and safety validation all live in one deployable backend so the
 workflow can stay a single, traceable pipeline instead of a distributed
-system with its own failure modes. This document describes the shape of that monolith as of Module 12
-(Safety & Failure Scenarios / Resilience Validation Layer) and where each future layer will sit.
+system with its own failure modes. This document describes the shape of that monolith as of Module 14
+(Final Command Center) and where each future layer will sit.
 
 ## Pipeline Architecture
 
@@ -614,11 +614,33 @@ Module 13 adds an empirical, multi-scenario evaluation and benchmarking engine (
 - `GET /api/v1/evaluation/runs/{runId}`: Retrieves a specific evaluation run by run ID.
 - `GET /api/v1/evaluation/runs/{runId}/incidents`: Retrieves granular per-incident evaluation breakdown.
 
+## Final Command Center (Module 14)
+
+Module 14 delivers the flagship **Final Command Center** interface at `/command-center` — a single operational control room that enables judges and payment operations engineers to understand Sentinel's end-to-end value proposition in 30 seconds.
+
+### 1. Presentation & Orchestration Layer Architecture
+
+Module 14 strictly operates as a **composition and presentation layer**. It introduces:
+- **Zero new AI decision logic**: Reuses authoritative Module 6 advisory diagnostics and Module 7 investigations.
+- **Zero second recovery engine**: Reuses authoritative Module 10 recovery execution simulator.
+- **Zero duplicated business logic**: Composes live data from existing REST APIs across Modules 1–13.
+- **Zero fake metrics**: All values are dynamically bound to live backend state with honest empty/awaiting indicators when data is not yet generated.
+
+### 2. Information Hierarchy & Key Capabilities
+
+1. **Subsystem Telemetry Header**: Real-time status indicators for AI Advisory Engine, Policy Gate (12 active rules), Recovery Simulator (Circuit Breakers Active), and Cryptographic Audit Chain (SHA-256 Verified).
+2. **1-Click Guided Demo Runner**: A 9-stage frontend orchestrator executing the full incident lifecycle (Ingest → Detect → Financial Impact → AI Diagnosis → Root-Cause Investigation → Recovery Strategy → Deterministic Policy Gate → Simulated Recovery → SHA-256 Audit Verification) sequentially against existing endpoints without bypassing policy.
+3. **Authoritative Financial Impact Matrix**: Visually distinguishes **Revenue at Risk** (Module 4 Exposure) $\ne$ **Recoverable Revenue** (Module 4 Ceiling) $\ne$ **Revenue Recovered** (Module 10 Simulated Outcome) $\ne$ **Unrecovered / Protected Revenue**, with recovery efficiency gauges.
+4. **Active Incident Hero**: Surfaces live failure rate jumps, affected transaction counts, and payment segments with 1-click incident injection when healthy.
+5. **8-Stage Visual Decision Pipeline**: Interactive status stepper tracing detection through audit verification.
+6. **6-Card Control Room Grid**: Detailed advisory diagnostics (Module 6), deep investigation hypothesis proofs (Module 7), bounded recovery strategy proposals (Module 8), deterministic policy gate with applied limits checklist (Module 9), recovery execution telemetry (Module 10), and cryptographic SHA-256 audit verification (Module 11).
+7. **Safety Invariant Proofs (Module 12)**: Live verification of zero policy bypasses, zero bound violations, fail-closed posture, and circuit breaker health.
+8. **Benchmark Snapshot & Baseline Comparison (Module 13)**: High-level performance snapshot and visual comparison bars against Baseline A (₹0) and Baseline B (Naive Retry).
+
 ## Future layers (not implemented yet)
 
 These packages exist as placeholders (`package-info.java`) so future modules slot in cleanly:
 
-- **`command-center/`** (Module 14) — consolidated operational incident commander dashboard.
-- **`submission/`** (Module 15) — packaging, documentation, and demo scripts.
+- **`submission/`** (Module 15) — packaging, documentation, and final demo scripts.
 
 See `development-roadmap.md` for the full module sequence.

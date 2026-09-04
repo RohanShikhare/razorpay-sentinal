@@ -19,10 +19,10 @@ document tracks the planned sequence and what "done" means for each one.
 | 11 | Audit Trail | **Done** | Complete chronological decision history and tamper-evident SHA-256 hash-chain audit layer across Modules 0–10. |
 | 12 | Safety & Failure Scenarios | **Done** | Controlled failure scenarios proving that Sentinel fails closed under AI failure, invalid schemas, policy rejections, circuit breakers, and audit tampering. |
 | 13 | Evaluation & Benchmarking | **Done** | Rigorous empirical benchmarking engine comparing Sentinel against Baselines A/B across financial, detection, diagnostic, strategy, and safety metrics. |
-| 14 | Final Command Center | Planned | Consolidated operational view surfacing AI diagnosis, policy gates, recovery simulator, and audit trail. |
+| 14 | Final Command Center | **Done** | Flagship operational control room (`/command-center`) consolidating live incident telemetry, financial impact matrix, AI advisory diagnosis, root-cause investigation, recovery proposals, deterministic policy gate, simulated recovery execution, SHA-256 audit proofs, safety invariants, benchmark snapshots, and 1-Click Guided Demo runner. |
 | 15 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 13)
+## Current state (Module 14)
 
 Implemented in Module 0:
 
@@ -307,16 +307,38 @@ Added in Module 13:
   - 4-Quadrant Metric Breakdown Grid (Financial, Detection, Diagnosis/Strategy, Recovery/Safety).
   - Safety Invariant Proof & Compliance Checklist (Zero Bypasses, Zero Bound Violations, Fail-Closed, SHA-256 Audit Integrity).
   - Per-Incident Breakdown Table & Detailed Inspector Drawer.
-- Module progress indicator updated in `ModuleStatus.tsx` (Module 13: "built", Module 14: "queued").
+- Module progress indicator updated in `ModuleStatus.tsx` (Module 13: "built", Module 14: "built", Module 15: "queued").
 - Navigation bar updated with "Evaluation" link in `lib/navigation.ts`.
 - Comprehensive unit and integration test suite (14 tests in `EvaluationServiceTest` and `EvaluationControllerIntegrationTest`, 100% passing) verifying deterministic reproducibility across seeds, empty scenario handling, baseline comparisons, and multi-seed invariants.
 - Total backend test suite: **158 of 158 tests passing**.
 
+Added in Module 14:
+
+- Flagship Final Command Center interface on `/command-center` consolidating the entire Sentinel architecture:
+  1. **Operational Header & Subsystem Telemetry**: Displays `SYSTEM OPERATIONAL` status alongside live telemetry indicators for AI Advisory Engine, Policy Gate (12 deterministic rules), Recovery Execution Simulator (Circuit Breakers Active), and Cryptographic Audit Chain (SHA-256 Verified).
+  2. **1-Click Guided Incident Commander Demo**: Live interactive 9-step runner that sequentially executes Ingest → Detect → Financial Impact → AI Diagnosis → Root-Cause Investigation → Recovery Strategy → Policy Gate → Simulated Recovery → SHA-256 Audit Verification without bypassing policy or using fake metrics.
+  3. **Authoritative Financial Impact Matrix**: Visually highlights and strictly distinguishes **Revenue at Risk** (Module 4 Exposure) ≠ **Recoverable Revenue** (Module 4 Ceiling) ≠ **Revenue Recovered** (Module 10 Simulated Outcome) ≠ **Unrecovered / Protected Revenue**, with live recovery efficiency gauge.
+  4. **Active Payment Incident Hero**: Surfaces highest-priority active incident with failure rate surge, affected transaction volume, payment method, bank, segment details, and a clean empty state with 1-click simulation trigger when healthy.
+  5. **8-Stage Interactive Decision Pipeline**: Visual decision chain (`DETECT` → `QUANTIFY` → `DIAGNOSE` → `INVESTIGATE` → `STRATEGIZE` → `POLICY GATE` → `RECOVER` → `AUDIT`) tracking dynamic state completion and metrics across the incident response cycle.
+  6. **6-Card Control Room Grid**:
+     - *AI Diagnostic Agent (Module 6)*: Advisory diagnosis, confidence %, risk level, controlled recommendation.
+     - *Deep Investigation (Module 7)*: Strongest hypothesis, corroborating vs counter evidence, observed telemetry vs AI inference.
+     - *Recovery Strategy (Module 8)*: Proposed strategy, expected recovery %, bounded financial estimates, stopping conditions.
+     - *Deterministic Policy Gate (Module 9)*: Decision badge (`APPROVED` / `APPROVED_WITH_LIMITS` / `HUMAN_REVIEW` / `REJECTED`), applied limits, 12 policy safety checklist.
+     - *Recovery Execution Simulator (Module 10)*: Simulated recovery amount (₹), execution status, transaction counts (attempted, recovered, failed), circuit breaker status.
+     - *Cryptographic Audit Proof (Module 11)*: SHA-256 hash chain verification status (`AUDIT INTEGRITY: VERIFIED`), event count, actor distribution.
+  7. **Safety Invariant Proofs (Module 12)**: Live safety metrics (Zero policy bypasses, zero bound violations, fail-closed posture, circuit breaker limits, stale strategy protections, idempotency guards).
+  8. **Live Benchmark Snapshot & Baseline Comparison (Module 13)**: Performance snapshot (Sentinel Score, Recovery Rate %, Uplift vs Naive Retry %, Root Cause Accuracy %) and visual comparison bars against Baseline A (₹0) and Baseline B (Naive Retry).
+- Route `/command-center` established as the main Sentinel command experience; `/dashboard` preserved for backward compatibility.
+- Navigation bar updated with "Command Center" as the flagship destination in `lib/navigation.ts`.
+- Home page hero action updated to direct users immediately to `/command-center`.
+- Module progress indicator updated in `ModuleStatus.tsx` (Module 14: "built", Module 15: "queued").
+
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- Final Command Center (Module 14 - Next).
-- Submission package (Module 15).
+- Real payment gateway integrations or real financial movement.
+- Submission package (Module 15 - Planned).
 
 ## Working agreement for future modules
 

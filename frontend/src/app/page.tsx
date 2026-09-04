@@ -15,7 +15,7 @@ export default function HomePage() {
           aria-hidden
         />
         <div className="relative mx-auto max-w-6xl px-6 py-16">
-          <p className="font-mono text-xs text-signal-wire">Module 5 · Command Center Dashboard</p>
+          <p className="font-mono text-xs text-signal-wire">Module 14 · Final Command Center</p>
           <h1 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
             Payment failures, explained before they become losses.
           </h1>
@@ -25,7 +25,7 @@ export default function HomePage() {
             that a deterministic policy engine has to approve before anything runs.
           </p>
           <a
-            href="/dashboard"
+            href="/command-center"
             className="mt-6 inline-block border border-signal-wire/50 bg-signal-wire/10 px-4 py-2 text-sm font-medium text-signal-wire hover:bg-signal-wire/20"
           >
             Open Command Center →

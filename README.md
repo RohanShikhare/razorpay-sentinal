@@ -7,16 +7,15 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 13 — Evaluation & Benchmarking Engine.** Foundation, synthetic payment
+> **Status: Module 14 — Final Command Center.** Foundation, synthetic payment
 > dataset, incident simulator, monitoring & detection engine, financial impact
 > engine, command center dashboard, advisory AI Diagnostic Agent, deep
 > Root-Cause Investigation, bounded Recovery Strategy Engine, deterministic
 > Policy Gate & Guardrail Engine, bounded Recovery Execution Simulator, tamper-evident
 > Audit Trail & Decision History layer, controlled Safety & Failure Scenarios /
-> Resilience Validation Lab, and empirical Evaluation & Benchmarking Engine
-> are fully implemented and validated.
-> Final Command Center (Module 14) described below
-> are **not implemented yet**. See [Current implementation status](#current-implementation-status).
+> Resilience Validation Lab, empirical Evaluation & Benchmarking Engine, and
+> flagship Final Command Center are fully implemented and validated.
+> Submission Package (Module 15) described below is **planned**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
 
@@ -1062,6 +1061,28 @@ GET /api/v1/evaluation/runs/{runId}
 GET /api/v1/evaluation/runs/{runId}/incidents
 ```
 
+**Module 14 — Final Command Center**
+
+- Flagship Final Command Center UI on `/command-center` consolidating all Sentinel capabilities into a 30-second judge-facing experience:
+  1. **Operational Header & Subsystem Telemetry**: Displays `SYSTEM OPERATIONAL` status alongside live telemetry indicators for AI Advisory Engine, Policy Gate (12 deterministic rules), Recovery Execution Simulator (Circuit Breakers Active), and Cryptographic Audit Chain (SHA-256 Verified).
+  2. **1-Click Guided Incident Commander Demo**: Live interactive 9-step runner that sequentially executes Ingest → Detect → Financial Impact → AI Diagnosis → Root-Cause Investigation → Recovery Strategy → Policy Gate → Simulated Recovery → SHA-256 Audit Verification without bypassing policy or using fake metrics.
+  3. **Authoritative Financial Impact Matrix**: Visually highlights and strictly distinguishes **Revenue at Risk** (Module 4 Exposure) ≠ **Recoverable Revenue** (Module 4 Ceiling) ≠ **Revenue Recovered** (Module 10 Simulated Outcome) ≠ **Unrecovered / Protected Revenue**, with live recovery efficiency gauge.
+  4. **Active Payment Incident Hero**: Surfaces highest-priority active incident with failure rate surge, affected transaction volume, payment method, bank, segment details, and a clean empty state with 1-click simulation trigger when healthy.
+  5. **8-Stage Interactive Decision Pipeline**: Visual decision chain (`DETECT` → `QUANTIFY` → `DIAGNOSE` → `INVESTIGATE` → `STRATEGIZE` → `POLICY GATE` → `RECOVER` → `AUDIT`) tracking dynamic state completion and metrics across the incident response cycle.
+  6. **6-Card Control Room Grid**:
+     - *AI Diagnostic Agent (Module 6)*: Advisory diagnosis, confidence %, risk level, controlled recommendation.
+     - *Deep Investigation (Module 7)*: Strongest hypothesis, corroborating vs counter evidence, observed telemetry vs AI inference.
+     - *Recovery Strategy (Module 8)*: Proposed strategy, expected recovery %, bounded financial estimates, stopping conditions.
+     - *Deterministic Policy Gate (Module 9)*: Decision badge (`APPROVED` / `APPROVED_WITH_LIMITS` / `HUMAN_REVIEW` / `REJECTED`), applied limits, 12 policy safety checklist.
+     - *Recovery Execution Simulator (Module 10)*: Simulated recovery amount (₹), execution status, transaction counts (attempted, recovered, failed), circuit breaker status.
+     - *Cryptographic Audit Proof (Module 11)*: SHA-256 hash chain verification status (`AUDIT INTEGRITY: VERIFIED`), event count, actor distribution.
+  7. **Safety Invariant Proofs (Module 12)**: Live safety metrics (Zero policy bypasses, zero bound violations, fail-closed posture, circuit breaker limits, stale strategy protections, idempotency guards).
+  8. **Live Benchmark Snapshot & Baseline Comparison (Module 13)**: Performance snapshot (Sentinel Score, Recovery Rate %, Uplift vs Naive Retry %, Root Cause Accuracy %) and visual comparison bars against Baseline A (₹0) and Baseline B (Naive Retry).
+- Route `/command-center` established as the main Sentinel command experience; `/dashboard` preserved for backward compatibility.
+- Navigation bar updated with "Command Center" as the flagship destination in `lib/navigation.ts`.
+- Home page hero action updated to direct users immediately to `/command-center`.
+- Module progress indicator updated in `ModuleStatus.tsx` (Module 14: "built", Module 15: "queued").
+
 ## Build verification notes
 
 - **Backend**: Complete build and test suite verified via Maven (`mvn test`). All **158 tests** across Modules 0 to 13 passed with 0 failures and 0 errors:
@@ -1091,4 +1112,4 @@ GET /api/v1/evaluation/runs/{runId}/incidents
   - `SegmentAnalyzerTest` (4 tests)
   - `RazorpaySentinelApplicationTests` (1 test)
   - `HealthControllerTest` (2 tests)
-- **Frontend**: `npx tsc --noEmit` and `npm run build` executed against Next.js 14 App Router, successfully compiling all 11 static and dynamic routes (`/`, `/dashboard`, `/payments`, `/simulator`, `/monitoring`, `/incidents`, `/incidents/[id]`, `/safety`, `/evaluation`) with zero TypeScript or ESLint errors.
+- **Frontend**: `npx tsc --noEmit` and `npm run build` executed against Next.js 14 App Router, successfully compiling all 12 static and dynamic routes (`/`, `/command-center`, `/dashboard`, `/payments`, `/simulator`, `/monitoring`, `/incidents`, `/incidents/[id]`, `/safety`, `/evaluation`) with zero TypeScript or ESLint errors.

@@ -766,7 +766,8 @@ public class EvaluationService {
     }
 
     private Incident generateAndInjectSyntheticScenario(EvaluationScenarioType scenarioType, EvaluationGroundTruth groundTruth, long seed) {
-        Instant now = Instant.now();
+        Instant baseTime = Instant.ofEpochSecond(1725450000L + Math.abs(seed % 50000L) * 60L);
+        Instant now = baseTime;
         Instant startTime = now.minus(45, ChronoUnit.MINUTES);
 
         if (scenarioType == EvaluationScenarioType.NORMAL_RANDOM_FAILURES) {

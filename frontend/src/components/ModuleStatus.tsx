@@ -13,6 +13,8 @@ const MODULES = [
   { name: "Audit Trail & Decision History", state: "done" as const },
   { name: "Safety & Failure Scenarios", state: "done" as const },
   { name: "Evaluation & Benchmarking", state: "done" as const },
+  { name: "Final Command Center", state: "done" as const },
+  { name: "Submission Package", state: "queued" as const },
 ];
 
 
