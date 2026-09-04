@@ -7,7 +7,9 @@ const MODULES = [
   { name: "Command Center Dashboard", state: "done" as const },
   { name: "AI Diagnostic Agent", state: "done" as const },
   { name: "Root-Cause Investigation", state: "done" as const },
-  { name: "Recovery Strategy Engine", state: "queued" as const },
+  { name: "Recovery Strategy Engine", state: "done" as const },
+  { name: "Deterministic Policy Engine", state: "done" as const },
+  { name: "Recovery Execution Simulator", state: "queued" as const },
 ];
 
 const STATE_LABEL: Record<"done" | "queued", string> = {

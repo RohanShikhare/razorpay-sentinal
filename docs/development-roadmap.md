@@ -13,8 +13,8 @@ document tracks the planned sequence and what "done" means for each one.
 | 5 | Revenue-at-Risk Engine | **Done** | Rigorous financial-impact engine: recoverability classification, batch reconstruction, per-segment breakdowns, and structured evidence for the AI module. |
 | 6 | AI Diagnostic Agent | **Done** | Advisory AI Diagnostic Agent analyzing structured deterministic telemetry, producing bounded recommendations with strict hallucination and policy guardrails. |
 | 7 | Root-Cause Investigation | **Done** | Deep root-cause investigation systematically comparing competing hypotheses against deterministic telemetry, evaluating corroborating and counter-indicative evidence. |
-| 8 | Recovery Strategy Engine | Planned | AI-generated, bounded recovery recommendations. |
-| 9 | Policy / Guardrail Engine | Planned | Deterministic validation gate that recovery recommendations must pass before execution. |
+| 8 | Recovery Strategy Engine | **Done** | Formulates bounded recovery strategy proposals with explicit stopping conditions and bounded financial estimates. |
+| 9 | Policy / Guardrail Engine | **Done** | Deterministic validation gate that evaluates recovery recommendations against 12 hard safety policies with zero AI calls. |
 | 10 | Recovery Execution Simulator | Planned | Simulated execution of an approved recovery strategy and resulting recovered revenue. |
 | 11 | Audit Trail | Planned | Full, queryable record of every detection, decision, gate check, and recovery action. |
 | 12 | Safety & Failure Scenarios | Planned | Deliberate failure-mode testing: bad AI recommendations, policy rejections, escalation paths. |
@@ -22,7 +22,7 @@ document tracks the planned sequence and what "done" means for each one.
 | 14 | Final Command Center | Planned | Consolidated operational view surfacing AI diagnosis, policy gates, recovery simulator, and audit trail. |
 | 15 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 7)
+## Current state (Module 8)
 
 Implemented in Module 0:
 
@@ -184,17 +184,47 @@ Added in Module 7:
 - `AiProvider.generateInvestigationJson` interface extension implemented across `MockAiProvider` (deterministic scenario hypotheses for Bank X UPI, Merchant degradation, and diffuse noise) and `GeminiAiProvider` (live LLM with "DATA, NOT INSTRUCTIONS" prompt injection defense).
 - `IncidentInvestigationService` orchestrating deterministic evidence compilation, hypothesis formulation, strict schema validation, bounds checks, conservative human review flags (< 0.70 confidence), and database persistence.
 - `IncidentInvestigationController` exposing `POST /api/v1/incidents/{incidentId}/investigate` and `GET /api/v1/incidents/{incidentId}/investigation`.
-- Frontend `RootCauseInvestigationPanel` on `/incidents/[id]` displaying the strongest root cause, overall confidence meter, competing hypotheses comparison cards with supporting (✓) and contradicting (✕) evidence bullets, diagnostic deduction narrative, and acknowledged uncertainty disclosures.
-- "Root-Cause Analysis" action link added to active incident hero on `/dashboard`.
-- Comprehensive unit and integration test suite covering hypothesis rankings, scenario deductions, out-of-bounds metrics, malformed responses, and controller endpoints.
+Added in Module 8:
+
+- `RecoveryStrategy` entity and repository (`recovery_strategies` table) recording generated recovery strategy proposals, confidence metrics, rationale, authoritative anchors, bounded financial estimates, stopping conditions, and alternative strategies.
+- Controlled strategy enums: `RecoveryStrategyType` (`IMMEDIATE_RETRY`, `DELAYED_RETRY`, `ALTERNATE_PAYMENT_METHOD`, `RETRY_WITH_BACKOFF`, `MONITOR_ONLY`, `HUMAN_REVIEW`, `NO_ACTION`), `StrategyStatus` (`PROPOSED`, `REJECTED`, `SUPERSEDED`, `FAILED`, `INVALID_RESPONSE`), and `StrategySource` (`DETERMINISTIC_RULES`, `AI_ASSISTED`, `FALLBACK`).
+- `StoppingConditionsDto` defining concrete bounded stopping criteria: max retry attempts, retry window in minutes, backoff interval, stop on success, stop on incident resolution, failure rate abort thresholds, and escalation limits.
+- `AlternativeStrategyDto` and `RecoveryStrategyResponse` representing structured strategy proposals.
+- `AiProvider.generateRecoveryStrategyJson` interface extension implemented in `MockAiProvider` and `GeminiAiProvider` with "DATA, NOT INSTRUCTIONS" prompt injection defense.
+- `RecoveryStrategyService` orchestrating authoritative financial impact retrieval, deterministic evidence evaluation, AI strategy synthesis with fallback, strict range validation, financial bounding (estimated recovery <= authoritative recoverable), human approval guardrails, proposal superseding, and persistence.
+- `RecoveryStrategyController` exposing `POST /api/v1/incidents/{incidentId}/recovery-strategy` and `GET /api/v1/incidents/{incidentId}/recovery-strategy`.
+- Frontend `RecoveryStrategyPanel` on `/incidents/[id]` displaying the recommended strategy badge, confidence and risk metrics, expected recovery %, bounded financial estimates, stopping conditions checklist, human approval recommendation, alternative strategies comparison, and policy gate disclaimer.
+- "Recovery Strategy" quick-action link added to active incident hero on `/dashboard`.
+Added in Module 9:
+
+- `policy/` package: `PolicyDecision` (`APPROVED`, `APPROVED_WITH_LIMITS`, `HUMAN_REVIEW`, `REJECTED`), `PolicyCheckResult` (`PASS`, `WARN`, `FAIL`), and `PolicyCheckSeverity` (`CRITICAL`, `MAJOR`, `MINOR`, `INFO`).
+- `PolicyEvaluation` entity and repository (`policy_evaluations` table) recording complete deterministic policy decisions, versioned audit metadata (`evaluatorVersion = "POLICY_V1"`), execution authorization status (`executionAllowed`), human approval mandates, deterministic policy scores (0-100), applied parameter clampings, violations, warnings, and structured policy check results.
+- `PolicyCheckDto`, `AppliedLimitDto`, and `PolicyEvaluationResponse` representing structured policy evaluation outcomes.
+- `PolicyEvaluationService` executing 12 deterministic, testable safety policies with **ZERO LLM calls**:
+  1. `POLICY-001`: Controlled Strategy Validation (only approved recovery strategy enums permitted)
+  2. `POLICY-002`: Stopping Conditions Completeness (stop on success / resolved mandatory for retries)
+  3. `POLICY-003`: Deterministic Retry Limits & Parameter Clamping (max 3 retry attempts, max 60 min window, min 10s backoff)
+  4. `POLICY-004`: Risk Level Guardrail (CRITICAL blocks autonomous execution, HIGH requires human sign-off)
+  5. `POLICY-005`: Diagnosis Confidence Guardrail (< 0.70 requires human sign-off, < 0.85 requires bounded limits)
+  6. `POLICY-006`: Merchant Degradation Protection (blocks automated retries against degraded merchant APIs)
+  7. `POLICY-007`: Alternate Payment Method Guardrail (mandates human authorization for checkout rerouting)
+  8. `POLICY-008`: Financial Safety Bounds (estimated recovery <= Module 4 authoritative recoverable revenue)
+  9. `POLICY-009`: Incident Resolution Guardrail (blocks recovery against RESOLVED incidents)
+  10. `POLICY-010`: Strategy Lifecycle Guardrail (only active PROPOSED strategies eligible for evaluation)
+  11. `POLICY-011`: Strategy Freshness Guardrail (strategies > 30 minutes require re-evaluation or human review)
+  12. `POLICY-012`: Telemetry Evidence Integrity (deterministic validation of underlying telemetry)
+- `PolicyEvaluationController` exposing `POST /api/v1/incidents/{incidentId}/policy-evaluate` and `GET /api/v1/incidents/{incidentId}/policy-evaluation`.
+- Frontend `PolicyGatePanel` on `/incidents/[id]` displaying decision badge, execution permitted/blocked status indicator, metric cards, enforced parameter clampings breakdown, violations/warnings alerts, policy checks table, and prominent policy authority disclaimer.
+- "Policy Gate" quick-action button in `ActiveIncidentHero` on `/dashboard`.
+- Module progress indicator updated in `ModuleStatus.tsx`.
+- Comprehensive unit and integration test suite (16 tests, 100% passing) verifying all policy decisions, limit clampings, merchant protections, financial bounds, and stale/resolved incident rejections.
 
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- Recovery Strategy Engine (Module 8).
-- Policy/guardrail validation engine (Module 9).
-- Recovery execution simulator (Module 10).
+- Recovery execution simulator (Module 10 - Next).
 - Audit trail (Module 11).
+- Safety & failure scenario benchmark runner (Module 12).
 - Incident lifecycle transitions beyond `DETECTED`/`INVESTIGATING` (no resolution workflow yet).
 
 ## Working agreement for future modules

@@ -3,9 +3,20 @@
 Razorpay Sentinel is a **monolith**, deliberately. Detection, diagnosis, policy
 gating, recovery, and audit all live in one deployable backend so the
 workflow can stay a single, traceable pipeline instead of a distributed
-system with its own failure modes. This document describes the shape of that
-monolith as of Module 4 (Revenue-at-Risk & Financial Impact Engine) and
-where each future layer will sit.
+system with its own failure modes. This document describes the shape of that monolith as of Module 9
+(Deterministic Policy / Guardrail Engine) and where each future layer will sit.
+
+## Pipeline Architecture
+
+```text
+Detect → Diagnose → Investigate → Quantify → Decide (Module 8) → GATE (Module 9) → Recover (Module 10) → Audit (Module 11)
+```
+
+The core architectural invariant governing recovery automation is:
+
+1. **AI Proposes (Modules 6, 7, 8)**: Formulates diagnosis hypotheses and advisory recovery strategy proposals with stopping conditions.
+2. **Policy Decides (Module 9)**: 100% deterministic, zero-AI guardrail engine evaluates proposals against hard financial bounds, retry limits, merchant protections, and safety invariants.
+3. **Execution Obeys Policy (Module 10)**: Autonomous execution is strictly blocked unless the Policy Gate explicitly grants `executionAllowed = true` within enforced constraints.
 
 ## Overview
 
@@ -347,12 +358,51 @@ The investigation strictly separates:
 - `POST /api/v1/incidents/{incidentId}/investigate`: Triggers deep root-cause hypothesis evaluation on demand.
 - `GET /api/v1/incidents/{incidentId}/investigation`: Retrieves the latest persisted root-cause investigation report without re-invoking the LLM.
 
+## Module 8: Recovery Strategy Engine Architecture
+
+Module 8 determines what bounded recovery strategy Sentinel should propose based on deterministic telemetry, Module 4 financial impact, Module 6 diagnosis, and Module 7 root-cause investigation:
+$$\text{Investigation} \longrightarrow \text{Select / Rank Strategy} \longrightarrow \text{Estimate Recovery} \longrightarrow \text{Define Stopping Conditions} \longrightarrow \text{Strategy Proposal}$$
+
+### 1. Controlled Strategy Types (`com.sentinelpulse.ai.RecoveryStrategyType`)
+Uncontrolled or arbitrary actions are strictly prohibited. Proposals must use discrete enums:
+- `IMMEDIATE_RETRY`: Transient errors with nominal provider health.
+- `DELAYED_RETRY`: Upstream gateway timeout / switch congestion requiring exponential backoff delay.
+- `ALTERNATE_PAYMENT_METHOD`: Specific rail degradation with healthy alternative payment options (e.g. Cards/Netbanking).
+- `RETRY_WITH_BACKOFF`: Intermittent errors recoverable via bounded stepwise attempts.
+- `MONITOR_ONLY`: Diffuse baseline noise or low confidence scenarios avoiding unnecessary customer disruption.
+- `HUMAN_REVIEW`: High risk, merchant configuration errors, or conflicting evidence requiring commander inspection.
+- `NO_ACTION`: Standard background baseline noise.
+
+### 2. Bounded Stopping Conditions (`com.sentinelpulse.dto.StoppingConditionsDto`)
+Every proposed recovery strategy defines explicit operational limits:
+- `maxRetryAttempts`: Bounded attempt cap per transaction (e.g. 2 attempts).
+- `retryWindowMinutes`: Maximum execution timeframe (e.g. 30 minutes).
+- `backoffBaseSeconds`: Exponential backoff initial delay (e.g. 30 seconds).
+- `stopOnSuccess`: Immediate termination upon settlement success.
+- `stopOnIncidentResolved`: Automatic cancellation if incident recovers.
+- `failureRateThreshold`: Downstream circuit-breaker if retry error rate exceeds threshold (e.g. 50%).
+- `escalateOnFailureLimit`: Automatic escalation to human review upon attempt exhaustion.
+
+### 3. Authoritative Financial Anchor vs Strategy Estimates
+- Module 4 remains the authoritative source of financial truth (`revenueAtRisk`, `estimatedRecoverableRevenue`, `nonRecoverableRevenue`).
+- Strategy recovery is clearly marked as an **advisory estimate**:
+  $$\text{estimatedRecoveryAmount} = \min(\text{authoritativeRecoverable}, \text{authoritativeRecoverable} \times \frac{\text{expectedRecoveryPercentage}}{100})$$
+- Guaranteed bounds: $0 \le \text{estimatedRecoveryAmount} \le \text{authoritativeRecoverable}$.
+
+### 4. Recovery Strategy Persistence (`recovery_strategies` table)
+- Persisted in `recovery_strategies` with incident ID, investigation ID, selected strategy, rank, rationale, confidence, risk level, affected segment, authoritative anchors, estimated recovery amount, stopping conditions JSON, alternatives JSON, source (`DETERMINISTIC_RULES`, `AI_ASSISTED`, `FALLBACK`), and status (`PROPOSED`, `SUPERSEDED`, `REJECTED`).
+- Re-evaluating a strategy for an active incident marks previous proposals as `SUPERSEDED`.
+
+### 5. API Endpoints
+- `POST /api/v1/incidents/{incidentId}/recovery-strategy`: Formulates and persists a bounded recovery strategy proposal.
+- `GET /api/v1/incidents/{incidentId}/recovery-strategy`: Retrieves the latest persisted strategy without re-running AI.
+
 ## Future layers (not implemented yet)
 
 These packages exist as placeholders (`package-info.java`) so future modules slot in cleanly:
 
-- **`recovery/`** (Module 8 & 10) — AI-generated bounded recovery strategy recommendations and simulated recovery execution.
-- **`policy/`** (Module 9) — deterministic guardrails that validate whatever the AI layer recommends before anything is allowed to execute. This is the gate in Detect → Diagnose → Quantify → Decide → **Gate** → Recover → Audit.
+- **`policy/`** (Module 9 - Next) — deterministic guardrails that validate whatever the AI layer recommends before anything is allowed to execute. This is the gate in Detect → Diagnose → Investigate → Quantify → Decide → **Gate** → Recover → Audit.
+- **`execution/`** (Module 10) — simulated execution of an approved recovery strategy and resulting recovered revenue.
 - **`audit/`** (Module 11) — a complete, queryable record of every detection, diagnosis, decision, policy check, and recovery action, for after-the-fact review and evaluation.
 
 See `development-roadmap.md` for the full module sequence.

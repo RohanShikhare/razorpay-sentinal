@@ -7,27 +7,30 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 7 — Root-Cause Investigation.** Foundation, synthetic payment
+> **Status: Module 9 — Deterministic Policy / Guardrail Engine.** Foundation, synthetic payment
 > dataset, incident simulator, monitoring & detection engine, financial impact
-> engine, command center dashboard, advisory AI Diagnostic Agent, and deep
-> Root-Cause Investigation are implemented. Recovery strategy, policy gating,
-> and recovery execution described below are **not implemented yet**. See [Current implementation status](#current-implementation-status).
+> engine, command center dashboard, advisory AI Diagnostic Agent, deep
+> Root-Cause Investigation, bounded Recovery Strategy Engine, and deterministic
+> Policy Gate & Guardrail Engine are fully implemented.
+> Recovery execution (Module 10) and audit trails (Module 11) described below
+> are **not implemented yet**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
 
 ```
-Detect → Diagnose → Quantify → Decide → Gate → Recover → Audit
+Detect → Diagnose → Investigate → Quantify → Decide (Module 8) → Gate (Module 9) → Recover (Module 10) → Audit (Module 11)
 ```
 
 | Stage | What it does |
 |-------|--------------|
-| Detect | Deterministic detection of abnormal payment failure patterns |
-| Diagnose | AI root-cause analysis of a detected incident |
-| Quantify | Calculates revenue at risk |
-| Decide | AI recommends a bounded recovery strategy |
-| Gate | A deterministic policy engine validates the recommendation |
-| Recover | The approved strategy is executed (simulated) |
-| Audit | Every step is recorded to a complete audit trail |
+| Detect | Deterministic detection of abnormal payment failure patterns (Module 3) |
+| Diagnose | AI root-cause analysis of a detected incident (Module 6) |
+| Investigate | Deep competing hypotheses evaluation and root cause (Module 7) |
+| Quantify | Calculates authoritative revenue at risk & recoverable amounts (Module 4) |
+| Decide | Bounded recovery strategy proposal with stopping conditions (Module 8) |
+| Gate | Deterministic policy engine validates proposals against 12 hard safety rules (Module 9) |
+| Recover | The approved strategy is executed in simulation (Module 10 - Next) |
+| Audit | Every step is recorded to a complete audit trail (Module 11) |
 
 ## Technology stack
 
@@ -74,26 +77,21 @@ Docker in this module.
   through results.
 - Unit tests for the generator's statistical properties, plus an H2-backed
   integration test suite covering generation, persistence, filtering,
-  pagination, and summary math (see [Build verification notes](#build-verification-notes)).
+  pagination, and summary math.
 
 **Module 2 — Incident Simulator**
 
 - `SimulationScenario` enum plus lightweight `SimulationRun`/`SimulationChange`
-  simulation records — explicitly *not* an "Incident" entity (see
-  [Incident Simulator](#incident-simulator) below).
+  simulation records.
 - `IncidentSimulationService` — deterministically degrades the dataset via
   three reproducible scenarios: `BANK_X_UPI_DEGRADATION` (primary demo),
   `MERCHANT_SPECIFIC_DEGRADATION`, and `NORMAL_RANDOM_FAILURES`.
 - `POST /api/v1/simulations/run`, `POST /api/v1/simulations/reset`,
   `GET /api/v1/simulations/status`.
 - Reset restores affected payments to their pre-simulation values without
-  regenerating the dataset. Starting a new simulation while one is active
-  automatically resets the previous one first, so repeated runs never compound.
+  regenerating the dataset.
 - A `/simulator` page in the frontend with a scenario selector, Simulate/Reset
-  controls, and a HEALTHY / SIMULATION ACTIVE status panel. The `/payments`
-  page shows a small indicator when a simulation is active.
-- Integration tests covering scenario concentration, merchant isolation,
-  normal-noise non-concentration, reset, and idempotency under repeated runs.
+  controls, and a status panel.
 
 **Module 3 — Monitoring & Incident Detection Engine**
 
@@ -128,15 +126,49 @@ Docker in this module.
 - Persistence in `incident_investigations` JPA entity and repository.
 - REST API: `POST /api/v1/incidents/{id}/investigate` and `GET /api/v1/incidents/{id}/investigation`.
 - Frontend: `RootCauseInvestigationPanel` on `/incidents/[id]` with hypothesis comparison cards, diagnostic reasoning narrative, and acknowledged uncertainty disclosures.
-- Active incident quick-link on `/dashboard`.
+
+**Module 8 — Recovery Strategy Engine**
+
+- Formulation of bounded, ranked recovery strategy proposals (`RecoveryStrategyType`: `IMMEDIATE_RETRY`, `DELAYED_RETRY`, `ALTERNATE_PAYMENT_METHOD`, `RETRY_WITH_BACKOFF`, `MONITOR_ONLY`, `HUMAN_REVIEW`, `NO_ACTION`).
+- Strict distinction between **Authoritative Financial Baseline** (Module 4) and **Strategy Recovery Estimates** (`estimatedRecoveryAmount` is derived and bounded strictly <= authoritative recoverable revenue).
+- Concrete bounded **Stopping Conditions** (`StoppingConditionsDto`: max retry attempts, retry window in minutes, exponential backoff, stop on success, stop on resolution, failure rate abort thresholds, human escalation).
+- Ranked alternative recovery strategies considered alongside rationale.
+- Conservative human review recommendations for safety-critical boundaries (low confidence < 0.70, HIGH/CRITICAL risk, merchant issues, or payment rerouting).
+- Safe fallback to deterministic rules when AI provider is unavailable or returns invalid responses.
+- Persistence in `recovery_strategies` JPA entity and repository with proposal lifecycle (`PROPOSED`, `SUPERSEDED`).
+- REST API: `POST /api/v1/incidents/{id}/recovery-strategy` and `GET /api/v1/incidents/{id}/recovery-strategy`.
+**Module 9 — Deterministic Policy / Guardrail Engine**
+
+- Complete separation of roles: **AI Proposes (Modules 6-8) → Policy Decides (Module 9) → Execution Obeys Policy (Module 10)**. Zero LLM calls are made in Module 9.
+- `PolicyDecision` enum: `APPROVED`, `APPROVED_WITH_LIMITS`, `HUMAN_REVIEW`, `REJECTED`.
+- 12 comprehensive deterministic policy checks (`POLICY-001` through `POLICY-012`):
+  - `POLICY-001`: Strategy Must Be Controlled (enforces valid `RecoveryStrategyType` enums)
+  - `POLICY-002`: Stopping Conditions Completeness (validates stop-on-success and stop-on-resolution)
+  - `POLICY-003`: Deterministic Retry Limits (clamps attempts to max 3, window to max 60m, backoff between 10s-900s)
+  - `POLICY-004`: Risk Level Guardrail (CRITICAL blocks autonomous recovery, HIGH requires Human Commander approval)
+  - `POLICY-005`: Diagnosis Confidence Guardrail (< 0.70 mandates human review, < 0.85 enforces bounded limits)
+  - `POLICY-006`: Merchant Degradation Protection (strictly forbids automated retries against merchant-isolated failures)
+  - `POLICY-007`: Alternate Payment Method Guardrail (mandates human authorization for checkout rerouting)
+  - `POLICY-008`: Financial Safety Bounds (enforces estimated recovery <= Module 4 authoritative recoverable revenue)
+  - `POLICY-009`: Incident Resolution Guardrail (blocks recovery against RESOLVED incidents)
+  - `POLICY-010`: Strategy Lifecycle Guardrail (only active PROPOSED strategies eligible for evaluation)
+  - `POLICY-011`: Strategy Freshness Guardrail (strategies > 30 minutes require re-evaluation or human review)
+  - `POLICY-012`: Telemetry Evidence Integrity (deterministic validation of underlying telemetry)
+- Versioned evaluator metadata (`evaluatorVersion = "POLICY_V1"`).
+- Deterministic compliance score calculation (0-100).
+- Explicit `executionAllowed` authorization boundary for downstream Module 10 executor.
+- Persistence in `policy_evaluations` JPA entity and repository.
+- REST API: `POST /api/v1/incidents/{id}/policy-evaluate` and `GET /api/v1/incidents/{id}/policy-evaluation`.
+- Frontend: `PolicyGatePanel` on `/incidents/[id]` displaying decision badge, execution permitted/blocked status indicator, metric cards, enforced parameter clampings breakdown, violations/warnings alerts, policy checks table, and prominent policy authority disclaimer.
+- Dashboard: "Policy Gate" quick-action link in `ActiveIncidentHero`.
+- 16 comprehensive unit and integration tests covering all 12 policy rules, limit clampings, and failure scenarios.
 
 ### Not implemented yet
 
 - Authentication (intentionally out of scope for this internal tool for now).
-- Recovery Strategy Engine (Module 8).
-- Policy/guardrail validation engine (Module 9).
-- Recovery execution simulator (Module 10).
+- Recovery execution simulator (Module 10 - Next).
 - Audit trail (Module 11).
+- Safety & failure scenario benchmark runner (Module 12).
 - Incident lifecycle transitions beyond `DETECTED`/`INVESTIGATING` (no resolution workflow yet).
 
 - `Incident` entity plus `IncidentType`, `IncidentSeverity`, `IncidentStatus`

@@ -340,4 +340,164 @@ public class MockAiProvider implements AiProvider {
         root.put("requiresHumanReview", false);
         return root.toString();
     }
+
+    @Override
+    public String generateRecoveryStrategyJson(AiEvidenceDto evidence, String diagnosisSummary, String investigationSummary, String systemInstruction) {
+        ObjectNode root = objectMapper.createObjectNode();
+
+        if (evidence == null) {
+            root.put("selectedStrategy", RecoveryStrategyType.HUMAN_REVIEW.name());
+            root.put("rank", 1);
+            root.put("rationale", "Insufficient telemetry to evaluate recovery feasibility. Human commander review required.");
+            root.put("confidence", 0.2);
+            root.put("riskLevel", RiskLevel.HIGH.name());
+            root.put("affectedSegment", "UNKNOWN");
+            root.put("expectedRecoveryPercentage", 0.0);
+            root.put("requiresHumanApproval", true);
+
+            ObjectNode stop = root.putObject("stoppingConditions");
+            stop.put("maxRetryAttempts", 0);
+            stop.put("retryWindowMinutes", 0);
+            stop.put("backoffBaseSeconds", 0);
+            stop.put("stopOnSuccess", false);
+            stop.put("stopOnIncidentResolved", true);
+            stop.put("failureRateThreshold", 0.0);
+            stop.put("escalateOnFailureLimit", true);
+            ArrayNode conds = stop.putArray("conditions");
+            conds.add("Automated recovery locked pending human operator assessment");
+
+            root.putArray("alternatives");
+            return root.toString();
+        }
+
+        // Scenario 1: Bank X UPI Degradation
+        if ("Bank X".equals(evidence.targetBank()) || (evidence.concentrationSummary() != null && "Bank X".equals(evidence.concentrationSummary().dominantBank()) && PaymentMethod.UPI.name().equals(evidence.concentrationSummary().dominantPaymentMethod()))) {
+            root.put("selectedStrategy", RecoveryStrategyType.DELAYED_RETRY.name());
+            root.put("rank", 1);
+            root.put("rationale", "Immediate retries are likely to encounter the same upstream Bank X UPI switch timeout. A delayed retry with bounded exponential backoff allows transient congestion to clear while recovering affected payments.");
+            root.put("confidence", 0.88);
+            root.put("riskLevel", RiskLevel.MEDIUM.name());
+            root.put("affectedSegment", "Bank X + UPI");
+            root.put("expectedRecoveryPercentage", 70.0);
+            root.put("requiresHumanApproval", false);
+
+            ObjectNode stop = root.putObject("stoppingConditions");
+            stop.put("maxRetryAttempts", 2);
+            stop.put("retryWindowMinutes", 30);
+            stop.put("backoffBaseSeconds", 30);
+            stop.put("stopOnSuccess", true);
+            stop.put("stopOnIncidentResolved", true);
+            stop.put("failureRateThreshold", 50.0);
+            stop.put("escalateOnFailureLimit", true);
+            ArrayNode conds = stop.putArray("conditions");
+            conds.add("Maximum 2 retry attempts per affected payment");
+            conds.add("Retry window capped at 30 minutes");
+            conds.add("Exponential backoff starting at 30 seconds");
+            conds.add("Stop immediately after successful payment settlement");
+            conds.add("Stop if incident is marked resolved");
+            conds.add("Abort if downstream retry failure rate exceeds 50.0%");
+            conds.add("Escalate to human review if attempts exceed limit without resolution");
+
+            ArrayNode alternatives = root.putArray("alternatives");
+            ObjectNode alt1 = alternatives.addObject();
+            alt1.put("strategy", RecoveryStrategyType.ALTERNATE_PAYMENT_METHOD.name());
+            alt1.put("rank", 2);
+            alt1.put("reason", "Reroute affected payments to alternate healthy payment methods (e.g. Netbanking / Cards) upon customer re-prompt.");
+            alt1.put("expectedRecoveryPercentage", 60.0);
+            alt1.put("riskLevel", RiskLevel.MEDIUM.name());
+
+            ObjectNode alt2 = alternatives.addObject();
+            alt2.put("strategy", RecoveryStrategyType.MONITOR_ONLY.name());
+            alt2.put("rank", 3);
+            alt2.put("reason", "Passive telemetry observation without active recovery; avoids customer contact but forfeits recoverable volume.");
+            alt2.put("expectedRecoveryPercentage", 20.0);
+            alt2.put("riskLevel", RiskLevel.LOW.name());
+
+            return root.toString();
+        }
+
+        // Scenario 2: Merchant-Specific Degradation
+        if (evidence.incidentType() == IncidentType.MERCHANT_DEGRADATION || evidence.targetMerchantId() != null) {
+            String merchant = evidence.targetMerchantId() != null ? evidence.targetMerchantId() : "merchant_hot";
+            root.put("selectedStrategy", RecoveryStrategyType.HUMAN_REVIEW.name());
+            root.put("rank", 1);
+            root.put("rationale", String.format("Failures are 100%% concentrated on merchant %s with integration/payload errors. Automated payment retries against a broken merchant endpoint will worsen error rates without recovering funds.", merchant));
+            root.put("confidence", 0.90);
+            root.put("riskLevel", RiskLevel.HIGH.name());
+            root.put("affectedSegment", "Merchant " + merchant);
+            root.put("expectedRecoveryPercentage", 30.0);
+            root.put("requiresHumanApproval", true);
+
+            ObjectNode stop = root.putObject("stoppingConditions");
+            stop.put("maxRetryAttempts", 0);
+            stop.put("retryWindowMinutes", 0);
+            stop.put("backoffBaseSeconds", 0);
+            stop.put("stopOnSuccess", false);
+            stop.put("stopOnIncidentResolved", false);
+            stop.put("failureRateThreshold", 0.0);
+            stop.put("escalateOnFailureLimit", true);
+            ArrayNode conds = stop.putArray("conditions");
+            conds.add("Automated recovery strictly locked pending human operator engagement with merchant technical contact");
+            conds.add("No automated payment mutations allowed");
+            conds.add("Requires explicit approval by Payment Operations Commander");
+
+            ArrayNode alternatives = root.putArray("alternatives");
+            ObjectNode alt1 = alternatives.addObject();
+            alt1.put("strategy", RecoveryStrategyType.MONITOR_ONLY.name());
+            alt1.put("rank", 2);
+            alt1.put("reason", "Monitor merchant integration error rates passively until merchant deploys fix.");
+            alt1.put("expectedRecoveryPercentage", 15.0);
+            alt1.put("riskLevel", RiskLevel.LOW.name());
+
+            ObjectNode alt2 = alternatives.addObject();
+            alt2.put("strategy", RecoveryStrategyType.NO_ACTION.name());
+            alt2.put("rank", 3);
+            alt2.put("reason", "Take no gateway-level action as the fault lies outside payment rail infrastructure.");
+            alt2.put("expectedRecoveryPercentage", 0.0);
+            alt2.put("riskLevel", RiskLevel.LOW.name());
+
+            return root.toString();
+        }
+
+        // Scenario 3: System / Normal Random Failures
+        root.put("selectedStrategy", RecoveryStrategyType.MONITOR_ONLY.name());
+        root.put("rank", 1);
+        root.put("rationale", "Observed failure variation is diffuse and consistent with normal baseline noise. Active recovery intervention is not justified and risks customer disruption.");
+        root.put("confidence", 0.75);
+        root.put("riskLevel", RiskLevel.LOW.name());
+        root.put("affectedSegment", "Global Payment System");
+        root.put("expectedRecoveryPercentage", 20.0);
+        root.put("requiresHumanApproval", false);
+
+        ObjectNode stop = root.putObject("stoppingConditions");
+        stop.put("maxRetryAttempts", 0);
+        stop.put("retryWindowMinutes", 60);
+        stop.put("backoffBaseSeconds", 0);
+        stop.put("stopOnSuccess", false);
+        stop.put("stopOnIncidentResolved", true);
+        stop.put("failureRateThreshold", 0.0);
+        stop.put("escalateOnFailureLimit", true);
+        ArrayNode conds = stop.putArray("conditions");
+        conds.add("Zero automated retry or rerouting attempts");
+        conds.add("Continuous passive telemetry monitoring for 60 minutes");
+        conds.add("Stop when baseline failure rate returns below anomaly threshold");
+        conds.add("Escalate to active diagnosis if failure rate escalates above 15%");
+
+        ArrayNode alternatives = root.putArray("alternatives");
+        ObjectNode alt1 = alternatives.addObject();
+        alt1.put("strategy", RecoveryStrategyType.NO_ACTION.name());
+        alt1.put("rank", 2);
+        alt1.put("reason", "Standard baseline noise requires no operational changes.");
+        alt1.put("expectedRecoveryPercentage", 0.0);
+        alt1.put("riskLevel", RiskLevel.LOW.name());
+
+        ObjectNode alt2 = alternatives.addObject();
+        alt2.put("strategy", RecoveryStrategyType.HUMAN_REVIEW.name());
+        alt2.put("rank", 3);
+        alt2.put("reason", "Escalate to payment operations if telemetry shows unexpected sustained variance.");
+        alt2.put("expectedRecoveryPercentage", 10.0);
+        alt2.put("riskLevel", RiskLevel.LOW.name());
+
+        return root.toString();
+    }
 }
