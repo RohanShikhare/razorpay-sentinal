@@ -123,6 +123,16 @@ export function ActiveIncidentHero({ incident, impact }: { incident: Incident; i
               </svg>
               <span>Policy Gate</span>
             </a>
+            <a
+              href={`/incidents/${incident.id}`}
+              className="inline-flex items-center gap-1.5 border border-emerald-500/50 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/30 transition-colors"
+            >
+              <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Execute Recovery</span>
+            </a>
           </div>
         </div>
       </div>

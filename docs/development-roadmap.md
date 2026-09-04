@@ -15,7 +15,7 @@ document tracks the planned sequence and what "done" means for each one.
 | 7 | Root-Cause Investigation | **Done** | Deep root-cause investigation systematically comparing competing hypotheses against deterministic telemetry, evaluating corroborating and counter-indicative evidence. |
 | 8 | Recovery Strategy Engine | **Done** | Formulates bounded recovery strategy proposals with explicit stopping conditions and bounded financial estimates. |
 | 9 | Policy / Guardrail Engine | **Done** | Deterministic validation gate that evaluates recovery recommendations against 12 hard safety policies with zero AI calls. |
-| 10 | Recovery Execution Simulator | Planned | Simulated execution of an approved recovery strategy and resulting recovered revenue. |
+| 10 | Recovery Execution Simulator | **Done** | Bounded recovery execution engine simulating retries obeying Module 9 policy limits, calculating actual recovered revenue with zero AI calls and circuit breakers. |
 | 11 | Audit Trail | Planned | Full, queryable record of every detection, decision, gate check, and recovery action. |
 | 12 | Safety & Failure Scenarios | Planned | Deliberate failure-mode testing: bad AI recommendations, policy rejections, escalation paths. |
 | 13 | Evaluation & Benchmarking | Planned | Measurable evaluation of detection accuracy, recovery effectiveness, and system behavior over time. |
@@ -219,13 +219,34 @@ Added in Module 9:
 - Module progress indicator updated in `ModuleStatus.tsx`.
 - Comprehensive unit and integration test suite (16 tests, 100% passing) verifying all policy decisions, limit clampings, merchant protections, financial bounds, and stale/resolved incident rejections.
 
+Added in Module 10:
+
+- `recovery/` package: `ExecutionStatus` (`REQUESTED`, `BLOCKED`, `RUNNING`, `COMPLETED`, `PARTIALLY_COMPLETED`, `STOPPED`, `FAILED`), `RecoveryOutcome` (`RECOVERED`, `FAILED`, `SKIPPED`, `ALREADY_SUCCESSFUL`, `STOPPED_BY_LIMIT`, `STOPPED_BY_CIRCUIT_BREAKER`), and `StoppingReason` (`COMPLETED_ALL_ELIGIBLE`, `MAX_ATTEMPTS_REACHED`, `RETRY_WINDOW_EXCEEDED`, `CIRCUIT_BREAKER_FAILURE_RATE`, `INCIDENT_RESOLVED`, `HUMAN_APPROVAL_REQUIRED`, `POLICY_BLOCKED`, `NO_ACTION_REQUIRED`).
+- `RecoveryExecution` JPA entity & repository (`recovery_executions` table) recording complete execution runs, status, transaction counts (eligible, attempted, successful, failed, skipped), authoritative financial anchors, actual recovered amount, enforced limits, simulation version, and stopping reasons.
+- `RecoveryExecutionAttempt` JPA entity & repository (`recovery_execution_attempts` table) capturing transaction-level execution audit trail with attempt number, strategy type, timestamp, amount, outcome, and failure reason.
+- `RecoveryExecutionAttemptDto`, `RecoveryMetricsDto`, and `RecoveryExecutionResponse` representing structured execution outputs.
+- `RecoveryExecutionService` implementing bounded recovery simulation with **ZERO LLM calls**:
+  1. Mandatory Policy Gate pre-execution check: independently verifies latest Module 9 `policyDecision` and `executionAllowed == true`.
+  2. Enforced Policy Limits: clamps attempt limits, retry windows, and backoffs to Module 9 values.
+  3. Deterministic synthetic payment selection from affected segment.
+  4. Deterministic outcome simulation based on payment method, bank, and error taxonomy.
+  5. Authoritative financial cap: guaranteed $\text{recoveredAmount} \le \text{authoritativeRecoverableRevenue}$.
+  6. Failure-rate circuit breaker: halts execution with `STOPPED` if failure rate exceeds 50%.
+  7. Idempotency guards: prevents duplicate executions for the same incident/strategy state.
+- `RecoveryExecutionController` exposing `POST /api/v1/incidents/{incidentId}/recovery-execute`, `GET /api/v1/incidents/{incidentId}/recovery-execution`, and `GET /api/v1/recovery-executions/{executionId}`.
+- Frontend `RecoveryExecutionPanel` on `/incidents/[id]` displaying Policy Gate authorization status badge, 4-Way KPI Comparison Card Grid (Revenue at Risk, Authoritative Recoverable, AI Estimate, Actual Simulated Outcome), stopping condition banner, secondary metrics bar, enforced policy limits, and transaction-level synthetic attempt timeline table.
+- "Execute Recovery" action button added to active incident hero on `/dashboard`.
+- Module progress indicator updated in `ModuleStatus.tsx` (Module 10: "built", Module 11: "queued").
+- Comprehensive unit and integration test suite (15 tests in `RecoveryExecutionServiceTest` and `RecoveryExecutionControllerIntegrationTest`, 100% passing) verifying approved execution, limit clamping, policy rejections, circuit breakers, financial bounds, and idempotency.
+
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- Recovery execution simulator (Module 10 - Next).
-- Audit trail (Module 11).
+- Audit trail engine (Module 11 - Next).
 - Safety & failure scenario benchmark runner (Module 12).
-- Incident lifecycle transitions beyond `DETECTED`/`INVESTIGATING` (no resolution workflow yet).
+- Evaluation & Benchmarking (Module 13).
+- Final Command Center (Module 14).
+- Submission package (Module 15).
 
 ## Working agreement for future modules
 

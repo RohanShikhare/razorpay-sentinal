@@ -10,6 +10,7 @@ import { AiInvestigationPanel } from "@/components/ai/AiInvestigationPanel";
 import { RootCauseInvestigationPanel } from "@/components/investigation/RootCauseInvestigationPanel";
 import { RecoveryStrategyPanel } from "@/components/recovery/RecoveryStrategyPanel";
 import { PolicyGatePanel } from "@/components/policy/PolicyGatePanel";
+import { RecoveryExecutionPanel } from "@/components/recovery/RecoveryExecutionPanel";
 import { fetchIncidentDetail, type IncidentDetail } from "@/lib/monitoring";
 import { fetchFinancialBreakdown, fetchFinancialImpact, type FinancialBreakdown, type FinancialImpact } from "@/lib/financial";
 
@@ -87,7 +88,7 @@ export default function IncidentDetailPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="font-mono text-xs text-signal-wire">Module 3-4, 6-8 · Monitoring, Financial Impact, AI Diagnosis, Investigation &amp; Recovery Strategy</p>
+      <p className="font-mono text-xs text-signal-wire">Module 3-4, 6-10 · Monitoring, Financial Impact, AI Diagnosis, Investigation, Strategy, Policy Gate &amp; Recovery Execution</p>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Incident #{incident.id}</h1>
         <span className="bg-signal-critical/15 px-2 py-0.5 text-xs font-semibold text-signal-critical">
@@ -150,6 +151,11 @@ export default function IncidentDetailPage() {
         />
 
         <PolicyGatePanel
+          incidentId={incident.id}
+          incident={incident}
+        />
+
+        <RecoveryExecutionPanel
           incidentId={incident.id}
           incident={incident}
         />

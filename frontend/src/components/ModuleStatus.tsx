@@ -9,7 +9,8 @@ const MODULES = [
   { name: "Root-Cause Investigation", state: "done" as const },
   { name: "Recovery Strategy Engine", state: "done" as const },
   { name: "Deterministic Policy Engine", state: "done" as const },
-  { name: "Recovery Execution Simulator", state: "queued" as const },
+  { name: "Recovery Execution Simulator", state: "done" as const },
+  { name: "Audit Trail Engine", state: "queued" as const },
 ];
 
 const STATE_LABEL: Record<"done" | "queued", string> = {

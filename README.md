@@ -7,12 +7,12 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 9 — Deterministic Policy / Guardrail Engine.** Foundation, synthetic payment
+> **Status: Module 10 — Recovery Execution Simulator.** Foundation, synthetic payment
 > dataset, incident simulator, monitoring & detection engine, financial impact
 > engine, command center dashboard, advisory AI Diagnostic Agent, deep
-> Root-Cause Investigation, bounded Recovery Strategy Engine, and deterministic
-> Policy Gate & Guardrail Engine are fully implemented.
-> Recovery execution (Module 10) and audit trails (Module 11) described below
+> Root-Cause Investigation, bounded Recovery Strategy Engine, deterministic
+> Policy Gate & Guardrail Engine, and bounded Recovery Execution Simulator are fully implemented.
+> Audit trails (Module 11) described below
 > are **not implemented yet**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
@@ -29,8 +29,8 @@ Detect → Diagnose → Investigate → Quantify → Decide (Module 8) → Gate 
 | Quantify | Calculates authoritative revenue at risk & recoverable amounts (Module 4) |
 | Decide | Bounded recovery strategy proposal with stopping conditions (Module 8) |
 | Gate | Deterministic policy engine validates proposals against 12 hard safety rules (Module 9) |
-| Recover | The approved strategy is executed in simulation (Module 10 - Next) |
-| Audit | Every step is recorded to a complete audit trail (Module 11) |
+| Recover | Bounded recovery workflow executes retries under policy limits and measures actual recovered revenue (Module 10) |
+| Audit | Every step is recorded to a complete audit trail (Module 11 - Next) |
 
 ## Technology stack
 
@@ -850,17 +850,103 @@ Example response:
 }
 ```
 
-### Get latest root-cause investigation
+### Module 10: Recovery Execution Simulator
 
 ```
-GET /api/v1/incidents/{incidentId}/investigation
+POST /api/v1/incidents/{incidentId}/recovery-execute
 ```
 
-Returns the latest persisted investigation report for an incident if available, or 404 if not yet investigated.
+Executes a bounded recovery simulation strictly obeying the latest Module 9 policy evaluation:
+- Validates `executionAllowed == true` and policy decision is `APPROVED` or `APPROVED_WITH_LIMITS`.
+- If blocked or human approval is required, returns a structured blocked response without simulating retries.
+- Clamps retry parameters to Module 9 enforced limits (e.g. max 3 attempts).
+- Deterministically selects affected synthetic payments.
+- Computes deterministic retry outcomes using payment and incident characteristics.
+- Sums recovered amounts strictly from successful payments, capped by Module 4 authoritative recoverable revenue.
+- Trips circuit breaker if retry failure rate exceeds 50%.
+- Persists execution and child attempt records.
+
+Example response:
+
+```json
+{
+  "executionId": 1,
+  "incidentId": 1,
+  "strategyId": 1,
+  "policyEvaluationId": 1,
+  "startedAt": "2026-09-04T12:30:00Z",
+  "completedAt": "2026-09-04T12:30:01Z",
+  "status": "COMPLETED",
+  "strategyType": "DELAYED_RETRY",
+  "eligibleTransactions": 28,
+  "attemptedTransactions": 28,
+  "successfulRecoveries": 21,
+  "failedRecoveries": 7,
+  "skippedTransactions": 0,
+  "recoveredAmount": 42000.00,
+  "attemptedAmount": 56000.00,
+  "remainingRecoverableAmount": 0.00,
+  "authoritativeRevenueAtRisk": 68000.00,
+  "authoritativeRecoverableAmount": 42000.00,
+  "expectedRecoveryPercentage": 70.0,
+  "metrics": {
+    "recoveryRate": 75.0,
+    "financialRecoveryRate": 100.0,
+    "averageAttemptsPerRecovery": 1.43,
+    "executionDurationSeconds": 1.0
+  },
+  "stoppingReason": "COMPLETED_ALL_ELIGIBLE",
+  "stoppingDetails": "Recovery simulation successfully processed 28 transactions within policy limits.",
+  "executionAllowed": true,
+  "appliedRetryLimit": 3,
+  "appliedRetryWindow": 30,
+  "appliedBackoff": 30,
+  "simulationVersion": "SIMULATION_V1",
+  "attempts": [
+    {
+      "attemptId": 1,
+      "paymentId": 101,
+      "attemptNumber": 1,
+      "attemptedAt": "2026-09-04T12:30:00.100Z",
+      "outcome": "FAILED",
+      "amount": 2000.00,
+      "failureReason": "Transient switch retry failure on attempt 1",
+      "strategyType": "DELAYED_RETRY",
+      "simulatedDelaySeconds": 0
+    },
+    {
+      "attemptId": 2,
+      "paymentId": 101,
+      "attemptNumber": 2,
+      "attemptedAt": "2026-09-04T12:30:00.250Z",
+      "outcome": "RECOVERED",
+      "amount": 2000.00,
+      "failureReason": null,
+      "strategyType": "DELAYED_RETRY",
+      "simulatedDelaySeconds": 30
+    }
+  ],
+  "simulationDisclaimer": "SIMULATION ONLY: No real payment gateway calls, processing, or financial transactions were performed."
+}
+```
+
+### Get latest recovery execution
+
+```
+GET /api/v1/incidents/{incidentId}/recovery-execution
+```
+
+Returns the latest persisted recovery execution for an incident if available, or 404 if not yet executed.
 
 ## Build verification notes
 
-- **Backend**: Complete build and test suite verified via Maven (`mvn test`). All 65 tests across Modules 0 to 7 passed with 0 failures and 0 errors:
+- **Backend**: Complete build and test suite verified via Maven (`mvn test`). All **108 tests** across Modules 0 to 10 passed with 0 failures and 0 errors:
+  - `RecoveryExecutionControllerIntegrationTest` (2 tests)
+  - `RecoveryExecutionServiceTest` (13 tests)
+  - `PolicyEvaluationControllerIntegrationTest` (3 tests)
+  - `PolicyEvaluationServiceTest` (13 tests)
+  - `RecoveryStrategyControllerIntegrationTest` (3 tests)
+  - `RecoveryStrategyServiceTest` (10 tests)
   - `IncidentInvestigationControllerIntegrationTest` (2 tests)
   - `IncidentInvestigationServiceTest` (6 tests)
   - `AiDiagnosticControllerIntegrationTest` (2 tests)
@@ -875,4 +961,4 @@ Returns the latest persisted investigation report for an incident if available, 
   - `SegmentAnalyzerTest` (4 tests)
   - `RazorpaySentinelApplicationTests` (1 test)
   - `HealthControllerTest` (2 tests)
-- **Frontend**: `npm run build` executed against Next.js 14 App Router, successfully compiling all 9 static and dynamic routes with zero TypeScript or ESLint errors.
+- **Frontend**: `npx tsc --noEmit` and `npm run build` executed against Next.js 14 App Router, successfully compiling all 9 static and dynamic routes with zero TypeScript or ESLint errors.

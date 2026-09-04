@@ -397,12 +397,71 @@ Every proposed recovery strategy defines explicit operational limits:
 - `POST /api/v1/incidents/{incidentId}/recovery-strategy`: Formulates and persists a bounded recovery strategy proposal.
 - `GET /api/v1/incidents/{incidentId}/recovery-strategy`: Retrieves the latest persisted strategy without re-running AI.
 
+## Module 9: Deterministic Policy / Guardrail Engine Architecture
+
+Module 9 serves as the mandatory, unbypassable safety gate between recovery strategy proposals (Module 8) and recovery execution (Module 10):
+$$\text{Strategy Proposal} \longrightarrow \text{Deterministic Policy Gate (12 Checks)} \longrightarrow \text{Policy Decision (Enforced Limits)} \longrightarrow \text{Execution}$$
+
+### 1. Architectural Invariant
+$$\text{AI proposes (Modules 6, 7, 8)} \longrightarrow \text{Policy decides (Module 9)} \longrightarrow \text{Execution obeys policy (Module 10)}$$
+- **Zero AI in Decision Making**: Evaluation is 100% deterministic code.
+- **Authoritative Limits**: Strategy parameters exceeding safety thresholds are clamped (`APPROVED_WITH_LIMITS`).
+
+### 2. Policy Evaluation Persistence (`policy_evaluations` table)
+- Persisted in `policy_evaluations` table with evaluation timestamp, decision (`APPROVED`, `APPROVED_WITH_LIMITS`, `HUMAN_REVIEW`, `REJECTED`), checks JSON, applied limits JSON, allowed actions JSON, and unbypassable `executionAllowed` boolean flag.
+
+---
+
+## Module 10: Recovery Execution Simulator Architecture
+
+Module 10 is the execution engine that tests the final operational promise:
+> **Sentinel does not merely identify lost revenue. It executes a bounded recovery workflow and measures how much revenue was actually recovered.**
+
+### 1. Safety & Policy Gate Boundary
+Before attempting any simulated retry, Module 10 independently queries and validates the latest Module 9 policy evaluation:
+- Execution is permitted **only** if:
+  $$\text{policyDecision} \in \{\text{APPROVED}, \text{APPROVED\_WITH\_LIMITS}\} \quad \text{AND} \quad \text{executionAllowed} == \text{true}$$
+- If policy decision is `HUMAN_REVIEW`, `REJECTED`, or `executionAllowed == false`, execution is strictly **BLOCKED** (`status = BLOCKED`, `stoppingReason = POLICY_BLOCKED` or `HUMAN_APPROVAL_REQUIRED`).
+- The backend independently validates policy freshness, strategy identity match (`policy.strategyId == strategy.id`), and incident consistency. It never trusts the frontend.
+
+### 2. Authoritative Policy Limits
+When Module 9 grants `APPROVED_WITH_LIMITS`, Module 10 enforces the clamped limits:
+- `appliedRetryLimit`: Clamped retry attempt ceiling (e.g. 3 attempts max).
+- `appliedRetryWindow`: Bounded execution window (e.g. 30 minutes).
+- `appliedBackoff`: Configured retry backoff interval.
+
+### 3. Deterministic Synthetic Payment Selection
+- Payments are queried deterministically from the incident's affected segment (bank, payment method, merchant, error code, timestamp window).
+- No arbitrary, unrelated, or invented transactions enter the simulation.
+- Payment source records remain immutable and protected; simulation results are recorded in dedicated execution tables.
+
+### 4. Deterministic Outcome & Recovery Model
+Retry success probabilities are simulated deterministically using payment attributes:
+- **Transient Gateway / Bank Timeout**: High recovery probability on delayed retry ($P \approx 0.75 - 0.85$).
+- **Network Errors / Rate Limits**: Moderate recovery probability after backoff ($P \approx 0.65 - 0.75$).
+- **Merchant Degradation**: $0\%$ retry recovery probability (root cause is in merchant integration).
+- **Permanent Errors** (`INSUFFICIENT_FUNDS`, `ISSUER_DECLINED`): $0\%$ recovery.
+- **Circuit Breaker**: If overall failure rate among attempted transactions exceeds 50% after initial samples, execution halts with `STOPPED` and `stoppingReason = CIRCUIT_BREAKER_FAILURE_RATE`.
+
+### 5. Authoritative Financial Cap
+$$\text{actualRecoveredAmount} = \sum_{\text{recovered } p} p.\text{amount} \le \text{authoritativeRecoverableRevenue (Module 4)}$$
+- The recovered amount is calculated strictly from successful synthetic payments.
+- It is physically impossible for Module 10 to recover more than Module 4's authoritative recoverable revenue.
+
+### 6. Persistence Model
+- `recovery_executions` table (`RecoveryExecution` JPA entity): Tracks execution lifecycle, status (`REQUESTED`, `BLOCKED`, `RUNNING`, `COMPLETED`, `PARTIALLY_COMPLETED`, `STOPPED`, `FAILED`), eligible/attempted/successful/failed/skipped transaction counts, actual recovered amount, and stopping conditions.
+- `recovery_execution_attempts` table (`RecoveryExecutionAttempt` JPA entity): Transaction-level audit of every synthetic retry attempt with timestamp, attempt number, strategy type, outcome, and failure reason.
+
+### 7. Endpoints
+- `POST /api/v1/incidents/{incidentId}/recovery-execute`: Verifies policy gate, runs bounded recovery simulation, and persists results.
+- `GET /api/v1/incidents/{incidentId}/recovery-execution`: Retrieves latest execution result.
+- `GET /api/v1/recovery-executions/{executionId}`: Retrieves specific execution details and attempts.
+
 ## Future layers (not implemented yet)
 
 These packages exist as placeholders (`package-info.java`) so future modules slot in cleanly:
 
-- **`policy/`** (Module 9 - Next) — deterministic guardrails that validate whatever the AI layer recommends before anything is allowed to execute. This is the gate in Detect → Diagnose → Investigate → Quantify → Decide → **Gate** → Recover → Audit.
-- **`execution/`** (Module 10) — simulated execution of an approved recovery strategy and resulting recovered revenue.
-- **`audit/`** (Module 11) — a complete, queryable record of every detection, diagnosis, decision, policy check, and recovery action, for after-the-fact review and evaluation.
+- **`audit/`** (Module 11 - Next) — a complete, queryable record of every detection, diagnosis, decision, policy check, and recovery action, for after-the-fact review and evaluation.
+- **`safety/`** (Module 12) — safety and failure scenarios benchmarking.
 
 See `development-roadmap.md` for the full module sequence.
