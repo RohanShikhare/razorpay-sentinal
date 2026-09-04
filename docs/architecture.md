@@ -1,15 +1,19 @@
 # Architecture
 
 Razorpay Sentinel is a **monolith**, deliberately. Detection, diagnosis, policy
-gating, recovery, and audit all live in one deployable backend so the
+gating, recovery, audit, and safety validation all live in one deployable backend so the
 workflow can stay a single, traceable pipeline instead of a distributed
-system with its own failure modes. This document describes the shape of that monolith as of Module 9
-(Deterministic Policy / Guardrail Engine) and where each future layer will sit.
+system with its own failure modes. This document describes the shape of that monolith as of Module 12
+(Safety & Failure Scenarios / Resilience Validation Layer) and where each future layer will sit.
 
 ## Pipeline Architecture
 
 ```text
-Detect → Diagnose → Investigate → Quantify → Decide (Module 8) → GATE (Module 9) → Recover (Module 10) → Audit (Module 11)
+Normal path:
+Detect → Diagnose → Investigate → Quantify → Decide (Module 8) → Gate (Module 9) → Recover (Module 10) → Audit (Module 11)
+
+Failure path:
+Failure Injected → Guardrail Triggered → Closed/Blocked/Escalated → Audit Recorded
 ```
 
 The core architectural invariant governing recovery automation is:
@@ -17,6 +21,8 @@ The core architectural invariant governing recovery automation is:
 1. **AI Proposes (Modules 6, 7, 8)**: Formulates diagnosis hypotheses and advisory recovery strategy proposals with stopping conditions.
 2. **Policy Decides (Module 9)**: 100% deterministic, zero-AI guardrail engine evaluates proposals against hard financial bounds, retry limits, merchant protections, and safety invariants.
 3. **Execution Obeys Policy (Module 10)**: Autonomous execution is strictly blocked unless the Policy Gate explicitly grants `executionAllowed = true` within enforced constraints.
+4. **Audit Records All (Module 11)**: Every proposal, decision, attempt, and outcome is sequentially recorded to a tamper-evident SHA-256 hash-chain.
+5. **Safety Fails Closed (Module 12)**: Under any failure, error, or ambiguity, Sentinel stops, blocks, or escalates — never bypasses policy or forces recovery.
 
 ## Overview
 
@@ -516,11 +522,78 @@ If an audit record payload is tampered with or an event is deleted/inserted out 
 - `GET /api/v1/incidents/{incidentId}/audit/verify`: Verifies SHA-256 hash-chain integrity.
 - `GET /api/v1/recovery-executions/{executionId}/audit`: Retrieves execution-specific timeline.
 
+---
+
+## Module 12: Safety & Failure Scenarios / Resilience Validation Layer Architecture
+
+Module 12 is a controlled **Safety & Failure Scenarios / Resilience Validation Layer** that deliberately exercises failure conditions and proves that Sentinel fails safely.
+
+### 1. The "Fail Closed" Design Principle
+
+```text
+Normal path:
+Detect → Diagnose → Investigate → Strategy → Policy → Execute → Audit
+
+Failure path:
+Failure Injected → Guardrail Triggered → Closed/Blocked/Escalated → Audit Recorded
+```
+
+Sentinel is architected around a strict safety invariant:
+> **"When something goes wrong, Sentinel does not blindly continue. It stops, blocks, escalates, or safely records the failure."**
+
+Module 12 is a **simulation and validation layer, not a production bypass layer**. There are NO bypass endpoints (e.g. `/disable-policy`, `/force-recovery`). Scenarios exercise real service code and verify that safety guardrails hold true under stress.
+
+### 2. Controlled Scenario Abstraction (`com.sentinelpulse.safety`)
+
+- `SafetyScenarioType`: Controlled enum covering 12 distinct failure conditions:
+  - `AI_PROVIDER_FAILURE` (Scenario A)
+  - `AI_INVALID_RESPONSE` (Scenario B)
+  - `AI_LOW_CONFIDENCE` (Scenario C)
+  - `POLICY_REJECTION` (Scenario D)
+  - `HUMAN_REVIEW_REQUIRED` (Scenario E)
+  - `EXECUTION_FAILURE` (Scenario F)
+  - `CIRCUIT_BREAKER` (Scenario G)
+  - `INCIDENT_RESOLVED_DURING_EXECUTION` (Scenario H)
+  - `STALE_STRATEGY` (Scenario I)
+  - `IDEMPOTENT_EXECUTION` (Scenario J)
+  - `AUDIT_TAMPER_DETECTION` (Scenario K)
+  - `AUDIT_PERSISTENCE_FAILURE` (Scenario L)
+- `SafetyScenarioStatus`: `PASSED`, `FAILED`, `ERROR`.
+- `SafetyScenarioDto`: Metadata descriptor for scenario registry and UI.
+- `SafetyScenarioResult`: Structured validation result DTO with expected vs. observed behaviors, policy decisions, execution statuses, recovered amounts, stopping reasons, and audit verification states.
+
+### 3. Fifteen Safety Invariants Validated
+
+| Invariant | Description | Enforcement Mechanism |
+|---|---|---|
+| `INVARIANT-001` | AI cannot directly execute recovery | Independent Policy Gate pre-check in `RecoveryExecutionService` |
+| `INVARIANT-002` | Policy rejection always prevents execution | `PolicyEvaluationService` sets `executionAllowed = false` |
+| `INVARIANT-003` | Human-review decisions prevent autonomous execution | `PolicyDecision = HUMAN_REVIEW` blocks autonomous simulation |
+| `INVARIANT-004` | CRITICAL risk cannot autonomously execute | `POLICY-004` rejects autonomous execution for CRITICAL risk |
+| `INVARIANT-005` | Low-confidence AI output cannot bypass human review/policy | `POLICY-005` forces `HUMAN_REVIEW` when confidence < 0.70 |
+| `INVARIANT-006` | Recovery attempts cannot exceed policy-approved limits | Clamped retry attempts in `appliedRetryLimit` |
+| `INVARIANT-007` | Circuit breaker stops excessive failures | Halts execution with `STOPPED` if failure rate > 50% |
+| `INVARIANT-008` | Resolved incidents cannot continue recovery | Execution aborts immediately with `INCIDENT_RESOLVED` |
+| `INVARIANT-009` | Stale strategies cannot execute autonomously | `POLICY-011` marks strategies older than 30m as `HUMAN_REVIEW` |
+| `INVARIANT-010` | Idempotent execution cannot double-count recovery | Existing execution returned, audited as `EXECUTION_IDEMPOTENT_REUSE` |
+| `INVARIANT-011` | Actual recovery cannot exceed Module 4 authoritative recoverable revenue | Math invariant $\text{recoveredAmount} \le \text{authoritativeRecoverableRevenue}$ |
+| `INVARIANT-012` | Audit failures do not corrupt the primary business workflow | Isolated exception handling in `AuditEventService` |
+| `INVARIANT-013` | Audit tampering is detectable | SHA-256 hash-chain verification detects corruptions and broken links |
+| `INVARIANT-014` | No scenario can bypass the Policy Engine | Mandatory verification of `PolicyEvaluation` records |
+| `INVARIANT-015` | No scenario can directly mutate payment records to fake recovery | Payment tables remain protected; simulation writes to execution tables |
+
+### 4. Endpoints
+
+- `GET /api/v1/safety/scenarios`: Returns metadata descriptors for all 12 controlled failure scenarios.
+- `POST /api/v1/safety/scenarios/{scenario}/run`: Executes a specific failure scenario and returns structured result.
+- `POST /api/v1/safety/scenarios/run-all`: Runs the entire 12-scenario test suite sequentially and returns comprehensive report.
+
 ## Future layers (not implemented yet)
 
 These packages exist as placeholders (`package-info.java`) so future modules slot in cleanly:
 
-- **`safety/`** (Module 12 - Next) — safety and failure scenarios benchmarking.
 - **`evaluation/`** (Module 13) — accuracy, recovery rate, and benchmark scoring.
+- **`command-center/`** (Module 14) — consolidated operational incident commander dashboard.
+- **`submission/`** (Module 15) — packaging, documentation, and demo scripts.
 
 See `development-roadmap.md` for the full module sequence.

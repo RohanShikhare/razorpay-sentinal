@@ -1,0 +1,19 @@
+package com.sentinelpulse.safety;
+
+/**
+ * Controlled types for Sentinel Safety & Failure Scenarios (Module 12).
+ */
+public enum SafetyScenarioType {
+    AI_PROVIDER_FAILURE,
+    AI_INVALID_RESPONSE,
+    AI_LOW_CONFIDENCE,
+    POLICY_REJECTION,
+    HUMAN_REVIEW_REQUIRED,
+    EXECUTION_FAILURE,
+    CIRCUIT_BREAKER,
+    INCIDENT_RESOLVED_DURING_EXECUTION,
+    STALE_STRATEGY,
+    IDEMPOTENT_EXECUTION,
+    AUDIT_TAMPER_DETECTION,
+    AUDIT_PERSISTENCE_FAILURE
+}

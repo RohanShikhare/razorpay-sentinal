@@ -17,12 +17,12 @@ document tracks the planned sequence and what "done" means for each one.
 | 9 | Policy / Guardrail Engine | **Done** | Deterministic validation gate that evaluates recovery recommendations against 12 hard safety policies with zero AI calls. |
 | 10 | Recovery Execution Simulator | **Done** | Bounded recovery execution engine simulating retries obeying Module 9 policy limits, calculating actual recovered revenue with zero AI calls and circuit breakers. |
 | 11 | Audit Trail | **Done** | Complete chronological decision history and tamper-evident SHA-256 hash-chain audit layer across Modules 0–10. |
-| 12 | Safety & Failure Scenarios | Planned | Deliberate failure-mode testing: bad AI recommendations, policy rejections, escalation paths. |
+| 12 | Safety & Failure Scenarios | **Done** | Controlled failure scenarios proving that Sentinel fails closed under AI failure, invalid schemas, policy rejections, circuit breakers, and audit tampering. |
 | 13 | Evaluation & Benchmarking | Planned | Measurable evaluation of detection accuracy, recovery effectiveness, and system behavior over time. |
 | 14 | Final Command Center | Planned | Consolidated operational view surfacing AI diagnosis, policy gates, recovery simulator, and audit trail. |
 | 15 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 11)
+## Current state (Module 12)
 
 Implemented in Module 0:
 
@@ -259,11 +259,37 @@ Added in Module 11:
 - Module progress indicator updated in `ModuleStatus.tsx` (Module 11: "built", Module 12: "queued").
 - Comprehensive unit and integration test suite (14 tests in `AuditEventServiceTest` and `AuditControllerIntegrationTest`, 100% passing) verifying all lifecycle hooks, chronological timelines, execution filtering, hash chaining, tampering detection, and read-only non-mutating safety.
 
+Added in Module 12:
+
+- `safety/` package: `SafetyScenarioType` (controlled enum covering 12 failure conditions), `SafetyScenarioStatus` (`PASSED`, `FAILED`, `ERROR`).
+- `SafetyScenarioDto` and `SafetyScenarioResult` representing structured scenario descriptors and evaluation outcomes.
+- `SafetyScenarioService` executing all 12 failure and safety validation scenarios against live service logic:
+  1. `AI_PROVIDER_FAILURE` (Scenario A): Thrown AI exception sets diagnosis to `FAILED`, leaves incident safe, blocks recovery execution, and audits failure.
+  2. `AI_INVALID_RESPONSE` (Scenario B): Malformed JSON schema response sets status to `INVALID_RESPONSE`, blocks downstream execution, and audits failure.
+  3. `AI_LOW_CONFIDENCE` (Scenario C): AI confidence below threshold (0.60 < 0.70) requires human review, blocking autonomous policy execution.
+  4. `POLICY_REJECTION` (Scenario D): Non-compliant strategy (e.g., CRITICAL risk, excessive retries) evaluated by Policy Gate, resulting in `PolicyDecision = REJECTED` and `executionAllowed = false`.
+  5. `HUMAN_REVIEW_REQUIRED` (Scenario E): Structurally valid high-risk or alternate-payment strategy returns `PolicyDecision = HUMAN_REVIEW` and `executionAllowed = false`.
+  6. `EXECUTION_FAILURE` (Scenario F): Repeated permanent retry failures handled safely, recovered revenue bounded $\le$ Module 4 authoritative recoverable amount.
+  7. `CIRCUIT_BREAKER` (Scenario G): Retry error rate exceeding 50% activates failure-rate circuit breaker, immediately stopping execution with reason `CIRCUIT_BREAKER_FAILURE_RATE`.
+  8. `INCIDENT_RESOLVED_DURING_EXECUTION` (Scenario H): Incident resolving mid-recovery halts execution with reason `INCIDENT_RESOLVED`.
+  9. `STALE_STRATEGY` (Scenario I): Strategy older than 30 minutes blocked by freshness guardrail `POLICY-011`.
+  10. `IDEMPOTENT_EXECUTION` (Scenario J): Duplicate execution requests reuse existing execution without double-counting recovered revenue, audited as `EXECUTION_IDEMPOTENT_REUSE`.
+  11. `AUDIT_TAMPER_DETECTION` (Scenario K): SHA-256 hash-chain verification detects mutated payloads and pinpointed corrupted event IDs without altering production records.
+  12. `AUDIT_PERSISTENCE_FAILURE` (Scenario L): Isolated audit failure logging guarantees core business and recovery workflows complete safely without unhandled exceptions.
+- `SafetyScenarioController` exposing REST APIs:
+  - `GET /api/v1/safety/scenarios` (list all 12 scenario descriptors)
+  - `POST /api/v1/safety/scenarios/{scenario}/run` (run single scenario)
+  - `POST /api/v1/safety/scenarios/run-all` (run all 12 scenarios)
+- Frontend Sentinel Safety & Failure Lab on `/safety` featuring Safety Scoreboard, Category Filter tabs, Run All/Run Scenario controls, Expected vs. Observed behavior panels, and real-time validation badges.
+- Module progress indicator updated in `ModuleStatus.tsx` (Module 12: "built", Module 13: "queued").
+- Navigation bar updated with "Safety Lab" link in `lib/navigation.ts`.
+- Comprehensive unit and integration test suite (22 tests in `SafetyScenarioServiceTest` and `SafetyScenarioControllerIntegrationTest`, 100% passing) verifying all 12 failure scenarios and the 15 core safety invariants (`INVARIANT-001` through `INVARIANT-015`).
+- Total backend test suite: **144 of 144 tests passing**.
+
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- Safety & failure scenario benchmark runner (Module 12 - Next).
-- Evaluation & Benchmarking (Module 13).
+- Evaluation & Benchmarking (Module 13 - Next).
 - Final Command Center (Module 14).
 - Submission package (Module 15).
 

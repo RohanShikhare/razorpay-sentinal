@@ -18,7 +18,9 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Simulator", href: "/simulator", available: true },
   { label: "Monitoring", href: "/monitoring", available: true },
   { label: "Incidents", href: "/incidents", available: true },
+  { label: "Safety Lab", href: "/safety", available: true },
   { label: "Recovery", href: "/recovery", available: false },
   { label: "Audit Trail", href: "/audit", available: false },
   { label: "Evaluation", href: "/evaluation", available: false },
 ];
+

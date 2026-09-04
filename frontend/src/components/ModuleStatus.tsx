@@ -11,8 +11,10 @@ const MODULES = [
   { name: "Deterministic Policy Engine", state: "done" as const },
   { name: "Recovery Execution Simulator", state: "done" as const },
   { name: "Audit Trail & Decision History", state: "done" as const },
-  { name: "Safety & Failure Scenarios", state: "queued" as const },
+  { name: "Safety & Failure Scenarios", state: "done" as const },
+  { name: "Evaluation & Benchmarking", state: "queued" as const },
 ];
+
 
 const STATE_LABEL: Record<"done" | "queued", string> = {
   done: "built",

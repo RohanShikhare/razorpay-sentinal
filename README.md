@@ -7,19 +7,24 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 11 — Audit Trail & Decision History.** Foundation, synthetic payment
+> **Status: Module 12 — Safety & Failure Scenarios.** Foundation, synthetic payment
 > dataset, incident simulator, monitoring & detection engine, financial impact
 > engine, command center dashboard, advisory AI Diagnostic Agent, deep
 > Root-Cause Investigation, bounded Recovery Strategy Engine, deterministic
-> Policy Gate & Guardrail Engine, bounded Recovery Execution Simulator, and tamper-evident
-> Audit Trail & Decision History layer are fully implemented.
-> Safety scenarios (Module 12) described below
+> Policy Gate & Guardrail Engine, bounded Recovery Execution Simulator, tamper-evident
+> Audit Trail & Decision History layer, and controlled Safety & Failure Scenarios /
+> Resilience Validation Lab are fully implemented and validated.
+> Evaluation & Benchmarking (Module 13) described below
 > are **not implemented yet**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
 
 ```
+Normal path:
 Detect → Diagnose → Investigate → Quantify → Decide (Module 8) → Gate (Module 9) → Recover (Module 10) → Audit (Module 11)
+
+Failure path:
+Failure Injected → Guardrail Triggered → Closed/Blocked/Escalated → Audit Recorded
 ```
 
 | Stage | What it does |
@@ -189,11 +194,31 @@ Docker in this module.
 - Frontend: `AuditTimeline` component on `/incidents/[id]` featuring Decision Chain progression bar, cryptographic verification status badge, category filters, distinct actor badges, and expandable metadata viewer.
 - Dashboard quick-link in `ActiveIncidentHero`.
 
+**Module 12 — Safety & Failure Scenarios / Resilience Validation Layer**
+
+- Controlled failure-scenario validation framework proving that **Sentinel is designed to fail closed**: when something goes wrong, Sentinel stops, blocks, escalates, or safely records the failure without bypassing policy or forcing recovery.
+- 12 deterministic, testable failure scenarios (`SafetyScenarioType` enum):
+  1. `AI_PROVIDER_FAILURE` (Scenario A): Unavailable AI provider results in `FAILED` diagnosis, zero autonomous recovery, incident remains safe, failure audited.
+  2. `AI_INVALID_RESPONSE` (Scenario B): Malformed JSON or invalid schema attributes rejected, diagnosis marked `INVALID_RESPONSE`, no downstream execution.
+  3. `AI_LOW_CONFIDENCE` (Scenario C): AI diagnosis confidence below threshold (0.70) treated as advisory only, autonomous recovery blocked, human review mandated.
+  4. `POLICY_REJECTION` (Scenario D): Unsafe strategy (e.g. excessive retries, CRITICAL risk) rejected by Policy Gate with `PolicyDecision = REJECTED` and `executionAllowed = false`, Module 10 refuses execution.
+  5. `HUMAN_REVIEW_REQUIRED` (Scenario E): High-risk or alternate payment method strategies require human sign-off (`PolicyDecision = HUMAN_REVIEW`, `executionAllowed = false`), autonomous execution blocked.
+  6. `EXECUTION_FAILURE` (Scenario F): Repeated permanent retry failures handled safely, attempts and failures recorded, recovered amount strictly $\le$ Module 4 authoritative recoverable revenue, stops within limits.
+  7. `CIRCUIT_BREAKER` (Scenario G): Retry failure rate exceeding 50% activates circuit breaker, execution halted with `STOPPED` and `stoppingReason = CIRCUIT_BREAKER_FAILURE_RATE`, zero further attempts.
+  8. `INCIDENT_RESOLVED_DURING_EXECUTION` (Scenario H): Incident resolving mid-recovery immediately halts execution with `INCIDENT_RESOLVED`, revenue bounded, stop audited.
+  9. `STALE_STRATEGY` (Scenario I): Strategy older than 30-minute freshness window rejected by Policy Gate, execution blocked.
+  10. `IDEMPOTENT_EXECUTION` (Scenario J): Duplicate execution requests for the same incident/strategy state safely return existing execution without double-counting recovered revenue, audited with `EXECUTION_IDEMPOTENT_REUSE`.
+  11. `AUDIT_TAMPER_DETECTION` (Scenario K): SHA-256 hash-chain verification detects mutated audit events or broken pointers and pinpoints the corrupted event ID without modifying production history.
+  12. `AUDIT_PERSISTENCE_FAILURE` (Scenario L): Isolated audit failure logging ensures primary business and recovery workflows complete safely without unhandled exceptions.
+- 15 core safety invariants (`INVARIANT-001` through `INVARIANT-015`) strictly validated across all services.
+- REST API: `GET /api/v1/safety/scenarios`, `POST /api/v1/safety/scenarios/{scenario}/run`, and `POST /api/v1/safety/scenarios/run-all`.
+- Frontend: Sentinel Safety & Failure Lab at `/safety` featuring Safety Scoreboard, Category Filter tabs, Run All/Run Scenario controls, Expected vs. Observed behavior panels, and real-time validation badges.
+- Comprehensive test suite: 144 unit and integration tests passing with 0 failures and 0 errors across the full backend.
+
 ### Not implemented yet
 
 - Authentication (intentionally out of scope for this internal tool for now).
-- Safety & failure scenario benchmark suite (Module 12 - Next).
-- Evaluation & Benchmarking (Module 13).
+- Evaluation & Benchmarking (Module 13 - Next).
 - Final Command Center (Module 14).
 - Submission package (Module 15).
 
@@ -878,9 +903,63 @@ GET /api/v1/incidents/{incidentId}/recovery-execution
 
 Returns the latest persisted recovery execution for an incident if available, or 404 if not yet executed.
 
+## Safety & Failure Scenarios API (Module 12)
+
+The Safety & Failure Lab provides deterministic testing endpoints to validate that Sentinel fails closed under failure and adversarial conditions.
+
+### List available safety scenarios
+
+```
+GET /api/v1/safety/scenarios
+```
+
+Returns descriptors for all 12 controlled failure scenarios, including their category, expected safety behavior, and safety invariants validated.
+
+### Run a single safety scenario
+
+```
+POST /api/v1/safety/scenarios/{scenario}/run
+```
+
+Runs one deterministic scenario and returns its structured outcome.
+
+Example response:
+
+```json
+{
+  "scenario": "CIRCUIT_BREAKER",
+  "name": "Circuit Breaker Activation",
+  "status": "PASSED",
+  "passed": true,
+  "expectedBehavior": "Execution must halt immediately when retry failure rate exceeds 50% limit",
+  "observedBehavior": "Circuit breaker activated after failure rate reached 100.0%. Execution stopped with reason CIRCUIT_BREAKER_FAILURE_RATE.",
+  "safetyProperty": "Failure rate circuit breaker prevents runaway retry loops on damaged rails",
+  "executionAllowed": true,
+  "policyDecision": "APPROVED",
+  "recoveryStatus": "STOPPED",
+  "recoveredAmount": 0.00,
+  "authoritativeRecoverableAmount": 0.00,
+  "stoppingReason": "CIRCUIT_BREAKER_FAILURE_RATE",
+  "auditEventCount": 9,
+  "auditVerified": true
+}
+```
+
+### Run all safety scenarios
+
+```
+POST /api/v1/safety/scenarios/run-all
+```
+
+Executes all 12 scenarios sequentially and returns the complete safety validation suite results.
+
 ## Build verification notes
 
-- **Backend**: Complete build and test suite verified via Maven (`mvn test`). All **108 tests** across Modules 0 to 10 passed with 0 failures and 0 errors:
+- **Backend**: Complete build and test suite verified via Maven (`mvn test`). All **144 tests** across Modules 0 to 12 passed with 0 failures and 0 errors:
+  - `SafetyScenarioControllerIntegrationTest` (3 tests)
+  - `SafetyScenarioServiceTest` (19 tests)
+  - `AuditControllerIntegrationTest` (2 tests)
+  - `AuditEventServiceTest` (12 tests)
   - `RecoveryExecutionControllerIntegrationTest` (2 tests)
   - `RecoveryExecutionServiceTest` (13 tests)
   - `PolicyEvaluationControllerIntegrationTest` (3 tests)
@@ -901,4 +980,4 @@ Returns the latest persisted recovery execution for an incident if available, or
   - `SegmentAnalyzerTest` (4 tests)
   - `RazorpaySentinelApplicationTests` (1 test)
   - `HealthControllerTest` (2 tests)
-- **Frontend**: `npx tsc --noEmit` and `npm run build` executed against Next.js 14 App Router, successfully compiling all 9 static and dynamic routes with zero TypeScript or ESLint errors.
+- **Frontend**: `npx tsc --noEmit` and `npm run build` executed against Next.js 14 App Router, successfully compiling all 10 static and dynamic routes (`/`, `/dashboard`, `/payments`, `/simulator`, `/monitoring`, `/incidents`, `/incidents/[id]`, `/safety`) with zero TypeScript or ESLint errors.
