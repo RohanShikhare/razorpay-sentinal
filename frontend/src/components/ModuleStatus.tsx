@@ -6,7 +6,8 @@ const MODULES = [
   { name: "Revenue-at-Risk & Financial Impact", state: "done" as const },
   { name: "Command Center Dashboard", state: "done" as const },
   { name: "AI Diagnostic Agent", state: "done" as const },
-  { name: "Root-Cause Investigation", state: "queued" as const },
+  { name: "Root-Cause Investigation", state: "done" as const },
+  { name: "Recovery Strategy Engine", state: "queued" as const },
 ];
 
 const STATE_LABEL: Record<"done" | "queued", string> = {

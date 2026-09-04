@@ -7,11 +7,11 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 6 — AI Diagnostic Agent.** Foundation, synthetic payment
+> **Status: Module 7 — Root-Cause Investigation.** Foundation, synthetic payment
 > dataset, incident simulator, monitoring & detection engine, financial impact
-> engine, command center dashboard, and the advisory AI Diagnostic Agent are
-> implemented. Policy gating and recovery execution described below are
-> **not implemented yet**. See [Current implementation status](#current-implementation-status).
+> engine, command center dashboard, advisory AI Diagnostic Agent, and deep
+> Root-Cause Investigation are implemented. Recovery strategy, policy gating,
+> and recovery execution described below are **not implemented yet**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
 
@@ -96,6 +96,48 @@ Docker in this module.
   normal-noise non-concentration, reset, and idempotency under repeated runs.
 
 **Module 3 — Monitoring & Incident Detection Engine**
+
+- `Incident` entity plus `IncidentType`, `IncidentSeverity`, `IncidentStatus` enums.
+- Deterministic baseline-vs-current comparison, adaptive window widening, and segment concentration analysis.
+- `POST /api/v1/monitoring/detect` and `GET /api/v1/monitoring/summary`.
+- `GET /api/v1/incidents` and `GET /api/v1/incidents/{id}`.
+
+**Module 4 — Revenue-at-Risk & Financial Impact Engine**
+
+- `RecoverabilityLevel` classifier and deterministic financial impact calculation (`FinancialImpactService`).
+- `GET /api/v1/incidents/{id}/financial-impact`, `/breakdown`, and `/evidence`.
+
+**Module 5 — Command Center Dashboard**
+
+- `/dashboard` — primary operations console consolidating telemetry, active incident hero, financial exposure, and breakdown tables.
+
+**Module 6 — AI Diagnostic Agent**
+
+- Provider abstraction (`MockAiProvider`, `GeminiAiProvider`, `AiProviderFactory`) supporting configurable live Gemini models or deterministic, offline mock diagnoses.
+- Deterministic incident evidence pipeline (`IncidentEvidenceService`) formalizing telemetry and Module 4 financial metrics for AI ingestion.
+- Strict bounded AI response schema (`ControlledAction`, `RiskLevel`, `DiagnosisStatus`) and conservative human approval gate.
+- Persistence in `incident_diagnoses` table.
+- REST API: `POST /api/v1/incidents/{id}/diagnose` and `GET /api/v1/incidents/{id}/diagnosis`.
+- Frontend: `AiInvestigationPanel` integrated into `/incidents/[id]`.
+
+**Module 7 — Root-Cause Investigation**
+
+- Deep investigative workflow systematically formulating, evaluating, and ranking competing root-cause hypotheses against deterministic telemetry.
+- Strict distinction between **Observed Facts** (telemetry data) and **AI Inference** (hypothesis evaluation).
+- `RootCauseHypothesis` DTO and `IncidentInvestigationResponse` with per-hypothesis confidence, supporting evidence (✓), contradicting evidence (✕), affected segments, and verdict badges (`STRONGEST`, `LIKELY`, `UNLIKELY`, `REFUTED`, `INCONCLUSIVE`).
+- Persistence in `incident_investigations` JPA entity and repository.
+- REST API: `POST /api/v1/incidents/{id}/investigate` and `GET /api/v1/incidents/{id}/investigation`.
+- Frontend: `RootCauseInvestigationPanel` on `/incidents/[id]` with hypothesis comparison cards, diagnostic reasoning narrative, and acknowledged uncertainty disclosures.
+- Active incident quick-link on `/dashboard`.
+
+### Not implemented yet
+
+- Authentication (intentionally out of scope for this internal tool for now).
+- Recovery Strategy Engine (Module 8).
+- Policy/guardrail validation engine (Module 9).
+- Recovery execution simulator (Module 10).
+- Audit trail (Module 11).
+- Incident lifecycle transitions beyond `DETECTED`/`INVESTIGATING` (no resolution workflow yet).
 
 - `Incident` entity plus `IncidentType`, `IncidentSeverity`, `IncidentStatus`
   enums. `rootCause` stays null — assigning one is a future AI module's job
@@ -695,9 +737,100 @@ GET /api/v1/incidents/{incidentId}/diagnosis
 
 Returns the latest persisted diagnosis for an incident if available, or 404 if not yet investigated.
 
+## Root-Cause Investigation API (Module 7)
+
+Module 7 conducts an in-depth root-cause investigation by evaluating and ranking competing hypotheses against deterministic telemetry.
+
+### Trigger root-cause investigation
+
+```
+POST /api/v1/incidents/{incidentId}/investigate
+```
+
+Example response:
+
+```json
+{
+  "investigationId": 1,
+  "incidentId": 123,
+  "createdAt": "2026-09-04T12:05:00Z",
+  "completedAt": "2026-09-04T12:05:01Z",
+  "status": "COMPLETED",
+  "provider": "MOCK",
+  "model": "mock-sentinel-diagnostician-v1",
+  "incidentType": "PAYMENT_DEGRADATION",
+  "summary": "Root-cause investigation confirms an upstream gateway timeout degradation isolated specifically to Bank X UPI switch infrastructure.",
+  "strongestRootCause": "Bank X UPI Gateway upstream timeout and processing degradation",
+  "overallConfidence": 0.94,
+  "affectedSegment": "Bank X + UPI",
+  "hypotheses": [
+    {
+      "hypothesis": "Bank X UPI Gateway / Switch Degradation",
+      "confidence": 0.94,
+      "supportingEvidence": [
+        "Bank X UPI failure rate spiked from 4.20% to 36.60% (+32.40 pts)",
+        "87.5% concentration of failures under BANK_TIMEOUT error code",
+        "Multiple unrelated merchants calling Bank X UPI experience identical degradation"
+      ],
+      "contradictingEvidence": [
+        "Card and Netbanking transactions at Bank X show nominal baseline failure rates (~3.5%)"
+      ],
+      "affectedSegment": "Bank X + UPI",
+      "verdict": "STRONGEST"
+    },
+    {
+      "hypothesis": "National UPI Switch (NPCI) Central Rail Outage",
+      "confidence": 0.25,
+      "supportingEvidence": [
+        "Affected transactions utilize the UPI protocol"
+      ],
+      "contradictingEvidence": [
+        "Other major banks (HDFC, ICICI, SBI, Axis) process UPI at normal baseline error rates (<4%)",
+        "Failures are strictly contained to Bank X issuer handles"
+      ],
+      "affectedSegment": "All Banks UPI",
+      "verdict": "REFUTED"
+    },
+    {
+      "hypothesis": "Merchant Integration Payload / Auth Misconfiguration",
+      "confidence": 0.12,
+      "supportingEvidence": [],
+      "contradictingEvidence": [
+        "Failures are distributed across multiple independent merchants",
+        "Error code is BANK_TIMEOUT rather than BAD_REQUEST or AUTH_FAILED"
+      ],
+      "affectedSegment": "All Merchants",
+      "verdict": "REFUTED"
+    }
+  ],
+  "supportingEvidence": [
+    "Failure rate surge concentrated in Bank X UPI (+32.40 pts)",
+    "Dominant failure mode is BANK_TIMEOUT (87.5% concentration)",
+    "Other banks on UPI rail maintain normal baseline failure rates"
+  ],
+  "contradictingEvidence": [
+    "Bank X non-UPI payment methods (Cards, Netbanking) remain healthy"
+  ],
+  "reasoning": "Deterministic telemetry demonstrates high segment concentration: failure rate increased from 4.20% to 36.60% strictly on Bank X UPI. The dominant error mode is BANK_TIMEOUT. Comparing competing hypotheses, National UPI Switch failure is refuted because other banks on UPI are operating normally. Merchant-level misconfiguration is refuted because failures span multiple independent merchants.",
+  "uncertainty": "Direct visibility into Bank X internal switch queuing telemetry is unavailable via payment gateway API.",
+  "requiresHumanReview": false,
+  "statusReason": null
+}
+```
+
+### Get latest root-cause investigation
+
+```
+GET /api/v1/incidents/{incidentId}/investigation
+```
+
+Returns the latest persisted investigation report for an incident if available, or 404 if not yet investigated.
+
 ## Build verification notes
 
-- **Backend**: Complete build and test suite verified via Maven (`mvn test`). All 57 tests across Modules 0 to 6 passed with 0 failures and 0 errors:
+- **Backend**: Complete build and test suite verified via Maven (`mvn test`). All 65 tests across Modules 0 to 7 passed with 0 failures and 0 errors:
+  - `IncidentInvestigationControllerIntegrationTest` (2 tests)
+  - `IncidentInvestigationServiceTest` (6 tests)
   - `AiDiagnosticControllerIntegrationTest` (2 tests)
   - `AiDiagnosticServiceTest` (6 tests)
   - `IncidentEvidenceServiceTest` (1 test)

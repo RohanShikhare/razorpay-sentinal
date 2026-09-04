@@ -86,15 +86,26 @@ export function ActiveIncidentHero({ incident, impact }: { incident: Incident; i
               {incident.rootCause ?? "Not yet investigated with AI"}
             </div>
           </div>
-          <a
-            href={`/incidents/${incident.id}`}
-            className="inline-flex items-center gap-1.5 border border-signal-wire/40 bg-signal-wire/10 px-3 py-1 text-xs font-semibold text-signal-wire hover:bg-signal-wire/20 transition-colors"
-          >
-            <svg className="w-3 h-3 text-signal-wire" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span>{incident.rootCause ? "View AI Diagnosis" : "Investigate with AI"}</span>
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/incidents/${incident.id}`}
+              className="inline-flex items-center gap-1.5 border border-signal-wire/40 bg-signal-wire/10 px-3 py-1 text-xs font-semibold text-signal-wire hover:bg-signal-wire/20 transition-colors"
+            >
+              <svg className="w-3 h-3 text-signal-wire" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>{incident.rootCause ? "View Diagnosis" : "Investigate with AI"}</span>
+            </a>
+            <a
+              href={`/incidents/${incident.id}`}
+              className="inline-flex items-center gap-1.5 border border-blue-500/40 bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-400 hover:bg-blue-500/20 transition-colors"
+            >
+              <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span>Root-Cause Analysis</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>

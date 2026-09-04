@@ -322,12 +322,37 @@ The AI Diagnostic Agent is strictly **advisory**:
 - `POST /api/v1/incidents/{incidentId}/diagnose`: Triggers an AI investigation on demand.
 - `GET /api/v1/incidents/{incidentId}/diagnosis`: Retrieves the latest existing diagnosis without re-invoking the LLM.
 
+## Module 7: Root-Cause Investigation Architecture
+
+Module 7 builds on Module 6 by formalizing a structured **hypothesis evaluation and evidence comparison** engine:
+$$\text{Incident} \longrightarrow \text{Telemetry Evidence} \longrightarrow \text{Segment Analysis} \longrightarrow \text{Competing Hypotheses} \longrightarrow \text{Evidence Comparison} \longrightarrow \text{Strongest Root Cause} \longrightarrow \text{Confidence} \longrightarrow \text{Investigation Report}$$
+
+### 1. Competing Hypotheses Formulation
+Rather than outputting a single unexamined deduction, the Root-Cause Investigation Agent formulates 2 to 4 competing hypotheses across operational dimensions:
+- **Downstream Bank / Gateway switch failure**: Investigates specific bank + payment method concentrations.
+- **Merchant Integration / Credentials failure**: Evaluates whether failures are 100% isolated to a single merchant across multiple banks.
+- **Protocol / National Switch Outage**: Evaluates whether failures affect all banks utilizing a given protocol (e.g. NPCI UPI central switch).
+- **Stochastic Baseline Noise**: Evaluates whether fluctuations represent diffuse background variance without statistically significant concentration.
+
+### 2. Fact vs Inference Telemetry Corroboration
+The investigation strictly separates:
+- **Observed Facts**: Deterministic metrics directly present in telemetry (e.g., error code distributions, baseline vs current failure rates, merchant volume breakdowns).
+- **AI Inference**: Diagnostic deduction ranking which hypothesis is corroborated or refuted by the facts.
+
+### 3. Investigation Persistence (`incident_investigations` table)
+- Persisted in `incident_investigations` with timestamp, provider, model, summary, strongest root cause, overall confidence, affected segment, reasoning, uncertainty, human review recommendations, and serialized JSON arrays of evaluated hypotheses.
+- Statuses: `REQUESTED`, `COMPLETED`, `FAILED`, `INVALID_RESPONSE`.
+
+### 4. Investigation Endpoints
+- `POST /api/v1/incidents/{incidentId}/investigate`: Triggers deep root-cause hypothesis evaluation on demand.
+- `GET /api/v1/incidents/{incidentId}/investigation`: Retrieves the latest persisted root-cause investigation report without re-invoking the LLM.
+
 ## Future layers (not implemented yet)
 
 These packages exist as placeholders (`package-info.java`) so future modules slot in cleanly:
 
-- **`policy/`** — deterministic guardrails that validate whatever the AI layer recommends before anything is allowed to execute. This is the gate in Detect → Diagnose → Quantify → Decide → **Gate** → Recover → Audit.
-- **`recovery/`** — simulated execution of an approved recovery strategy, and the resulting money-recovered accounting. Will report against `estimatedRecoverableRevenue` (Module 4) as its baseline.
-- **`audit/`** — a complete, queryable record of every detection, diagnosis, decision, policy check, and recovery action, for after-the-fact review and evaluation.
+- **`recovery/`** (Module 8 & 10) — AI-generated bounded recovery strategy recommendations and simulated recovery execution.
+- **`policy/`** (Module 9) — deterministic guardrails that validate whatever the AI layer recommends before anything is allowed to execute. This is the gate in Detect → Diagnose → Quantify → Decide → **Gate** → Recover → Audit.
+- **`audit/`** (Module 11) — a complete, queryable record of every detection, diagnosis, decision, policy check, and recovery action, for after-the-fact review and evaluation.
 
 See `development-roadmap.md` for the full module sequence.

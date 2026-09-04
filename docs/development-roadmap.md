@@ -12,7 +12,7 @@ document tracks the planned sequence and what "done" means for each one.
 | 4 | Monitoring & Incident Detection | **Done** | Deterministic baseline-vs-current comparison, segment analysis, revenue-at-risk, confidence scoring, and Incident persistence with duplicate suppression. |
 | 5 | Revenue-at-Risk Engine | **Done** | Rigorous financial-impact engine: recoverability classification, batch reconstruction, per-segment breakdowns, and structured evidence for the AI module. |
 | 6 | AI Diagnostic Agent | **Done** | Advisory AI Diagnostic Agent analyzing structured deterministic telemetry, producing bounded recommendations with strict hallucination and policy guardrails. |
-| 7 | Root-Cause Investigation | Planned | Deeper diagnostic tooling and evidence gathering behind the AI agent's conclusions. |
+| 7 | Root-Cause Investigation | **Done** | Deep root-cause investigation systematically comparing competing hypotheses against deterministic telemetry, evaluating corroborating and counter-indicative evidence. |
 | 8 | Recovery Strategy Engine | Planned | AI-generated, bounded recovery recommendations. |
 | 9 | Policy / Guardrail Engine | Planned | Deterministic validation gate that recovery recommendations must pass before execution. |
 | 10 | Recovery Execution Simulator | Planned | Simulated execution of an approved recovery strategy and resulting recovered revenue. |
@@ -22,7 +22,7 @@ document tracks the planned sequence and what "done" means for each one.
 | 14 | Final Command Center | Planned | Consolidated operational view surfacing AI diagnosis, policy gates, recovery simulator, and audit trail. |
 | 15 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 6)
+## Current state (Module 7)
 
 Implemented in Module 0:
 
@@ -177,14 +177,25 @@ Added in Module 6:
 - `AiDiagnosticController` - `POST /api/v1/incidents/{incidentId}/diagnose` (on-demand trigger) and `GET /api/v1/incidents/{incidentId}/diagnosis` (retrieve latest).
 - Frontend `AiInvestigationPanel` on `/incidents/[id]` - "Investigate with AI" button, loading/analyzing state animation, root cause headline, confidence gauge, observed telemetry points, diagnostic reasoning, bounded action card, advisory recovery potential %, risk badge, human approval required gate, and prominent safety guardrail banner.
 - Active incident quick-link updated on `/dashboard`.
-- Comprehensive unit and integration test suite covering evidence generation, schema validation, malformed responses, bounds checking, scenario diagnoses, and API controller endpoints.
+Added in Module 7:
+
+- `IncidentInvestigation` entity and repository (`incident_investigations` table) recording deep investigative outcomes, evaluated hypotheses, confidence metrics, and uncertainty disclaimers.
+- `RootCauseHypothesis` DTO and `IncidentInvestigationResponse` representing ranked competing theories (`STRONGEST`, `LIKELY`, `UNLIKELY`, `REFUTED`, `INCONCLUSIVE`).
+- `AiProvider.generateInvestigationJson` interface extension implemented across `MockAiProvider` (deterministic scenario hypotheses for Bank X UPI, Merchant degradation, and diffuse noise) and `GeminiAiProvider` (live LLM with "DATA, NOT INSTRUCTIONS" prompt injection defense).
+- `IncidentInvestigationService` orchestrating deterministic evidence compilation, hypothesis formulation, strict schema validation, bounds checks, conservative human review flags (< 0.70 confidence), and database persistence.
+- `IncidentInvestigationController` exposing `POST /api/v1/incidents/{incidentId}/investigate` and `GET /api/v1/incidents/{incidentId}/investigation`.
+- Frontend `RootCauseInvestigationPanel` on `/incidents/[id]` displaying the strongest root cause, overall confidence meter, competing hypotheses comparison cards with supporting (✓) and contradicting (✕) evidence bullets, diagnostic deduction narrative, and acknowledged uncertainty disclosures.
+- "Root-Cause Analysis" action link added to active incident hero on `/dashboard`.
+- Comprehensive unit and integration test suite covering hypothesis rankings, scenario deductions, out-of-bounds metrics, malformed responses, and controller endpoints.
 
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- Policy/guardrail validation engine (Modules 8–10 will handle recovery strategy, policy gates, and execution simulation).
-- Recovery execution (simulated), audit trail, and evaluation - so there is no "actually recovered" figure yet, only the estimate.
-- Incident lifecycle transitions beyond `DETECTED` (no resolution workflow yet).
+- Recovery Strategy Engine (Module 8).
+- Policy/guardrail validation engine (Module 9).
+- Recovery execution simulator (Module 10).
+- Audit trail (Module 11).
+- Incident lifecycle transitions beyond `DETECTED`/`INVESTIGATING` (no resolution workflow yet).
 
 ## Working agreement for future modules
 

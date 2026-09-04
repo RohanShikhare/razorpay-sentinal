@@ -7,6 +7,7 @@ import { SegmentChart } from "@/components/monitoring/SegmentChart";
 import { FinancialImpactSummary } from "@/components/financial/FinancialImpactSummary";
 import { FinancialBreakdownChart } from "@/components/financial/FinancialBreakdownChart";
 import { AiInvestigationPanel } from "@/components/ai/AiInvestigationPanel";
+import { RootCauseInvestigationPanel } from "@/components/investigation/RootCauseInvestigationPanel";
 import { fetchIncidentDetail, type IncidentDetail } from "@/lib/monitoring";
 import { fetchFinancialBreakdown, fetchFinancialImpact, type FinancialBreakdown, type FinancialImpact } from "@/lib/financial";
 
@@ -84,7 +85,7 @@ export default function IncidentDetailPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="font-mono text-xs text-signal-wire">Module 3-4, 6 · Monitoring, Financial Impact &amp; AI Diagnostic Agent</p>
+      <p className="font-mono text-xs text-signal-wire">Module 3-4, 6-7 · Monitoring, Financial Impact, AI Diagnosis &amp; Root-Cause Investigation</p>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Incident #{incident.id}</h1>
         <span className="bg-signal-critical/15 px-2 py-0.5 text-xs font-semibold text-signal-critical">
@@ -104,7 +105,7 @@ export default function IncidentDetailPage() {
         <Field label="Revenue at risk" value={formatInr(incident.revenueAtRisk)} />
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8 space-y-6">
         <AiInvestigationPanel
           incidentId={incident.id}
           incident={incident}
@@ -116,6 +117,24 @@ export default function IncidentDetailPage() {
                     incident: {
                       ...prev.incident,
                       rootCause: diag.rootCause,
+                    },
+                  }
+                : prev
+            );
+          }}
+        />
+
+        <RootCauseInvestigationPanel
+          incidentId={incident.id}
+          incident={incident}
+          onInvestigated={(inv) => {
+            setDetail((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    incident: {
+                      ...prev.incident,
+                      rootCause: inv.strongestRootCause,
                     },
                   }
                 : prev

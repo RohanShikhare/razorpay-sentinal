@@ -116,6 +116,76 @@ public class GeminiAiProvider implements AiProvider {
         }
     }
 
+    @Override
+    public String generateInvestigationJson(AiEvidenceDto evidence, String diagnosisSummary, String systemInstruction) {
+        String apiKey = properties.getApiKey();
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new SentinelAiException("AI API key is not configured for provider GEMINI");
+        }
+
+        try {
+            String evidenceJson = objectMapper.writeValueAsString(evidence);
+
+            ObjectNode requestBody = objectMapper.createObjectNode();
+
+            // System instruction
+            ObjectNode sysInst = requestBody.putObject("system_instruction");
+            ArrayNode sysParts = sysInst.putArray("parts");
+            sysParts.addObject().put("text", systemInstruction);
+
+            // User message with evidence and optional prior diagnosis
+            ArrayNode contents = requestBody.putArray("contents");
+            ObjectNode userContent = contents.addObject();
+            userContent.put("role", "user");
+            ArrayNode userParts = userContent.putArray("parts");
+
+            StringBuilder promptBuilder = new StringBuilder();
+            promptBuilder.append("EVIDENCE_DATA:\n").append(evidenceJson).append("\n\n");
+            if (diagnosisSummary != null && !diagnosisSummary.isBlank()) {
+                promptBuilder.append("PRIOR_DIAGNOSIS_SUMMARY:\n").append(diagnosisSummary).append("\n\n");
+            }
+            promptBuilder.append("Please perform deep root-cause investigation and compare competing hypotheses.");
+
+            userParts.addObject().put("text", promptBuilder.toString());
+
+            // Generation config with JSON output enforcement
+            ObjectNode genConfig = requestBody.putObject("generationConfig");
+            genConfig.put("temperature", properties.getTemperature());
+            genConfig.put("response_mime_type", "application/json");
+
+            String url = String.format("/v1beta/models/%s:generateContent?key=%s", properties.getModel(), apiKey);
+
+            String responseBody = restClient.post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(requestBody))
+                    .retrieve()
+                    .body(String.class);
+
+            if (responseBody == null || responseBody.isBlank()) {
+                throw new SentinelAiException("Received empty response from Gemini API");
+            }
+
+            JsonNode rootNode = objectMapper.readTree(responseBody);
+            JsonNode candidates = rootNode.path("candidates");
+            if (candidates.isMissingNode() || !candidates.isArray() || candidates.isEmpty()) {
+                throw new SentinelAiException("No candidates returned in Gemini API response");
+            }
+
+            JsonNode textNode = candidates.get(0).path("content").path("parts").get(0).path("text");
+            if (textNode.isMissingNode() || textNode.asText().isBlank()) {
+                throw new SentinelAiException("No text content found in Gemini candidate response");
+            }
+
+            return cleanJsonOutput(textNode.asText());
+        } catch (SentinelAiException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to execute Gemini AI investigation request: {}", e.getMessage());
+            throw new SentinelAiException("Gemini AI investigation request failed: " + e.getMessage(), e);
+        }
+    }
+
     private String cleanJsonOutput(String raw) {
         String trimmed = raw.trim();
         if (trimmed.startsWith("```json")) {
