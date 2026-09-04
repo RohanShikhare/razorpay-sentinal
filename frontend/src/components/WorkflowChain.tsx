@@ -1,11 +1,12 @@
 const STAGES = [
-  { name: "Detect", note: "Deterministic incident detection" },
-  { name: "Diagnose", note: "AI root-cause analysis" },
+  { name: "Detect", note: "Anomaly detection" },
   { name: "Quantify", note: "Revenue at risk" },
-  { name: "Decide", note: "AI recovery recommendation" },
-  { name: "Gate", note: "Policy & guardrail validation" },
-  { name: "Recover", note: "Simulated recovery execution" },
-  { name: "Audit", note: "Complete audit trail" },
+  { name: "Diagnose", note: "Advisory AI diagnosis" },
+  { name: "Investigate", note: "Evidence hypothesis proof" },
+  { name: "Strategize", note: "Bounded recovery strategy" },
+  { name: "Gate", note: "12-rule policy gate" },
+  { name: "Recover", note: "Simulated execution" },
+  { name: "Audit", note: "SHA-256 audit proof" },
 ];
 
 export function WorkflowChain() {

@@ -1,4 +1,4 @@
-# Evaluation & Benchmarking Methodology (Module 13)
+# Evaluation & Benchmarking Methodology
 
 ## Razorpay Sentinel — Track 3 Revenue Recovery Benchmark
 
@@ -6,11 +6,14 @@
 
 ## 1. Executive Summary & Evaluation Purpose
 
-The **Evaluation & Benchmarking Engine (Module 13)** provides a deterministic, rigorous, reproducible framework to answer the core question of the Razorpay AI Revenue Recovery track:
+The **Evaluation & Benchmarking Engine** provides a deterministic, rigorous, reproducible framework to answer the core question of the Razorpay AI Revenue Recovery track:
 
 > **"How much revenue did Sentinel recover, how efficiently did it recover it, how accurately did it diagnose incidents, and did it remain strictly safe while doing so?"**
 
-Rather than relying on qualitative assertions or ad-hoc demos, Module 13 subjects Sentinel to controlled synthetic payment scenarios with known **ground truth**, comparing Sentinel against two baseline models (**Baseline A: No Recovery / Status Quo** and **Baseline B: Naive Retry**).
+> [!NOTE]
+> **Synthetic Benchmark Distinction**: All benchmark results described in this document are generated using deterministic synthetic payment datasets (default seed = 42) in a controlled test environment. They do NOT represent live production Razorpay customer data or real monetary transactions.
+
+Rather than relying on qualitative assertions or ad-hoc demos, the Evaluation Engine subjects Sentinel to controlled synthetic payment scenarios with known **ground truth**, comparing Sentinel against two baseline models (**Baseline A: No Recovery / Status Quo** and **Baseline B: Naive Retry**).
 
 ---
 
@@ -40,7 +43,7 @@ Persisted Evaluation Run & Interactive Benchmark Console (/evaluation)
 
 ## 3. Evaluation Scenario Catalog & Ground Truth
 
-Module 13 defines 4 core scenario families with explicit ground truths:
+The evaluator defines 4 core scenario families with explicit ground truths:
 
 | Scenario Type | Scenario Name | Ground Truth Description | Expected Root Cause Keywords | Expected Safe Strategies | Expected Policy Decision | Expected Execution Status |
 |---|---|---|---|---|---|---|
@@ -56,8 +59,8 @@ Module 13 defines 4 core scenario families with explicit ground truths:
 The evaluator measures **4 key operational dimensions** comprising 25+ metrics:
 
 ### Dimension 1: Financial Effectiveness
-- **Total Revenue at Risk ($\text{TRR}$)**: Sum of transaction amounts at risk during detected incidents.
-- **Total Recoverable Revenue ($\text{TRecR}$)**: Total revenue of failed transactions eligible for recovery actions.
+- **Total Revenue at Risk ($\text{TRR}$)**: Sum of transaction amounts at risk during detected incidents (exposure).
+- **Total Recoverable Revenue ($\text{TRecR}$)**: Total revenue of failed transactions eligible for recovery actions (authoritative cap).
 - **Sentinel Recovered Revenue ($\text{SRR}$)**: Total revenue successfully recovered by Sentinel via policy-governed actions.
 - **Overall Recovery Rate ($\text{RR}$)**:
   $$\text{Recovery Rate (\%)} = \frac{\text{SRR}}{\max(1.0, \text{TRecR})} \times 100$$

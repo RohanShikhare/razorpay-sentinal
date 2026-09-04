@@ -14,7 +14,7 @@ const MODULES = [
   { name: "Safety & Failure Scenarios", state: "done" as const },
   { name: "Evaluation & Benchmarking", state: "done" as const },
   { name: "Final Command Center", state: "done" as const },
-  { name: "Submission Package", state: "queued" as const },
+  { name: "Submission Package", state: "done" as const },
 ];
 
 
@@ -32,7 +32,7 @@ export function ModuleStatus() {
   return (
     <div className="border border-base-border bg-base-panel">
       <div className="border-b border-base-border px-4 py-3">
-        <span className="text-sm font-medium text-ink">Module progress</span>
+        <span className="text-sm font-medium text-ink">Subsystem Status</span>
       </div>
       <ul className="divide-y divide-base-border">
         {MODULES.map((module) => (
@@ -45,7 +45,7 @@ export function ModuleStatus() {
         ))}
       </ul>
       <div className="border-t border-base-border px-4 py-2.5 text-xs text-ink-faint">
-        16 modules planned in total — see docs/development-roadmap.md
+        All core subsystems operational — see docs/architecture.md
       </div>
     </div>
   );
