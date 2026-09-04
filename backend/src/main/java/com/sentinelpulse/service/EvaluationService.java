@@ -394,7 +394,7 @@ public class EvaluationService {
                 totalFailedTx += executionResponse.failedRecoveries();
                 totalSkippedTx += executionResponse.skippedTransactions();
 
-                if (executionResponse.metrics() != null && executionResponse.metrics().averageAttemptsPerRecovery() != null) {
+                if (executionResponse.metrics() != null) {
                     totalAttemptsSum += executionResponse.metrics().averageAttemptsPerRecovery();
                 }
 
@@ -774,7 +774,7 @@ public class EvaluationService {
             List<Payment> payments = new ArrayList<>();
             for (int i = 0; i < 40; i++) {
                 PaymentStatus status = (i % 25 == 0) ? PaymentStatus.FAILED : PaymentStatus.SUCCESS;
-                ErrorCode err = status == PaymentStatus.FAILED ? ErrorCode.NETWORK_ERROR : null;
+                ErrorCode err = status == PaymentStatus.FAILED ? ErrorCode.NETWORK_ERROR : ErrorCode.NONE;
                 payments.add(createTestPayment(
                         Banks.BANK_B,
                         PaymentMethod.CARD,
@@ -807,7 +807,7 @@ public class EvaluationService {
 
         for (int i = 0; i < paymentCount; i++) {
             PaymentStatus status = (i < paymentCount * 0.8) ? PaymentStatus.FAILED : PaymentStatus.SUCCESS;
-            ErrorCode err = null;
+            ErrorCode err = ErrorCode.NONE;
             if (status == PaymentStatus.FAILED) {
                 if (scenarioType == EvaluationScenarioType.MERCHANT_SPECIFIC_DEGRADATION) {
                     err = ErrorCode.ISSUER_DECLINED;
@@ -854,7 +854,9 @@ public class EvaluationService {
                 targetMerchant,
                 60
         );
-        return incidentRepository.save(incident);
+        incident = incidentRepository.save(incident);
+        auditEventService.recordIncidentDetected(incident);
+        return incident;
     }
 
     private Payment createTestPayment(String bank, PaymentMethod method, String merchantId,

@@ -7,14 +7,15 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 12 — Safety & Failure Scenarios.** Foundation, synthetic payment
+> **Status: Module 13 — Evaluation & Benchmarking Engine.** Foundation, synthetic payment
 > dataset, incident simulator, monitoring & detection engine, financial impact
 > engine, command center dashboard, advisory AI Diagnostic Agent, deep
 > Root-Cause Investigation, bounded Recovery Strategy Engine, deterministic
 > Policy Gate & Guardrail Engine, bounded Recovery Execution Simulator, tamper-evident
-> Audit Trail & Decision History layer, and controlled Safety & Failure Scenarios /
-> Resilience Validation Lab are fully implemented and validated.
-> Evaluation & Benchmarking (Module 13) described below
+> Audit Trail & Decision History layer, controlled Safety & Failure Scenarios /
+> Resilience Validation Lab, and empirical Evaluation & Benchmarking Engine
+> are fully implemented and validated.
+> Final Command Center (Module 14) described below
 > are **not implemented yet**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
@@ -953,9 +954,119 @@ POST /api/v1/safety/scenarios/run-all
 
 Executes all 12 scenarios sequentially and returns the complete safety validation suite results.
 
+## Evaluation & Benchmarking API (Module 13)
+
+The Evaluation & Benchmarking Engine provides deterministic, seeded multi-scenario evaluations comparing Sentinel against standard baselines (**Baseline A: No Recovery** and **Baseline B: Naive Retry**).
+
+### List evaluation scenarios
+
+```
+GET /api/v1/evaluation/scenarios
+```
+
+Returns supported benchmark scenario descriptors, their expected ground truth root-causes, safe recovery strategies, and policy gate decisions.
+
+### Run evaluation benchmark
+
+```
+POST /api/v1/evaluation/run
+```
+
+Runs a multi-scenario seeded benchmark evaluation with optional baseline comparisons.
+
+Request body:
+```json
+{
+  "scenarioCount": 4,
+  "seed": 42,
+  "includeBaseline": true
+}
+```
+
+Example response:
+```json
+{
+  "runId": "EVAL-EA945607",
+  "evaluatorVersion": "EVAL_V1",
+  "scenarioCount": 4,
+  "randomSeed": 42,
+  "includeBaseline": true,
+  "durationMs": 4825,
+  "status": "COMPLETED",
+  "overallScore": 91.51,
+  "metrics": {
+    "financial": {
+      "totalRevenueAtRisk": 147350.00,
+      "totalRecoverableRevenue": 112350.00,
+      "sentinelRecoveredRevenue": 77350.00,
+      "baselineNoRecoveryRevenue": 0.00,
+      "baselineNaiveRetryRevenue": 55250.00,
+      "overallRecoveryRatePercent": 68.85,
+      "upliftVsNoRecoveryPercent": 100.00,
+      "upliftVsNaiveRetryPercent": 40.00,
+      "costBenefitRatio": 15.47,
+      "netValueAdded": 77350.00
+    },
+    "detection": {
+      "totalScenarios": 4,
+      "detectedCount": 4,
+      "detectionRatePercent": 100.00,
+      "falsePositiveCount": 0,
+      "falsePositiveRatePercent": 0.00,
+      "meanTimeToDetectMs": 142.0
+    },
+    "diagnosis": {
+      "rootCauseAccuracyPercent": 100.00,
+      "meanConfidencePercent": 91.80,
+      "investigationAccuracyPercent": 100.00
+    },
+    "strategy": {
+      "strategySafetyPrecisionPercent": 100.00,
+      "strategyAppropriatenessPercent": 100.00
+    },
+    "policy": {
+      "policyComplianceRatePercent": 100.00,
+      "approvedCount": 3,
+      "humanReviewCount": 1,
+      "rejectedCount": 0,
+      "policyBypassesCount": 0,
+      "boundViolationsCount": 0
+    },
+    "recovery": {
+      "recoverySuccessRatePercent": 100.00,
+      "meanRecoveryLatencyMs": 385.0
+    },
+    "safety": {
+      "safetyScore": 100.0,
+      "policyCompliancePercent": 100.0,
+      "zeroPolicyBypassVerified": true,
+      "zeroBoundViolationVerified": true,
+      "auditChainIntegrityPercent": 100.0
+    }
+  }
+}
+```
+
+### Get latest evaluation run
+
+```
+GET /api/v1/evaluation/latest
+```
+
+Returns the most recently completed benchmark run.
+
+### Get run details and incident breakdown
+
+```
+GET /api/v1/evaluation/runs/{runId}
+GET /api/v1/evaluation/runs/{runId}/incidents
+```
+
 ## Build verification notes
 
-- **Backend**: Complete build and test suite verified via Maven (`mvn test`). All **144 tests** across Modules 0 to 12 passed with 0 failures and 0 errors:
+- **Backend**: Complete build and test suite verified via Maven (`mvn test`). All **158 tests** across Modules 0 to 13 passed with 0 failures and 0 errors:
+  - `EvaluationControllerIntegrationTest` (3 tests)
+  - `EvaluationServiceTest` (11 tests)
   - `SafetyScenarioControllerIntegrationTest` (3 tests)
   - `SafetyScenarioServiceTest` (19 tests)
   - `AuditControllerIntegrationTest` (2 tests)
@@ -980,4 +1091,4 @@ Executes all 12 scenarios sequentially and returns the complete safety validatio
   - `SegmentAnalyzerTest` (4 tests)
   - `RazorpaySentinelApplicationTests` (1 test)
   - `HealthControllerTest` (2 tests)
-- **Frontend**: `npx tsc --noEmit` and `npm run build` executed against Next.js 14 App Router, successfully compiling all 10 static and dynamic routes (`/`, `/dashboard`, `/payments`, `/simulator`, `/monitoring`, `/incidents`, `/incidents/[id]`, `/safety`) with zero TypeScript or ESLint errors.
+- **Frontend**: `npx tsc --noEmit` and `npm run build` executed against Next.js 14 App Router, successfully compiling all 11 static and dynamic routes (`/`, `/dashboard`, `/payments`, `/simulator`, `/monitoring`, `/incidents`, `/incidents/[id]`, `/safety`, `/evaluation`) with zero TypeScript or ESLint errors.

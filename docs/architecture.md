@@ -588,11 +588,36 @@ Module 12 is a **simulation and validation layer, not a production bypass layer*
 - `POST /api/v1/safety/scenarios/{scenario}/run`: Executes a specific failure scenario and returns structured result.
 - `POST /api/v1/safety/scenarios/run-all`: Runs the entire 12-scenario test suite sequentially and returns comprehensive report.
 
+## Evaluation Layer (Module 13)
+
+Module 13 adds an empirical, multi-scenario evaluation and benchmarking engine (`evaluation/` package) to measure Sentinel's performance against ground truth and compare against standard industry baselines (**Baseline A: No Recovery = ₹0** and **Baseline B: Naive Retry**).
+
+### 1. Evaluator Architecture
+
+- Evaluator Engine Version: `EVAL_V1`.
+- Fully deterministic synthetic scenarios generated via pseudo-random seeding (`java.util.Random(seed)`).
+- End-to-end multi-incident benchmark pipeline: Data Ingestion → Incident Detection → Financial Quantification → AI Diagnosis → Root-Cause Investigation → Recovery Strategy Proposal → Policy Gate Gating → Bounded Recovery Execution → Cryptographic Audit Verification.
+- Ground truth comparison engine evaluating actual vs. expected root-cause keywords, strategy safety precision, and policy compliance.
+
+### 2. Evaluated Metric Dimensions
+
+- **Financial Recovery Effectiveness**: Total Revenue at Risk (TRR), Recoverable Revenue, Sentinel Recovered, Baseline A/B Revenue, Overall Recovery Rate %, Uplift vs Naive Retry %, Cost/Benefit Ratio, and Net Value Added.
+- **Detection & Diagnosis Accuracy**: Detection Rate %, False Positive Rate %, Mean Time to Detect (TTD ms), Root-Cause Accuracy %, Mean AI Confidence %, Investigation Hypothesis Accuracy %.
+- **Strategy & Policy Gate Precision**: Strategy Safety Precision %, Policy Compliance Rate %, Autonomous Approval Count, Human Review Escalation Count, Zero Policy Bypasses Verified, Zero Bound Violations Verified.
+- **Recovery Execution & Safety**: Recovery Success Rate %, Mean Recovery Latency ms, Total Execution Attempts, Successful Attempts, 100% SHA-256 Audit Chain Cryptographic Integrity.
+
+### 3. Endpoints
+
+- `GET /api/v1/evaluation/scenarios`: Returns available benchmark scenario descriptors and ground truths.
+- `POST /api/v1/evaluation/run`: Executes a multi-scenario seeded benchmark evaluation.
+- `GET /api/v1/evaluation/latest`: Returns the most recently completed evaluation run.
+- `GET /api/v1/evaluation/runs/{runId}`: Retrieves a specific evaluation run by run ID.
+- `GET /api/v1/evaluation/runs/{runId}/incidents`: Retrieves granular per-incident evaluation breakdown.
+
 ## Future layers (not implemented yet)
 
 These packages exist as placeholders (`package-info.java`) so future modules slot in cleanly:
 
-- **`evaluation/`** (Module 13) — accuracy, recovery rate, and benchmark scoring.
 - **`command-center/`** (Module 14) — consolidated operational incident commander dashboard.
 - **`submission/`** (Module 15) — packaging, documentation, and demo scripts.
 

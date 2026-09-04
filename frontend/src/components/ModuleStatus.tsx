@@ -12,7 +12,7 @@ const MODULES = [
   { name: "Recovery Execution Simulator", state: "done" as const },
   { name: "Audit Trail & Decision History", state: "done" as const },
   { name: "Safety & Failure Scenarios", state: "done" as const },
-  { name: "Evaluation & Benchmarking", state: "queued" as const },
+  { name: "Evaluation & Benchmarking", state: "done" as const },
 ];
 
 

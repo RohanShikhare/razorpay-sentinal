@@ -18,11 +18,11 @@ document tracks the planned sequence and what "done" means for each one.
 | 10 | Recovery Execution Simulator | **Done** | Bounded recovery execution engine simulating retries obeying Module 9 policy limits, calculating actual recovered revenue with zero AI calls and circuit breakers. |
 | 11 | Audit Trail | **Done** | Complete chronological decision history and tamper-evident SHA-256 hash-chain audit layer across Modules 0–10. |
 | 12 | Safety & Failure Scenarios | **Done** | Controlled failure scenarios proving that Sentinel fails closed under AI failure, invalid schemas, policy rejections, circuit breakers, and audit tampering. |
-| 13 | Evaluation & Benchmarking | Planned | Measurable evaluation of detection accuracy, recovery effectiveness, and system behavior over time. |
+| 13 | Evaluation & Benchmarking | **Done** | Rigorous empirical benchmarking engine comparing Sentinel against Baselines A/B across financial, detection, diagnostic, strategy, and safety metrics. |
 | 14 | Final Command Center | Planned | Consolidated operational view surfacing AI diagnosis, policy gates, recovery simulator, and audit trail. |
 | 15 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 12)
+## Current state (Module 13)
 
 Implemented in Module 0:
 
@@ -281,16 +281,41 @@ Added in Module 12:
   - `POST /api/v1/safety/scenarios/{scenario}/run` (run single scenario)
   - `POST /api/v1/safety/scenarios/run-all` (run all 12 scenarios)
 - Frontend Sentinel Safety & Failure Lab on `/safety` featuring Safety Scoreboard, Category Filter tabs, Run All/Run Scenario controls, Expected vs. Observed behavior panels, and real-time validation badges.
-- Module progress indicator updated in `ModuleStatus.tsx` (Module 12: "built", Module 13: "queued").
 - Navigation bar updated with "Safety Lab" link in `lib/navigation.ts`.
 - Comprehensive unit and integration test suite (22 tests in `SafetyScenarioServiceTest` and `SafetyScenarioControllerIntegrationTest`, 100% passing) verifying all 12 failure scenarios and the 15 core safety invariants (`INVARIANT-001` through `INVARIANT-015`).
-- Total backend test suite: **144 of 144 tests passing**.
+
+Added in Module 13:
+
+- `evaluation/` package: `EvaluationScenarioType` (`BANK_X_UPI_DEGRADATION`, `MERCHANT_SPECIFIC_DEGRADATION`, `NORMAL_RANDOM_FAILURES`, `GATEWAY_TIMEOUT_DEGRADATION`), `BaselineStrategyType` (`NO_RECOVERY`, `NAIVE_RETRY`), and `EvaluationGroundTruth` mapping.
+- `EvaluationRun` JPA entity & repository (`evaluation_runs` table) persisting serialized benchmark summaries, aggregated metrics across 4 dimensions, and incident-by-incident results.
+- `EvaluationService` implementing deterministic, seeded multi-scenario benchmark evaluation with **ZERO LLM hallucinations**:
+  1. Multi-scenario synthetic degradation generation using deterministic pseudo-random seeds (`java.util.Random(seed)`).
+  2. Full pipeline execution: Ingestion → Detection → Financial Impact → AI Diagnosis → Root-Cause Investigation → Recovery Strategy → Deterministic Policy Gate → Recovery Execution Simulation → SHA-256 Audit Trail Verification.
+  3. Objective Ground Truth comparison: evaluates actual vs expected root causes, strategy safety precision, and policy gate compliance.
+  4. Comparative baseline analysis: objectively calculates uplift and net value added against Baseline A (No Recovery = ₹0) and Baseline B (Naive Retry).
+  5. 4-Dimension Metric Aggregator (`EVAL_V1`): Financial Effectiveness (TRR, Recoverable, Sentinel Recovered, Recovery Rate %, Cost/Benefit Ratio, Net Value Added), Detection & Latency (DR %, FPR %, TTD ms), Diagnosis & Strategy (Root Cause Accuracy %, Mean Confidence %, Strategy Safety Precision %, Policy Compliance %), Execution & Safety (Recovery Success Rate %, Latency ms, Zero Policy Bypasses, Zero Bound Violations, 100% SHA-256 Audit Integrity).
+- `EvaluationController` exposing REST APIs:
+  - `GET /api/v1/evaluation/scenarios` (list available benchmark scenarios and ground truths)
+  - `POST /api/v1/evaluation/run` (execute multi-scenario benchmark evaluation)
+  - `GET /api/v1/evaluation/latest` (retrieve latest evaluation run)
+  - `GET /api/v1/evaluation/runs/{runId}` (retrieve run by ID)
+  - `GET /api/v1/evaluation/runs/{runId}/incidents` (retrieve per-incident evaluation breakdown)
+- Frontend Sentinel Evaluation & Benchmarking Console on `/evaluation` featuring:
+  - Hero KPI Cards (Sentinel Score, Recovered Revenue, Recovery Rate %, Uplift vs Naive Retry, Safety Invariant Score).
+  - Interactive Benchmark Controls (Scenario Count 1-8, Random Seed for reproducibility, Compare Baselines toggle, "Run Evaluation Benchmark" button, Evaluator Version badge `EVAL_V1`).
+  - Baseline Comparison Visual Section (No Recovery ₹0 vs Naive Retry vs Sentinel Policy-Governed Recovery).
+  - 4-Quadrant Metric Breakdown Grid (Financial, Detection, Diagnosis/Strategy, Recovery/Safety).
+  - Safety Invariant Proof & Compliance Checklist (Zero Bypasses, Zero Bound Violations, Fail-Closed, SHA-256 Audit Integrity).
+  - Per-Incident Breakdown Table & Detailed Inspector Drawer.
+- Module progress indicator updated in `ModuleStatus.tsx` (Module 13: "built", Module 14: "queued").
+- Navigation bar updated with "Evaluation" link in `lib/navigation.ts`.
+- Comprehensive unit and integration test suite (14 tests in `EvaluationServiceTest` and `EvaluationControllerIntegrationTest`, 100% passing) verifying deterministic reproducibility across seeds, empty scenario handling, baseline comparisons, and multi-seed invariants.
+- Total backend test suite: **158 of 158 tests passing**.
 
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- Evaluation & Benchmarking (Module 13 - Next).
-- Final Command Center (Module 14).
+- Final Command Center (Module 14 - Next).
 - Submission package (Module 15).
 
 ## Working agreement for future modules
