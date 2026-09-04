@@ -11,5 +11,31 @@ spring:
     show-sql: false
 
 sentinel:
+  cors:
+    allowed-origins: http://localhost:3000
   payments:
     generation-window-hours: 48
+  monitoring:
+    default-window-minutes: 60
+    minimum-sample-size: 100
+    minimum-segment-sample-size: 15
+    max-window-minutes: 2880
+    thresholds:
+      minimum-increase-points: 5.0
+      low-increase-points: 5.0
+      medium-increase-points: 12.0
+      high-increase-points: 20.0
+      critical-increase-points: 30.0
+  financial:
+    recoverability-rates:
+      HIGH_RECOVERABILITY: 0.70
+      MEDIUM_RECOVERABILITY: 0.35
+      LOW_RECOVERABILITY: 0.10
+      UNKNOWN: 0.25
+  ai:
+    provider: mock
+    api-key: ""
+    model: mock-agent
+    temperature: 0.0
+    timeout-ms: 5000
+

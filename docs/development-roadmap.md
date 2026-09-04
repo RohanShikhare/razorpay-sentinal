@@ -10,20 +10,19 @@ document tracks the planned sequence and what "done" means for each one.
 | 2 | Payment Data Engine | **Done** | Synthetic payment generation, persistence, filtered/paginated query API, and an aggregate summary endpoint. |
 | 3 | Incident Simulator | **Done** | Deterministic, reproducible payment-degradation scenarios (Bank X UPI, merchant-specific, normal noise) with reset. |
 | 4 | Monitoring & Incident Detection | **Done** | Deterministic baseline-vs-current comparison, segment analysis, revenue-at-risk, confidence scoring, and Incident persistence with duplicate suppression. |
-| 5 | Revenue-at-Risk Engine | **Done** | Rigorous financial-impact engine: recoverability classification, batch reconstruction, per-segment breakdowns, and structured evidence for the future AI module. |
-| 6 | Command Center Dashboard | **Done** | Consolidated `/dashboard` operations console: KPI cards, active-incident hero, financial exposure, bank/method/error-code breakdowns, incident list, and quick simulate/detect/reset controls, with auto-refresh. |
-| 7 | AI Diagnostic Agent | Planned | AI-driven root-cause analysis of a detected incident. |
-| 8 | Root-Cause Investigation | Planned | Deeper diagnostic tooling and evidence gathering behind the AI agent's conclusions. |
-| 9 | Recovery Strategy Engine | Planned | AI-generated, bounded recovery recommendations. |
-| 10 | Policy / Guardrail Engine | Planned | Deterministic validation gate that recovery recommendations must pass before execution. |
-| 11 | Recovery Execution Simulator | Planned | Simulated execution of an approved recovery strategy and resulting recovered revenue. |
-| 12 | Audit Trail | Planned | Full, queryable record of every detection, decision, gate check, and recovery action. |
-| 13 | Safety & Failure Scenarios | Planned | Deliberate failure-mode testing: bad AI recommendations, policy rejections, escalation paths. |
-| 14 | Evaluation & Benchmarking | Planned | Measurable evaluation of detection accuracy, recovery effectiveness, and system behavior over time. |
-| 15 | Final Command Center | Planned | Will extend the Command Center Dashboard (`/dashboard`, row 6 above) once AI diagnosis, policy, recovery, and audit exist to surface — not a separate rebuild. |
-| 16 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
+| 5 | Revenue-at-Risk Engine | **Done** | Rigorous financial-impact engine: recoverability classification, batch reconstruction, per-segment breakdowns, and structured evidence for the AI module. |
+| 6 | AI Diagnostic Agent | **Done** | Advisory AI Diagnostic Agent analyzing structured deterministic telemetry, producing bounded recommendations with strict hallucination and policy guardrails. |
+| 7 | Root-Cause Investigation | Planned | Deeper diagnostic tooling and evidence gathering behind the AI agent's conclusions. |
+| 8 | Recovery Strategy Engine | Planned | AI-generated, bounded recovery recommendations. |
+| 9 | Policy / Guardrail Engine | Planned | Deterministic validation gate that recovery recommendations must pass before execution. |
+| 10 | Recovery Execution Simulator | Planned | Simulated execution of an approved recovery strategy and resulting recovered revenue. |
+| 11 | Audit Trail | Planned | Full, queryable record of every detection, decision, gate check, and recovery action. |
+| 12 | Safety & Failure Scenarios | Planned | Deliberate failure-mode testing: bad AI recommendations, policy rejections, escalation paths. |
+| 13 | Evaluation & Benchmarking | Planned | Measurable evaluation of detection accuracy, recovery effectiveness, and system behavior over time. |
+| 14 | Final Command Center | Planned | Consolidated operational view surfacing AI diagnosis, policy gates, recovery simulator, and audit trail. |
+| 15 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 5)
+## Current state (Module 6)
 
 Implemented in Module 0:
 
@@ -167,14 +166,24 @@ Added in Module 5:
   existing `/`, `/payments`, `/simulator`, `/monitoring`, and `/incidents`
   pages remain fully intact and reachable from navigation.
 
+Added in Module 6:
+
+- `ai/` package: `AiProvider` interface, `MockAiProvider` (deterministic scenario diagnoses for Bank X UPI, Merchant degradation, and Normal noise), `GeminiAiProvider` (REST client for live LLM), and `AiProviderFactory`.
+- `ControlledAction` enum (`IMMEDIATE_RETRY`, `DELAYED_RETRY`, `ALTERNATE_PAYMENT_METHOD`, `MONITOR`, `HUMAN_REVIEW`, `NO_ACTION`) — bounded actions only, avoiding uncontrolled free text.
+- `RiskLevel` (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`) and `DiagnosisStatus` (`REQUESTED`, `COMPLETED`, `FAILED`, `INVALID_RESPONSE`).
+- `AiProperties` - configurable via `sentinel.ai.*` (`AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_TEMPERATURE`, `AI_TIMEOUT_MS`).
+- `IncidentEvidenceService` - deterministic extraction and structuring of incident telemetry and Module 4 financial calculations.
+- `AiDiagnosticService` - prompt synthesis with "DATA, NOT INSTRUCTIONS" prompt injection defense, strict JSON schema validation, range checks (confidence 0-1, recovery % 0-100), conservative human approval guardrails, diagnosis persistence to `incident_diagnoses` table, and incident root cause updates.
+- `AiDiagnosticController` - `POST /api/v1/incidents/{incidentId}/diagnose` (on-demand trigger) and `GET /api/v1/incidents/{incidentId}/diagnosis` (retrieve latest).
+- Frontend `AiInvestigationPanel` on `/incidents/[id]` - "Investigate with AI" button, loading/analyzing state animation, root cause headline, confidence gauge, observed telemetry points, diagnostic reasoning, bounded action card, advisory recovery potential %, risk badge, human approval required gate, and prominent safety guardrail banner.
+- Active incident quick-link updated on `/dashboard`.
+- Comprehensive unit and integration test suite covering evidence generation, schema validation, malformed responses, bounds checking, scenario diagnoses, and API controller endpoints.
+
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- AI root-cause diagnosis and recovery recommendation (this module's
-  detector never guesses `rootCause` - see `docs/architecture.md`).
-- Policy/guardrail validation.
-- Recovery execution (simulated), audit trail, and evaluation - so there is
-  no "actually recovered" figure yet, only the estimate.
+- Policy/guardrail validation engine (Modules 8–10 will handle recovery strategy, policy gates, and execution simulation).
+- Recovery execution (simulated), audit trail, and evaluation - so there is no "actually recovered" figure yet, only the estimate.
 - Incident lifecycle transitions beyond `DETECTED` (no resolution workflow yet).
 
 ## Working agreement for future modules

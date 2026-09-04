@@ -286,30 +286,48 @@ lifecycle (investigation, recovery, resolution, escalation) is deliberately
 unimplemented scaffolding for later modules, present now so the schema
 doesn't need to change when they land.
 
+## Module 6: AI Diagnostic Agent Architecture
+
+Module 6 introduces the AI Diagnostic Agent adhering to the strict architectural principle:
+**Detect → Evidence → AI Diagnosis → Recommendation → Policy Gate → Recovery**
+
+### 1. Strict Advisory Boundary
+The AI Diagnostic Agent is strictly **advisory**:
+- Receives structured, deterministic telemetry evidence from `IncidentEvidenceService` (Module 4).
+- Synthesizes an explanatory root cause, diagnostic reasoning, confidence score, and bounded action recommendation.
+- **NEVER** executes payments, retries transactions, modifies payment records, triggers recovery, or bypasses policy gates.
+- **NEVER** overrides deterministic financial numbers (`revenueAtRisk`, `estimatedRecoverableRevenue`, `nonRecoverableRevenue`, `affectedTransactionValue`).
+- **NEVER** queries the database directly or invents hallucinated data values.
+
+### 2. Provider Abstraction (`com.sentinelpulse.ai`)
+- `AiProvider`: Core interface for evaluating structured telemetry evidence.
+- `MockAiProvider`: Deterministic, zero-dependency provider for local development, CI/CD, and automated tests. Correctly attributes root cause and bounded actions for Bank X UPI degradation, merchant degradation, and normal statistical noise without requiring external network calls or API keys.
+- `GeminiAiProvider`: Production REST client using Spring Boot's built-in `RestClient` for direct interaction with Google Gemini API models (`gemini-1.5-flash`, etc.).
+- `AiProviderFactory`: Automatically wires the active provider based on `sentinel.ai.provider` (`mock` or `gemini`).
+
+### 3. Hallucination & Safety Guardrails
+- **Prompt Injection Defense**: All telemetry fields and merchant identifiers are treated strictly as **DATA, NOT INSTRUCTIONS**.
+- **Strict Bounded Schema**: The response is validated against strict domain types:
+  - `ControlledAction`: `IMMEDIATE_RETRY`, `DELAYED_RETRY`, `ALTERNATE_PAYMENT_METHOD`, `MONITOR`, `HUMAN_REVIEW`, `NO_ACTION`. Uncontrolled strings are strictly rejected.
+  - `RiskLevel`: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
+  - `confidence`: Verified strictly between `0.0` and `1.0`.
+  - `estimatedRecoveryPercentage`: Verified strictly between `0` and `100`.
+- **Conservative Human Approval Gate**: `requiresHumanApproval` is enforced if risk is HIGH/CRITICAL or confidence is low, signaling that human or policy authorization is required before downstream recovery.
+
+### 4. Diagnosis Persistence (`incident_diagnoses` table)
+- Each diagnosis is persisted in `incident_diagnoses` with timestamp, provider, model, root cause, reasoning, evidence points, recommended action, advisory recovery %, risk level, human approval flag, and status (`REQUESTED`, `COMPLETED`, `FAILED`, `INVALID_RESPONSE`).
+- Successfully completed diagnoses update `incidents.root_cause` and transition the incident status to `INVESTIGATING`.
+
+### 5. API Endpoints
+- `POST /api/v1/incidents/{incidentId}/diagnose`: Triggers an AI investigation on demand.
+- `GET /api/v1/incidents/{incidentId}/diagnosis`: Retrieves the latest existing diagnosis without re-invoking the LLM.
+
 ## Future layers (not implemented yet)
 
-These packages exist as empty, documented placeholders (`package-info.java`)
-so later modules slot in without restructuring the project. `monitoring/`
-graduated from placeholder to implemented in Module 3, and the standalone
-`financial/` package (Module 4) was added the same way — the remaining
-placeholders are still ahead:
+These packages exist as placeholders (`package-info.java`) so future modules slot in cleanly:
 
-- **`ai/`** — the AI layer. Root-cause analysis over a detected incident, and
-  a bounded recovery recommendation. This is where an LLM call will live,
-  isolated behind a service interface so the rest of the system doesn't
-  depend on a specific provider. Will read `Incident` rows Module 3 produces
-  plus the structured evidence `FinancialImpactService.getEvidence`
-  (Module 4) already packages for it, and write to `Incident.rootCause`,
-  which the detector deliberately never touches.
-- **`policy/`** — deterministic guardrails that validate whatever the AI
-  layer recommends before anything is allowed to execute. This is the gate
-  in Detect → Diagnose → Quantify → Decide → **Gate** → Recover → Audit, and
-  it is intentionally *not* AI — it's rules a human can read and trust.
-- **`recovery/`** — simulated execution of an approved recovery strategy,
-  and the resulting money-recovered accounting. Will report against
-  `estimatedRecoverableRevenue` (Module 4) as its baseline.
-- **`audit/`** — a complete, queryable record of every detection, diagnosis,
-  decision, policy check, and recovery action, for after-the-fact review and
-  evaluation.
+- **`policy/`** — deterministic guardrails that validate whatever the AI layer recommends before anything is allowed to execute. This is the gate in Detect → Diagnose → Quantify → Decide → **Gate** → Recover → Audit.
+- **`recovery/`** — simulated execution of an approved recovery strategy, and the resulting money-recovered accounting. Will report against `estimatedRecoverableRevenue` (Module 4) as its baseline.
+- **`audit/`** — a complete, queryable record of every detection, diagnosis, decision, policy check, and recovery action, for after-the-fact review and evaluation.
 
 See `development-roadmap.md` for the full module sequence.

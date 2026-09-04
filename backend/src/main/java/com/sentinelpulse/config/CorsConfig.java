@@ -16,7 +16,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
-    @Value("${sentinel.cors.allowed-origins}")
+    @Value("${sentinel.cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
 
     @Override

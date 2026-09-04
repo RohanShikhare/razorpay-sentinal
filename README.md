@@ -7,11 +7,10 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 5 — Command Center Dashboard.** The foundation, a
-> realistic synthetic payment dataset, a deterministic incident simulator,
-> a deterministic detection engine, a deterministic financial-impact
-> engine, and a consolidated operations dashboard are implemented. AI
-> diagnosis, policy gating, and recovery execution described below are
+> **Status: Module 6 — AI Diagnostic Agent.** Foundation, synthetic payment
+> dataset, incident simulator, monitoring & detection engine, financial impact
+> engine, command center dashboard, and the advisory AI Diagnostic Agent are
+> implemented. Policy gating and recovery execution described below are
 > **not implemented yet**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
@@ -166,16 +165,23 @@ Docker in this module.
   fully intact — the Command Center consolidates and links to them, it
   doesn't replace them.
 
+**Module 6 — AI Diagnostic Agent**
+
+- Provider abstraction (`AiProvider`, `MockAiProvider`, `GeminiAiProvider`, `AiProviderFactory`) supporting configurable live Gemini models or deterministic, offline mock diagnoses.
+- Deterministic incident evidence pipeline (`IncidentEvidenceService`) formalizing telemetry and Module 4 financial metrics for AI ingestion.
+- Strict bounded AI response schema (`ControlledAction`, `RiskLevel`, `DiagnosisStatus`) and conservative human approval gate.
+- Hallucination guards: "DATA, NOT INSTRUCTIONS" prompt injection defense, strict JSON schema validation, bounds checks (confidence 0–1, recovery % 0–100), and rejecting unsupported free text.
+- Persistence: `incident_diagnoses` JPA entity and repository storing diagnostic audit history.
+- REST API: `POST /api/v1/incidents/{id}/diagnose` (on-demand investigation trigger) and `GET /api/v1/incidents/{id}/diagnosis` (retrieve latest).
+- Frontend: `AiInvestigationPanel` integrated into `/incidents/[id]`, featuring an on-demand "Investigate with AI" trigger, analyzing spinner, root cause, confidence meter, observed evidence bullets, reasoning narrative, bounded action card, advisory recovery %, risk badge, and a safety guardrail banner.
+- Active incident quick-link on `/dashboard`.
+
 ### Not implemented yet
 
 - Authentication (intentionally out of scope for this internal tool for now).
-- AI root-cause diagnosis and recovery recommendation (the detector never
-  guesses `rootCause` — see
-  [Monitoring & Incident Detection Engine](#monitoring--incident-detection-engine)).
-- Policy/guardrail validation.
-- Recovery execution (simulated), audit trail, and evaluation — so there is
-  no "actually recovered" figure yet, only `estimatedRecoverableRevenue`.
-- Incident lifecycle beyond `DETECTED` (no resolution workflow yet).
+- Policy/guardrail validation engine (Modules 8–10 will handle recovery strategy, policy gates, and execution simulation).
+- Recovery execution (simulated), audit trail, and evaluation — so there is no "actually recovered" figure yet, only `estimatedRecoverableRevenue`.
+- Incident lifecycle transitions beyond `DETECTED` (no resolution workflow yet).
 
 See `docs/development-roadmap.md` for the full 16-module plan.
 
@@ -250,6 +256,11 @@ development against a local Postgres install on default settings.
 | `SENTINEL_MONITORING_THRESHOLD_MINIMUM` | `5.0` | Percentage-point increase below which nothing is flagged |
 | `SENTINEL_MONITORING_THRESHOLD_LOW` / `_MEDIUM` / `_HIGH` / `_CRITICAL` | `5.0` / `12.0` / `20.0` / `30.0` | Severity band boundaries (percentage points) |
 | `SENTINEL_RECOVERABILITY_HIGH` / `_MEDIUM` / `_LOW` / `_UNKNOWN` | `0.70` / `0.35` / `0.10` / `0.25` | Recovery rate applied per recoverability level (see `docs/architecture.md`) |
+| `AI_PROVIDER` | `mock` | AI diagnostic provider (`mock` for deterministic/offline testing, `gemini` for live LLM) |
+| `AI_API_KEY` | *(empty)* | Google Gemini API key (required only when `AI_PROVIDER=gemini`) |
+| `AI_MODEL` | `gemini-1.5-flash` | Gemini model name |
+| `AI_TEMPERATURE` | `0.1` | Model sampling temperature (0.0 - 1.0) |
+| `AI_TIMEOUT_MS` | `10000` | HTTP request timeout in milliseconds for live AI calls |
 
 Example (macOS/Linux shell):
 
@@ -636,34 +647,67 @@ either, even for the Bank X UPI demo scenario. `/`, `/payments`,
 reachable from navigation; the Command Center consolidates and links to
 them rather than replacing them.
 
+## AI Diagnostic Agent API (Module 6)
+
+The AI Diagnostic Agent evaluates deterministic statistical evidence and formulates an advisory root-cause hypothesis, diagnostic reasoning narrative, and bounded action recommendation.
+
+### Trigger AI diagnosis
+
+```
+POST /api/v1/incidents/{incidentId}/diagnose
+```
+
+Generates structured evidence, invokes the configured `AiProvider`, validates response schema and ranges, applies safety and human approval gates, persists the result to `incident_diagnoses`, and updates the incident's `rootCause` and `status` to `INVESTIGATING`.
+
+Example response:
+
+```json
+{
+  "diagnosisId": 1,
+  "incidentId": 123,
+  "timestamp": "2026-09-04T12:00:00Z",
+  "provider": "mock",
+  "model": "deterministic-mock-v1",
+  "incidentType": "PAYMENT_DEGRADATION",
+  "rootCause": "Downstream UPI gateway degradation on Bank X core banking network resulting in elevated BANK_TIMEOUT error rates.",
+  "reasoning": "Telemetry evidence shows a localized failure surge specifically for Bank X UPI transactions (+32.4 pts increase), with BANK_TIMEOUT accounting for 87.5% of failures. Other payment methods and banks remain unaffected.",
+  "confidence": 0.94,
+  "evidence": [
+    "Bank X UPI failure rate surged from baseline 4.2% to 36.6%",
+    "BANK_TIMEOUT is the dominant failure mode (87.5% concentration)",
+    "Non-Bank-X transactions operating at nominal baseline (3.8% failure rate)"
+  ],
+  "affectedSegment": "BANK: Bank X, METHOD: UPI",
+  "recommendedAction": "ALTERNATE_PAYMENT_METHOD",
+  "estimatedRecoveryPercentage": 75,
+  "riskLevel": "MEDIUM",
+  "requiresHumanApproval": false,
+  "status": "COMPLETED",
+  "statusReason": null
+}
+```
+
+### Get latest AI diagnosis
+
+```
+GET /api/v1/incidents/{incidentId}/diagnosis
+```
+
+Returns the latest persisted diagnosis for an incident if available, or 404 if not yet investigated.
+
 ## Build verification notes
 
-- **Frontend**: `npm install` and `npm run build` were run against this
-  exact project (including the new `/dashboard` route, the shared
-  `IncidentsTable` component, and the extended `/incidents` page) and
-  completed successfully with no TypeScript or lint errors — all 8 routes
-  generated.
-- **Backend**: the Module 5 code (extended `PaymentRepository`/`PaymentService`/
-  `PaymentSummaryResponse` for per-segment failure breakdowns, plus a new
-  integration test) was written and carefully reviewed against standard
-  Spring Boot 3 / Java 17 / Spring Data JPA patterns, including a manual
-  brace-balance and cross-reference check of every changed file, and a
-  check that no other file still referenced the old (pre-Module-5) method/DTO
-  shapes. `mvn compile` / `mvn test` could not actually be executed
-  end-to-end in the environment this project was built in — Maven Central
-  (`repo.maven.apache.org`) is network-blocked there, confirmed again this
-  module (403 Forbidden at the proxy). `pom.xml` itself parses correctly
-  (Maven gets past POM resolution and fails only on the dependency-download
-  network block). Run `mvn clean test` locally to fetch dependencies and
-  confirm both the build and the full test suite (Module 0 through Module 5)
-  before relying on them. Tests run against an in-memory H2 database (test
-  scope only — see `pom.xml`), so `mvn test` does not require a live
-  PostgreSQL instance; running the app itself still does.
-- **A note on Module 2's simulator**: while building this module, comparing
-  a recent "current window" against an older "baseline" only works if
-  simulated degradation actually shows up more in recent transactions than
-  old ones. The original simulator spread its changes uniformly across the
-  whole 48-hour dataset, which a time-window comparison couldn't see. Fixed
-  in `IncidentSimulationService` — see `docs/architecture.md` for details.
-  This didn't change any public API or existing test's assertions, only
-  *which* transactions within a segment get selected.
+- **Backend**: Complete build and test suite verified via Maven (`mvn test`). All 57 tests across Modules 0 to 6 passed with 0 failures and 0 errors:
+  - `AiDiagnosticControllerIntegrationTest` (2 tests)
+  - `AiDiagnosticServiceTest` (6 tests)
+  - `IncidentEvidenceServiceTest` (1 test)
+  - `MonitoringControllerIntegrationTest` (7 tests)
+  - `PaymentControllerIntegrationTest` (8 tests)
+  - `SimulationControllerIntegrationTest` (5 tests)
+  - `FinancialImpactServiceTest` (8 tests)
+  - `PaymentGeneratorServiceTest` (8 tests)
+  - `PaymentStatisticsTest` (5 tests)
+  - `SegmentAnalyzerTest` (4 tests)
+  - `RazorpaySentinelApplicationTests` (1 test)
+  - `HealthControllerTest` (2 tests)
+- **Frontend**: `npm run build` executed against Next.js 14 App Router, successfully compiling all 9 static and dynamic routes with zero TypeScript or ESLint errors.

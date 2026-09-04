@@ -4,7 +4,9 @@ const MODULES = [
   { name: "Incident Simulator", state: "done" as const },
   { name: "Monitoring & Incident Detection", state: "done" as const },
   { name: "Revenue-at-Risk & Financial Impact", state: "done" as const },
-  { name: "Command Center Dashboard", state: "queued" as const },
+  { name: "Command Center Dashboard", state: "done" as const },
+  { name: "AI Diagnostic Agent", state: "done" as const },
+  { name: "Root-Cause Investigation", state: "queued" as const },
 ];
 
 const STATE_LABEL: Record<"done" | "queued", string> = {

@@ -6,6 +6,7 @@ import { FailureRateComparisonChart } from "@/components/monitoring/FailureRateC
 import { SegmentChart } from "@/components/monitoring/SegmentChart";
 import { FinancialImpactSummary } from "@/components/financial/FinancialImpactSummary";
 import { FinancialBreakdownChart } from "@/components/financial/FinancialBreakdownChart";
+import { AiInvestigationPanel } from "@/components/ai/AiInvestigationPanel";
 import { fetchIncidentDetail, type IncidentDetail } from "@/lib/monitoring";
 import { fetchFinancialBreakdown, fetchFinancialImpact, type FinancialBreakdown, type FinancialImpact } from "@/lib/financial";
 
@@ -83,7 +84,7 @@ export default function IncidentDetailPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="font-mono text-xs text-signal-wire">Module 3-4 · Monitoring, Detection &amp; Financial Impact</p>
+      <p className="font-mono text-xs text-signal-wire">Module 3-4, 6 · Monitoring, Financial Impact &amp; AI Diagnostic Agent</p>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Incident #{incident.id}</h1>
         <span className="bg-signal-critical/15 px-2 py-0.5 text-xs font-semibold text-signal-critical">
@@ -103,15 +104,24 @@ export default function IncidentDetailPage() {
         <Field label="Revenue at risk" value={formatInr(incident.revenueAtRisk)} />
       </div>
 
-      <div className="mt-4 border border-base-border bg-base-panel p-4">
-        <div className="text-xs text-ink-muted">Root cause</div>
-        <div className="mt-1 text-sm text-ink-faint">
-          {incident.rootCause ?? "Not yet investigated"}
-        </div>
-        <p className="mt-1 text-xs text-ink-faint">
-          Root-cause diagnosis is handled by a future AI investigation module. This deterministic
-          engine only reports what it statistically observed.
-        </p>
+      <div className="mt-8">
+        <AiInvestigationPanel
+          incidentId={incident.id}
+          incident={incident}
+          onDiagnosed={(diag) => {
+            setDetail((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    incident: {
+                      ...prev.incident,
+                      rootCause: diag.rootCause,
+                    },
+                  }
+                : prev
+            );
+          }}
+        />
       </div>
 
       {impact && (

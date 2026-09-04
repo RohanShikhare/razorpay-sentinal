@@ -216,6 +216,14 @@ public class Incident {
         return monitoringWindowMinutes;
     }
 
+    public void setRootCause(String rootCause) {
+        this.rootCause = rootCause;
+    }
+
+    public void setStatus(IncidentStatus status) {
+        this.status = status;
+    }
+
     /**
      * Refreshes an existing incident with a newer detection reading of the
      * same underlying condition, instead of creating a duplicate row. See

@@ -79,9 +79,22 @@ export function ActiveIncidentHero({ incident, impact }: { incident: Incident; i
           <Field label="Non-recoverable" value={impact ? formatInr(impact.nonRecoverableRevenue) : "—"} />
         </div>
 
-        <div className="mt-4 border-t border-signal-critical/20 pt-3">
-          <div className="text-xs text-ink-muted">Root cause</div>
-          <div className="mt-0.5 text-sm text-ink-faint">Not yet investigated</div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-signal-critical/20 pt-3">
+          <div>
+            <div className="text-xs text-ink-muted">Root cause (AI Investigation)</div>
+            <div className="mt-0.5 text-sm text-ink-faint">
+              {incident.rootCause ?? "Not yet investigated with AI"}
+            </div>
+          </div>
+          <a
+            href={`/incidents/${incident.id}`}
+            className="inline-flex items-center gap-1.5 border border-signal-wire/40 bg-signal-wire/10 px-3 py-1 text-xs font-semibold text-signal-wire hover:bg-signal-wire/20 transition-colors"
+          >
+            <svg className="w-3 h-3 text-signal-wire" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>{incident.rootCause ? "View AI Diagnosis" : "Investigate with AI"}</span>
+          </a>
         </div>
       </div>
     </div>

@@ -124,7 +124,11 @@ public class IncidentDetectionService {
         List<SegmentSignal> segmentSignals = SegmentAnalyzer.evaluate(
                 snapshot.baselinePayments(), snapshot.currentPayments(), properties.getMinimumSegmentSampleSize());
 
-        SegmentSignal topSegment = segmentSignals.isEmpty() ? null : segmentSignals.get(0);
+        List<SegmentSignal> actionableSignals = segmentSignals.stream()
+                .filter(s -> s.current().failed() >= 3)
+                .toList();
+
+        SegmentSignal topSegment = actionableSignals.isEmpty() ? null : actionableSignals.get(0);
         double topSegmentIncrease = topSegment != null ? topSegment.failureRateIncrease() : Double.NEGATIVE_INFINITY;
         double maxIncrease = Math.max(snapshot.globalIncrease(), topSegmentIncrease);
 
@@ -162,7 +166,7 @@ public class IncidentDetectionService {
         }
 
         double increase = maxIncrease;
-        IncidentSeverity severity = severityFor(increase, thresholds);
+        IncidentSeverity severity = severityFor(increase, thresholds, affectedCurrent);
         BigDecimal revenueAtRisk = calculateRevenueAtRisk(affectedBaseline, affectedCurrent);
         double concentrationGap = segmentDriven ? Math.max(0, topSegmentIncrease - snapshot.globalIncrease()) : 0.0;
         double confidence = computeConfidence(increase, affectedCurrent.total(), concentrationGap, thresholds);
@@ -273,17 +277,30 @@ public class IncidentDetectionService {
     // Severity, revenue at risk, confidence
     // ---------------------------------------------------------------
 
-    private IncidentSeverity severityFor(double increase, Thresholds thresholds) {
+    private IncidentSeverity severityFor(double increase, Thresholds thresholds, SegmentStats current) {
+        IncidentSeverity raw;
         if (increase >= thresholds.getCriticalIncreasePoints()) {
-            return IncidentSeverity.CRITICAL;
+            raw = IncidentSeverity.CRITICAL;
+        } else if (increase >= thresholds.getHighIncreasePoints()) {
+            raw = IncidentSeverity.HIGH;
+        } else if (increase >= thresholds.getMediumIncreasePoints()) {
+            raw = IncidentSeverity.MEDIUM;
+        } else {
+            raw = IncidentSeverity.LOW;
         }
-        if (increase >= thresholds.getHighIncreasePoints()) {
-            return IncidentSeverity.HIGH;
+
+        // On small samples, guard against false alarms from single/double random failures
+        if (raw == IncidentSeverity.CRITICAL || raw == IncidentSeverity.HIGH) {
+            if (current != null && current.failed() < 3) {
+                return IncidentSeverity.MEDIUM;
+            }
         }
-        if (increase >= thresholds.getMediumIncreasePoints()) {
-            return IncidentSeverity.MEDIUM;
+        if (raw == IncidentSeverity.CRITICAL) {
+            if (current != null && (current.total() < 15 && current.failed() < 6)) {
+                return IncidentSeverity.HIGH;
+            }
         }
-        return IncidentSeverity.LOW;
+        return raw;
     }
 
     /**

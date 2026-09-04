@@ -60,6 +60,12 @@ sentinel:
       MEDIUM_RECOVERABILITY: ${SENTINEL_RECOVERABILITY_MEDIUM:0.35}
       LOW_RECOVERABILITY: ${SENTINEL_RECOVERABILITY_LOW:0.10}
       UNKNOWN: ${SENTINEL_RECOVERABILITY_UNKNOWN:0.25}
+  ai:
+    provider: ${AI_PROVIDER:mock}
+    api-key: ${AI_API_KEY:}
+    model: ${AI_MODEL:gemini-1.5-flash}
+    temperature: ${AI_TEMPERATURE:0.2}
+    timeout-ms: ${AI_TIMEOUT_MS:10000}
 
 logging:
   level:
