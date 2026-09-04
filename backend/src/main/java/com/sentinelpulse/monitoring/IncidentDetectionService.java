@@ -103,13 +103,16 @@ public class IncidentDetectionService {
     private final IncidentRepository incidentRepository;
     private final MonitoringProperties properties;
     private final FinancialImpactService financialImpactService;
+    private final com.sentinelpulse.service.AuditEventService auditEventService;
 
     public IncidentDetectionService(PaymentRepository paymentRepository, IncidentRepository incidentRepository,
-                                     MonitoringProperties properties, FinancialImpactService financialImpactService) {
+                                     MonitoringProperties properties, FinancialImpactService financialImpactService,
+                                     com.sentinelpulse.service.AuditEventService auditEventService) {
         this.paymentRepository = paymentRepository;
         this.incidentRepository = incidentRepository;
         this.properties = properties;
         this.financialImpactService = financialImpactService;
+        this.auditEventService = auditEventService;
     }
 
     @Transactional
@@ -354,14 +357,18 @@ public class IncidentDetectionService {
             existing.refresh(severity, now, affectedCurrent.total(), affectedCurrent.totalValue(),
                     affectedCurrent.failedValue(), revenueAtRisk, confidence,
                     baselineFailureRate, currentFailureRate, increase);
-            return incidentRepository.save(existing);
+            Incident saved = incidentRepository.save(existing);
+            auditEventService.recordIncidentDetected(saved);
+            return saved;
         }
 
         Incident incident = new Incident(type, severity, now, startTime, affectedCurrent.total(),
                 affectedCurrent.totalValue(), affectedCurrent.failedValue(), revenueAtRisk, confidence,
                 IncidentStatus.DETECTED, baselineFailureRate, currentFailureRate, increase,
                 targetBank, targetMethod, targetMerchant, windowMinutes);
-        return incidentRepository.save(incident);
+        Incident saved = incidentRepository.save(incident);
+        auditEventService.recordIncidentDetected(saved);
+        return saved;
     }
 
     // ---------------------------------------------------------------

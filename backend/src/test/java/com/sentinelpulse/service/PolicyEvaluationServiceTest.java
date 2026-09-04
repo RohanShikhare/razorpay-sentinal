@@ -71,6 +71,9 @@ class PolicyEvaluationServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private AuditEventService auditEventService;
+
     private PolicyEvaluationService policyEvaluationService;
 
     @BeforeEach
@@ -90,7 +93,8 @@ class PolicyEvaluationServiceTest {
                 incidentInvestigationRepository,
                 incidentDiagnosisRepository,
                 policyEvaluationRepository,
-                objectMapper
+                objectMapper,
+                auditEventService
         );
     }
 

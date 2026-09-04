@@ -56,6 +56,9 @@ class AiDiagnosticServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private AuditEventService auditEventService;
+
     @BeforeEach
     void setUp() {
         incidentDiagnosisRepository.deleteAll();
@@ -160,7 +163,7 @@ class AiDiagnosticServiceTest {
         };
 
         AiDiagnosticService customService = new AiDiagnosticService(
-                incidentRepository, incidentEvidenceService, mockFactory, incidentDiagnosisRepository, objectMapper
+                incidentRepository, incidentEvidenceService, mockFactory, incidentDiagnosisRepository, objectMapper, auditEventService
         );
 
         assertThrows(SentinelAiException.class, () -> customService.diagnoseIncident(incident.getId()));
@@ -207,7 +210,7 @@ class AiDiagnosticServiceTest {
         };
 
         AiDiagnosticService customService = new AiDiagnosticService(
-                incidentRepository, incidentEvidenceService, mockFactory, incidentDiagnosisRepository, objectMapper
+                incidentRepository, incidentEvidenceService, mockFactory, incidentDiagnosisRepository, objectMapper, auditEventService
         );
 
         assertThrows(SentinelAiException.class, () -> customService.diagnoseIncident(incident.getId()));
@@ -256,7 +259,7 @@ class AiDiagnosticServiceTest {
         };
 
         AiDiagnosticService customService = new AiDiagnosticService(
-                incidentRepository, incidentEvidenceService, mockFactory, incidentDiagnosisRepository, objectMapper
+                incidentRepository, incidentEvidenceService, mockFactory, incidentDiagnosisRepository, objectMapper, auditEventService
         );
 
         assertThrows(SentinelAiException.class, () -> customService.diagnoseIncident(incident.getId()));
@@ -305,7 +308,7 @@ class AiDiagnosticServiceTest {
         };
 
         AiDiagnosticService customService = new AiDiagnosticService(
-                incidentRepository, incidentEvidenceService, mockFactory, incidentDiagnosisRepository, objectMapper
+                incidentRepository, incidentEvidenceService, mockFactory, incidentDiagnosisRepository, objectMapper, auditEventService
         );
 
         assertThrows(SentinelAiException.class, () -> customService.diagnoseIncident(incident.getId()));

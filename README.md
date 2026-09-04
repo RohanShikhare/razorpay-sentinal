@@ -7,12 +7,13 @@ diagnoses why they're happening, quantifies the revenue at risk, and proposes
 a bounded recovery strategy — one that a deterministic policy engine has to
 approve before anything is allowed to run.
 
-> **Status: Module 10 — Recovery Execution Simulator.** Foundation, synthetic payment
+> **Status: Module 11 — Audit Trail & Decision History.** Foundation, synthetic payment
 > dataset, incident simulator, monitoring & detection engine, financial impact
 > engine, command center dashboard, advisory AI Diagnostic Agent, deep
 > Root-Cause Investigation, bounded Recovery Strategy Engine, deterministic
-> Policy Gate & Guardrail Engine, and bounded Recovery Execution Simulator are fully implemented.
-> Audit trails (Module 11) described below
+> Policy Gate & Guardrail Engine, bounded Recovery Execution Simulator, and tamper-evident
+> Audit Trail & Decision History layer are fully implemented.
+> Safety scenarios (Module 12) described below
 > are **not implemented yet**. See [Current implementation status](#current-implementation-status).
 
 ## Core workflow
@@ -30,7 +31,8 @@ Detect → Diagnose → Investigate → Quantify → Decide (Module 8) → Gate 
 | Decide | Bounded recovery strategy proposal with stopping conditions (Module 8) |
 | Gate | Deterministic policy engine validates proposals against 12 hard safety rules (Module 9) |
 | Recover | Bounded recovery workflow executes retries under policy limits and measures actual recovered revenue (Module 10) |
-| Audit | Every step is recorded to a complete audit trail (Module 11 - Next) |
+| Audit | Every step, proposal, policy decision, and recovery attempt is recorded to a tamper-evident SHA-256 hash-chain audit trail (Module 11) |
+
 
 ## Technology stack
 
@@ -163,99 +165,37 @@ Docker in this module.
 - Dashboard: "Policy Gate" quick-action link in `ActiveIncidentHero`.
 - 16 comprehensive unit and integration tests covering all 12 policy rules, limit clampings, and failure scenarios.
 
-### Not implemented yet
+**Module 10 — Recovery Execution Simulator**
 
-- Authentication (intentionally out of scope for this internal tool for now).
-- Recovery execution simulator (Module 10 - Next).
-- Audit trail (Module 11).
-- Safety & failure scenario benchmark runner (Module 12).
-- Incident lifecycle transitions beyond `DETECTED`/`INVESTIGATING` (no resolution workflow yet).
+- Complete execution obedience: **AI Proposes (Modules 6–8) → Policy Decides (Module 9) → Execution Obeys Policy (Module 10)** with **ZERO LLM calls**.
+- Mandatory Policy Gate verification: independently validates Module 9 `executionAllowed == true` prior to executing any recovery.
+- Bounded simulated recovery obeying policy limits (max attempts, retry window, backoff delay).
+- Authoritative financial cap ($\text{recoveredAmount} \le \text{authoritativeRecoverableRevenue}$).
+- Failure-rate circuit breaker (>50% failure halts execution immediately).
+- Idempotency guards preventing duplicate recovery execution.
+- Persistence in `recovery_executions` and `recovery_execution_attempts` tables.
+- REST API: `POST /api/v1/incidents/{id}/recovery-execute`, `GET /api/v1/incidents/{id}/recovery-execution`, and `GET /api/v1/recovery-executions/{id}`.
+- Frontend: `RecoveryExecutionPanel` on `/incidents/[id]` with KPI grid, metrics bar, and attempt audit timeline.
 
-- `Incident` entity plus `IncidentType`, `IncidentSeverity`, `IncidentStatus`
-  enums. `rootCause` stays null — assigning one is a future AI module's job
-  (see [Monitoring & Incident Detection Engine](#monitoring--incident-detection-engine) below).
-- `PaymentStatistics` / `SegmentAnalyzer` — pure statistics helpers comparing
-  baseline vs. current-window failure rates, globally and per bank / payment
-  method / bank+method / merchant.
-- `IncidentDetectionService` — adaptive window widening, segment-level
-  detection, configurable severity thresholds, a documented revenue-at-risk
-  formula, a deterministic confidence score, and duplicate suppression.
-- `POST /api/v1/monitoring/detect`, `GET /api/v1/monitoring/summary`,
-  `GET /api/v1/incidents`, `GET /api/v1/incidents/{id}`.
-- `/monitoring` (command center) and `/incidents` + `/incidents/[id]` pages
-  in the frontend, with Recharts visualizations.
-- Unit tests for the statistics/segment helpers, plus an H2-backed
-  integration suite covering all three simulator scenarios, duplicate
-  suppression, pagination, and the monitoring summary.
-- A refinement to Module 2's simulator: degradation is now concentrated in
-  recent transactions instead of spread uniformly across the whole 48h
-  span — both more realistic and necessary for this module's time-window
-  comparison to actually see it (details in `docs/architecture.md`).
+**Module 11 — Audit Trail & Decision History**
 
-**Module 4 — Revenue-at-Risk & Financial Impact Engine**
-
-- `financial/` package: `RecoverabilityLevel`, `RecoverabilityClassifier`
-  (fixed, documented error-code → recoverability mapping), and
-  `FinancialImpactService` — reads Module 3's `revenueAtRisk` rather than
-  recomputing it (see
-  [Monitoring & Incident Detection Engine](#monitoring--incident-detection-engine)
-  and `docs/architecture.md` for why that keeps it an explainable snapshot).
-- `RecoverabilityProperties` — configurable numeric rate per recoverability
-  level (`sentinel.financial.recoverability-rates.*`).
-- Affected-batch reconstruction straight from `payments` (no duplicated
-  transaction storage) using each incident's own target criteria.
-- `GET /api/v1/incidents/{id}/financial-impact`,
-  `/financial-impact/breakdown` (by bank / payment method / error code /
-  merchant), and `/evidence` (structured, map-shaped data ready for a
-  future AI module — no LLM call happens here).
-- `GET /api/v1/monitoring/summary` extended with `estimatedRecoverableRevenue`
-  and `affectedTransactionValue`.
-- A financial-impact section on the incident detail page (summary cards,
-  a recoverable-vs-at-risk progress bar, and revenue-at-risk-by-segment
-  charts), plus the extra fields surfaced on the Monitoring command center.
-- Unit tests using hand-built, controlled-amount payments to verify the
-  formulas exactly, plus integration tests tying together simulate →
-  detect → financial-impact for the Bank X UPI and merchant scenarios.
-
-**Module 5 — Command Center Dashboard**
-
-- `/dashboard` — the new primary operations console, consolidating data
-  already exposed by Modules 1–4 (no parallel data path): KPI cards
-  (success rate vs. baseline, revenue at risk, estimated recoverable
-  revenue, active incidents, affected payments), an active-incident hero
-  card, bank/payment-method/error-code breakdown tables, a financial
-  exposure section, a recent-incidents table, and a quick-operations panel
-  (simulate/detect/reset).
-- `PaymentSummaryResponse`'s breakdowns extended with per-segment failure
-  count/value/rate (`byBank`/`byPaymentMethod`) and value/percentage-of-failures
-  (`byErrorCode`) — an additive extension of the existing Module 1 endpoint,
-  not a new aggregation service, so the dashboard's breakdown tables work
-  even in the healthy state.
-- A shared `IncidentsTable` component used by both `/incidents` and
-  `/dashboard` (no duplicate table implementation).
-- Manual refresh plus 20-second auto-refresh polling, guarded against
-  overlapping requests; proper loading/error/empty states throughout.
-- `/`, `/payments`, `/simulator`, `/monitoring`, and `/incidents` remain
-  fully intact — the Command Center consolidates and links to them, it
-  doesn't replace them.
-
-**Module 6 — AI Diagnostic Agent**
-
-- Provider abstraction (`AiProvider`, `MockAiProvider`, `GeminiAiProvider`, `AiProviderFactory`) supporting configurable live Gemini models or deterministic, offline mock diagnoses.
-- Deterministic incident evidence pipeline (`IncidentEvidenceService`) formalizing telemetry and Module 4 financial metrics for AI ingestion.
-- Strict bounded AI response schema (`ControlledAction`, `RiskLevel`, `DiagnosisStatus`) and conservative human approval gate.
-- Hallucination guards: "DATA, NOT INSTRUCTIONS" prompt injection defense, strict JSON schema validation, bounds checks (confidence 0–1, recovery % 0–100), and rejecting unsupported free text.
-- Persistence: `incident_diagnoses` JPA entity and repository storing diagnostic audit history.
-- REST API: `POST /api/v1/incidents/{id}/diagnose` (on-demand investigation trigger) and `GET /api/v1/incidents/{id}/diagnosis` (retrieve latest).
-- Frontend: `AiInvestigationPanel` integrated into `/incidents/[id]`, featuring an on-demand "Investigate with AI" trigger, analyzing spinner, root cause, confidence meter, observed evidence bullets, reasoning narrative, bounded action card, advisory recovery %, risk badge, and a safety guardrail banner.
-- Active incident quick-link on `/dashboard`.
+- Complete chronological audit log across all lifecycle events (detection, diagnosis, investigation, strategy, policy, execution, attempts, and resolution) with **ZERO LLM calls**.
+- Controlled enums for event types (`AuditEventType`), categories (`AuditEventCategory`), and actors (`AuditActorType`: `AI`, `POLICY_ENGINE`, `RECOVERY_ENGINE`, `SYSTEM`, `HUMAN_OPERATOR`, `USER`).
+- SHA-256 cryptographic tamper-evident hash-chain linking all events per incident sequentially ($H_n = \text{SHA256}(H_{n-1} + \text{payload})$).
+- Cryptographic integrity verification endpoint detecting modified records or broken pointer links.
+- Isolated non-blocking error handling ensuring audit recording never disrupts business operations.
+- Persistence in `audit_events` JPA entity and repository.
+- REST API: `GET /api/v1/incidents/{id}/audit`, `GET /api/v1/incidents/{id}/audit/verify`, `GET /api/v1/recovery-executions/{id}/audit`.
+- Frontend: `AuditTimeline` component on `/incidents/[id]` featuring Decision Chain progression bar, cryptographic verification status badge, category filters, distinct actor badges, and expandable metadata viewer.
+- Dashboard quick-link in `ActiveIncidentHero`.
 
 ### Not implemented yet
 
 - Authentication (intentionally out of scope for this internal tool for now).
-- Policy/guardrail validation engine (Modules 8–10 will handle recovery strategy, policy gates, and execution simulation).
-- Recovery execution (simulated), audit trail, and evaluation — so there is no "actually recovered" figure yet, only `estimatedRecoverableRevenue`.
-- Incident lifecycle transitions beyond `DETECTED` (no resolution workflow yet).
+- Safety & failure scenario benchmark suite (Module 12 - Next).
+- Evaluation & Benchmarking (Module 13).
+- Final Command Center (Module 14).
+- Submission package (Module 15).
 
 See `docs/development-roadmap.md` for the full 16-module plan.
 

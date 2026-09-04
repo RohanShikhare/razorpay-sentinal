@@ -16,13 +16,13 @@ document tracks the planned sequence and what "done" means for each one.
 | 8 | Recovery Strategy Engine | **Done** | Formulates bounded recovery strategy proposals with explicit stopping conditions and bounded financial estimates. |
 | 9 | Policy / Guardrail Engine | **Done** | Deterministic validation gate that evaluates recovery recommendations against 12 hard safety policies with zero AI calls. |
 | 10 | Recovery Execution Simulator | **Done** | Bounded recovery execution engine simulating retries obeying Module 9 policy limits, calculating actual recovered revenue with zero AI calls and circuit breakers. |
-| 11 | Audit Trail | Planned | Full, queryable record of every detection, decision, gate check, and recovery action. |
+| 11 | Audit Trail | **Done** | Complete chronological decision history and tamper-evident SHA-256 hash-chain audit layer across Modules 0–10. |
 | 12 | Safety & Failure Scenarios | Planned | Deliberate failure-mode testing: bad AI recommendations, policy rejections, escalation paths. |
 | 13 | Evaluation & Benchmarking | Planned | Measurable evaluation of detection accuracy, recovery effectiveness, and system behavior over time. |
 | 14 | Final Command Center | Planned | Consolidated operational view surfacing AI diagnosis, policy gates, recovery simulator, and audit trail. |
 | 15 | Submission Package | Planned | Final packaging, documentation pass, and demo preparation. |
 
-## Current state (Module 8)
+## Current state (Module 11)
 
 Implemented in Module 0:
 
@@ -239,11 +239,30 @@ Added in Module 10:
 - Module progress indicator updated in `ModuleStatus.tsx` (Module 10: "built", Module 11: "queued").
 - Comprehensive unit and integration test suite (15 tests in `RecoveryExecutionServiceTest` and `RecoveryExecutionControllerIntegrationTest`, 100% passing) verifying approved execution, limit clamping, policy rejections, circuit breakers, financial bounds, and idempotency.
 
+Added in Module 11:
+
+- `audit/` package: `AuditEventType` (controlled lifecycle event types: detection, diagnosis, investigation, strategy, policy, recovery execution, attempts, and completion), `AuditEventCategory` (`DETECTION`, `FINANCIAL`, `DIAGNOSIS`, `INVESTIGATION`, `STRATEGY`, `POLICY`, `EXECUTION`, `SYSTEM`), `AuditActorType` (`AI`, `POLICY_ENGINE`, `RECOVERY_ENGINE`, `SYSTEM`, `HUMAN_OPERATOR`, `USER`), `AuditSeverity`, and `AuditStatus`.
+- `AuditEvent` JPA entity & repository (`audit_events` table) recording complete immutable-style audit records with incident ID, execution ID, strategy ID, policy evaluation ID, actor metadata, summary, failure reasons, structured evidence JSON, structured metadata JSON, timestamp, and SHA-256 hash chaining pointers (`previousEventHash`, `eventHash`).
+- `AuditEventDto`, `AuditTimelineResponse`, and `AuditVerificationResponse` representing queryable timeline representations and cryptographic verification results.
+- `AuditEventService` implementing tamper-evident audit recording with **ZERO LLM calls**:
+  1. Automated lifecycle hooks across Modules 3 (detection/resolution), 4 (financial calculations), 6 (AI diagnosis request/complete/fail), 7 (investigation request/complete/fail), 8 (strategy proposal), 9 (policy approvals/rejections), and 10 (recovery execution requests, start, attempts, completion, circuit-breaker stops, and idempotent reuses).
+  2. SHA-256 cryptographic hash-chaining linking every event per incident sequentially.
+  3. Cryptographic integrity verification engine: detects broken previous-event pointers or payload tampering.
+  4. Decision chain aggregator: summarizes overall progression (Detected → Diagnosed → Investigated → Strategy Proposed → Policy Approved → Recovery Executed → ₹ Recovered).
+  5. Isolated non-blocking error handling: guarantees audit recording never disrupts core incident response operations.
+- `AuditController` exposing REST APIs:
+  - `GET /api/v1/incidents/{incidentId}/audit` (chronological incident audit timeline)
+  - `GET /api/v1/incidents/{incidentId}/audit/verify` (tamper-evident hash chain verification)
+  - `GET /api/v1/recovery-executions/{executionId}/audit` (execution-specific attempt timeline)
+- Frontend `AuditTimeline` on `/incidents/[id]` featuring Decision Chain progression bar, SHA-256 cryptographic integrity verification badge, category filtering, clear visual actor distinction badges (AI vs Policy vs Execution vs System vs Human), expandable metadata inspector, and SHA-256 hash previews.
+- "Audit Trail" quick-action link in `ActiveIncidentHero` on `/dashboard`.
+- Module progress indicator updated in `ModuleStatus.tsx` (Module 11: "built", Module 12: "queued").
+- Comprehensive unit and integration test suite (14 tests in `AuditEventServiceTest` and `AuditControllerIntegrationTest`, 100% passing) verifying all lifecycle hooks, chronological timelines, execution filtering, hash chaining, tampering detection, and read-only non-mutating safety.
+
 Not implemented (by design, not oversight):
 
 - Authentication of any kind.
-- Audit trail engine (Module 11 - Next).
-- Safety & failure scenario benchmark runner (Module 12).
+- Safety & failure scenario benchmark runner (Module 12 - Next).
 - Evaluation & Benchmarking (Module 13).
 - Final Command Center (Module 14).
 - Submission package (Module 15).

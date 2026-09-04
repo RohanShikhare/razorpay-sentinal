@@ -59,6 +59,9 @@ class IncidentInvestigationServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private AuditEventService auditEventService;
+
     private IncidentInvestigationService investigationService;
 
     @BeforeEach
@@ -74,7 +77,8 @@ class IncidentInvestigationServiceTest {
                 incidentEvidenceService,
                 aiProviderFactory,
                 incidentInvestigationRepository,
-                objectMapper
+                objectMapper,
+                auditEventService
         );
     }
 
@@ -202,7 +206,8 @@ class IncidentInvestigationServiceTest {
                 incidentEvidenceService,
                 mockFactory,
                 incidentInvestigationRepository,
-                objectMapper
+                objectMapper,
+                auditEventService
         );
 
         Long id = incident.getId();
@@ -263,7 +268,8 @@ class IncidentInvestigationServiceTest {
                 incidentEvidenceService,
                 mockFactory,
                 incidentInvestigationRepository,
-                objectMapper
+                objectMapper,
+                auditEventService
         );
 
         Long id = incident.getId();
@@ -311,7 +317,8 @@ class IncidentInvestigationServiceTest {
                 incidentEvidenceService,
                 mockFactory,
                 incidentInvestigationRepository,
-                objectMapper
+                objectMapper,
+                auditEventService
         );
 
         Long id = incident.getId();

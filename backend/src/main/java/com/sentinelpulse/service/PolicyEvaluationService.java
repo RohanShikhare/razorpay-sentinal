@@ -74,6 +74,7 @@ public class PolicyEvaluationService {
     private final IncidentDiagnosisRepository incidentDiagnosisRepository;
     private final PolicyEvaluationRepository policyEvaluationRepository;
     private final ObjectMapper objectMapper;
+    private final AuditEventService auditEventService;
 
     public PolicyEvaluationService(IncidentRepository incidentRepository,
                                    RecoveryStrategyRepository recoveryStrategyRepository,
@@ -82,7 +83,8 @@ public class PolicyEvaluationService {
                                    IncidentInvestigationRepository incidentInvestigationRepository,
                                    IncidentDiagnosisRepository incidentDiagnosisRepository,
                                    PolicyEvaluationRepository policyEvaluationRepository,
-                                   ObjectMapper objectMapper) {
+                                   ObjectMapper objectMapper,
+                                   AuditEventService auditEventService) {
         this.incidentRepository = incidentRepository;
         this.recoveryStrategyRepository = recoveryStrategyRepository;
         this.financialImpactService = financialImpactService;
@@ -91,6 +93,7 @@ public class PolicyEvaluationService {
         this.incidentDiagnosisRepository = incidentDiagnosisRepository;
         this.policyEvaluationRepository = policyEvaluationRepository;
         this.objectMapper = objectMapper;
+        this.auditEventService = auditEventService;
     }
 
     @Transactional
@@ -555,6 +558,8 @@ public class PolicyEvaluationService {
         );
 
         entity = policyEvaluationRepository.save(entity);
+
+        auditEventService.recordPolicyEvaluation(incident, entity);
 
         return toResponse(entity, checks, appliedLimits, violations, warnings);
     }

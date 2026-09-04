@@ -457,11 +457,70 @@ $$\text{actualRecoveredAmount} = \sum_{\text{recovered } p} p.\text{amount} \le 
 - `GET /api/v1/incidents/{incidentId}/recovery-execution`: Retrieves latest execution result.
 - `GET /api/v1/recovery-executions/{executionId}`: Retrieves specific execution details and attempts.
 
+---
+
+## Module 11: Audit Trail & Decision History Architecture
+
+Module 11 sits across the entire lifecycle as an **immutable-style, tamper-evident audit and decision history layer**:
+
+```text
+AI proposes (Modules 6, 7, 8)
+         ↓
+Policy decides (Module 9)
+         ↓
+Execution obeys policy (Module 10)
+         ↓
+Audit records what happened (Module 11)
+```
+
+### 1. Invariants & Boundaries
+- **Zero LLM Calls**: Module 11 never invokes AI models or performs decision logic.
+- **Zero Business Logic Mutations**: Audit recording is strictly observational and never modifies domain state, policies, or payment records.
+- **Fail-Safe Persistence**: Audit persistence failures are logged in isolation without blocking upstream payment, diagnostic, or recovery operations.
+- **Authoritative Anchors**: Financial amounts, policy decisions, and execution numbers are ingested directly from the authoritative source modules without recalculation.
+
+### 2. Controlled Actor & Event Model
+The audit model distinguishes distinct actors:
+- `AI`: Advisory root-cause analyses, investigations, and recovery strategy proposals (Modules 6, 7, 8).
+- `POLICY_ENGINE`: Deterministic guardrail evaluations, limit clampings, and execution authorizations (Module 9).
+- `RECOVERY_ENGINE`: Autonomous simulation executor and retry attempts (Module 10).
+- `SYSTEM`: Background monitoring and detection engines (Module 3, 4).
+- `HUMAN_OPERATOR` / `USER`: Operator commands, human reviews, manual approvals, and incident resolution.
+
+Controlled event categories:
+- `DETECTION`, `FINANCIAL`, `DIAGNOSIS`, `INVESTIGATION`, `STRATEGY`, `POLICY`, `EXECUTION`, `SYSTEM`.
+
+### 3. Cryptographic Tamper-Evidence (SHA-256 Hash Chain)
+To ensure decision history integrity, each event is cryptographically linked to the preceding event for that incident:
+$$H_0 = \text{SHA-256}(\text{"GENESIS"} \mid \text{eventId} \mid \text{incidentId} \mid \text{eventType} \mid \text{timestamp} \mid \text{actor} \mid \text{summary} \mid \text{metadata})$$
+$$H_n = \text{SHA-256}(H_{n-1} \mid \text{eventId} \mid \text{incidentId} \mid \text{eventType} \mid \text{timestamp} \mid \text{actor} \mid \text{summary} \mid \text{metadata})$$
+
+If an audit record payload is tampered with or an event is deleted/inserted out of sequence, the verification engine (`GET /api/v1/incidents/{id}/audit/verify`) detects the discrepancy and points to the broken event ID.
+
+### 4. Database Schema (`audit_events` table)
+- `id` (Primary Key, sequential ID)
+- `event_id` (Unique UUID string e.g. `AUD-...`)
+- `incident_id`, `execution_id`, `strategy_id`, `policy_evaluation_id` (Foreign entity references)
+- `event_type` (`AuditEventType` enum)
+- `event_category` (`AuditEventCategory` enum)
+- `actor_type` (`AuditActorType` enum)
+- `actor_id` (String identifier e.g. `POLICY_V1`, `Gemini-1.5-Pro`)
+- `severity` (`INFO`, `WARN`, `CRITICAL`), `status` (`SUCCESS`, `FAILURE`, `BLOCKED`, `INFO`)
+- `summary`, `reason`
+- `evidence_json`, `metadata_json` (Text payloads)
+- `timestamp` (Instant)
+- `previous_event_hash`, `event_hash` (SHA-256 hex strings)
+
+### 5. Endpoints
+- `GET /api/v1/incidents/{incidentId}/audit`: Retrieves full chronological audit timeline with decision chain summary and verification badge.
+- `GET /api/v1/incidents/{incidentId}/audit/verify`: Verifies SHA-256 hash-chain integrity.
+- `GET /api/v1/recovery-executions/{executionId}/audit`: Retrieves execution-specific timeline.
+
 ## Future layers (not implemented yet)
 
 These packages exist as placeholders (`package-info.java`) so future modules slot in cleanly:
 
-- **`audit/`** (Module 11 - Next) — a complete, queryable record of every detection, diagnosis, decision, policy check, and recovery action, for after-the-fact review and evaluation.
-- **`safety/`** (Module 12) — safety and failure scenarios benchmarking.
+- **`safety/`** (Module 12 - Next) — safety and failure scenarios benchmarking.
+- **`evaluation/`** (Module 13) — accuracy, recovery rate, and benchmark scoring.
 
 See `development-roadmap.md` for the full module sequence.

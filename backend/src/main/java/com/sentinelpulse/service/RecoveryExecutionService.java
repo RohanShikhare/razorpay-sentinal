@@ -76,6 +76,7 @@ public class RecoveryExecutionService {
     private final PaymentRepository paymentRepository;
     private final FinancialImpactService financialImpactService;
     private final ObjectMapper objectMapper;
+    private final AuditEventService auditEventService;
 
     public RecoveryExecutionService(IncidentRepository incidentRepository,
                                     RecoveryStrategyRepository recoveryStrategyRepository,
@@ -84,7 +85,8 @@ public class RecoveryExecutionService {
                                     RecoveryExecutionAttemptRepository recoveryExecutionAttemptRepository,
                                     PaymentRepository paymentRepository,
                                     FinancialImpactService financialImpactService,
-                                    ObjectMapper objectMapper) {
+                                    ObjectMapper objectMapper,
+                                    AuditEventService auditEventService) {
         this.incidentRepository = incidentRepository;
         this.recoveryStrategyRepository = recoveryStrategyRepository;
         this.policyEvaluationRepository = policyEvaluationRepository;
@@ -93,11 +95,14 @@ public class RecoveryExecutionService {
         this.paymentRepository = paymentRepository;
         this.financialImpactService = financialImpactService;
         this.objectMapper = objectMapper;
+        this.auditEventService = auditEventService;
     }
 
     @Transactional
     public RecoveryExecutionResponse executeRecovery(Long incidentId) {
         Instant startTime = Instant.now();
+
+        auditEventService.recordRecoveryExecutionRequested(incidentId);
 
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Incident not found: " + incidentId));
@@ -187,6 +192,7 @@ public class RecoveryExecutionService {
             RecoveryExecution existing = existingExecution.get();
             if (existing.getStatus() == ExecutionStatus.COMPLETED || existing.getStatus() == ExecutionStatus.STOPPED) {
                 log.info("Returning existing recovery execution #{} for strategy #{}", existing.getId(), strategy.getId());
+                auditEventService.recordIdempotentReuse(existing);
                 List<RecoveryExecutionAttempt> attempts = recoveryExecutionAttemptRepository
                         .findAllByExecutionIdOrderByAttemptNumberAsc(existing.getId());
                 return mapToResponse(existing, attempts);
@@ -265,6 +271,7 @@ public class RecoveryExecutionService {
                     "{}"
             );
             passiveExecution = recoveryExecutionRepository.save(passiveExecution);
+            auditEventService.recordRecoveryExecutionCompleted(passiveExecution);
             return mapToResponse(passiveExecution, List.of());
         }
 
@@ -294,6 +301,7 @@ public class RecoveryExecutionService {
                     "{}"
             );
             emptyExecution = recoveryExecutionRepository.save(emptyExecution);
+            auditEventService.recordRecoveryExecutionCompleted(emptyExecution);
             return mapToResponse(emptyExecution, List.of());
         }
 
@@ -334,6 +342,7 @@ public class RecoveryExecutionService {
                 "{}"
         );
         executionEntity = recoveryExecutionRepository.save(executionEntity);
+        auditEventService.recordRecoveryExecutionStarted(executionEntity);
         Long executionId = executionEntity.getId();
 
         for (Payment payment : eligiblePayments) {
@@ -369,6 +378,7 @@ public class RecoveryExecutionService {
                             delaySeconds
                     );
                     attemptEntities.add(attemptRecord);
+                    auditEventService.recordRecoveryAttempt(executionEntity, attemptRecord);
                     break;
                 }
 
@@ -391,6 +401,7 @@ public class RecoveryExecutionService {
                             delaySeconds
                     );
                     attemptEntities.add(attemptRecord);
+                    auditEventService.recordRecoveryAttempt(executionEntity, attemptRecord);
                     // Stop further retries for this payment on success
                     break;
                 } else {
@@ -406,6 +417,7 @@ public class RecoveryExecutionService {
                             delaySeconds
                     );
                     attemptEntities.add(attemptRecord);
+                    auditEventService.recordRecoveryAttempt(executionEntity, attemptRecord);
                 }
             }
 
@@ -468,6 +480,7 @@ public class RecoveryExecutionService {
         // Replace running entity with finalized entity
         recoveryExecutionRepository.delete(executionEntity);
         finalized = recoveryExecutionRepository.save(finalized);
+        auditEventService.recordRecoveryExecutionCompleted(finalized);
 
         return mapToResponse(finalized, attemptEntities);
     }
@@ -588,6 +601,7 @@ public class RecoveryExecutionService {
                 "{}"
         );
         blocked = recoveryExecutionRepository.save(blocked);
+        auditEventService.recordRecoveryExecutionBlocked(incidentId, strategyId, policyEvaluationId, stoppingReason, stoppingDetails);
         return mapToResponse(blocked, List.of());
     }
 

@@ -73,6 +73,9 @@ class RecoveryExecutionServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private AuditEventService auditEventService;
+
     private RecoveryExecutionService recoveryExecutionService;
 
     @BeforeEach
@@ -92,7 +95,8 @@ class RecoveryExecutionServiceTest {
                 recoveryExecutionAttemptRepository,
                 paymentRepository,
                 financialImpactService,
-                objectMapper
+                objectMapper,
+                auditEventService
         );
     }
 

@@ -69,6 +69,9 @@ class RecoveryStrategyServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private AuditEventService auditEventService;
+
     private RecoveryStrategyService recoveryStrategyService;
 
     @BeforeEach
@@ -87,7 +90,8 @@ class RecoveryStrategyServiceTest {
                 incidentDiagnosisRepository,
                 recoveryStrategyRepository,
                 aiProviderFactory,
-                objectMapper
+                objectMapper,
+                auditEventService
         );
     }
 
@@ -258,7 +262,7 @@ class RecoveryStrategyServiceTest {
         RecoveryStrategyService customService = new RecoveryStrategyService(
                 incidentRepository, financialImpactService, incidentEvidenceService,
                 incidentInvestigationRepository, incidentDiagnosisRepository,
-                recoveryStrategyRepository, createCustomFactory(lowConfProvider), objectMapper
+                recoveryStrategyRepository, createCustomFactory(lowConfProvider), objectMapper, auditEventService
         );
 
         RecoveryStrategyResponse response = customService.generateStrategy(incident.getId());
@@ -323,7 +327,7 @@ class RecoveryStrategyServiceTest {
         RecoveryStrategyService customService = new RecoveryStrategyService(
                 incidentRepository, financialImpactService, incidentEvidenceService,
                 incidentInvestigationRepository, incidentDiagnosisRepository,
-                recoveryStrategyRepository, createCustomFactory(highRiskProvider), objectMapper
+                recoveryStrategyRepository, createCustomFactory(highRiskProvider), objectMapper, auditEventService
         );
 
         RecoveryStrategyResponse response = customService.generateStrategy(incident.getId());
@@ -389,7 +393,7 @@ class RecoveryStrategyServiceTest {
         RecoveryStrategyService customService = new RecoveryStrategyService(
                 incidentRepository, financialImpactService, incidentEvidenceService,
                 incidentInvestigationRepository, incidentDiagnosisRepository,
-                recoveryStrategyRepository, createCustomFactory(malformedProvider), objectMapper
+                recoveryStrategyRepository, createCustomFactory(malformedProvider), objectMapper, auditEventService
         );
 
         RecoveryStrategyResponse response = customService.generateStrategy(incident.getId());
@@ -433,7 +437,7 @@ class RecoveryStrategyServiceTest {
         RecoveryStrategyService customService = new RecoveryStrategyService(
                 incidentRepository, financialImpactService, incidentEvidenceService,
                 incidentInvestigationRepository, incidentDiagnosisRepository,
-                recoveryStrategyRepository, createCustomFactory(throwingProvider), objectMapper
+                recoveryStrategyRepository, createCustomFactory(throwingProvider), objectMapper, auditEventService
         );
 
         RecoveryStrategyResponse response = customService.generateStrategy(incident.getId());
@@ -529,7 +533,7 @@ class RecoveryStrategyServiceTest {
         RecoveryStrategyService customService = new RecoveryStrategyService(
                 incidentRepository, financialImpactService, incidentEvidenceService,
                 incidentInvestigationRepository, incidentDiagnosisRepository,
-                recoveryStrategyRepository, createCustomFactory(altMethodProvider), objectMapper
+                recoveryStrategyRepository, createCustomFactory(altMethodProvider), objectMapper, auditEventService
         );
 
         RecoveryStrategyResponse response = customService.generateStrategy(incident.getId());

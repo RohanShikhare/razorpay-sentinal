@@ -133,6 +133,15 @@ export function ActiveIncidentHero({ incident, impact }: { incident: Incident; i
               </svg>
               <span>Execute Recovery</span>
             </a>
+            <a
+              href={`/incidents/${incident.id}#audit-trail`}
+              className="inline-flex items-center gap-1.5 border border-indigo-500/50 bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/30 transition-colors"
+            >
+              <svg className="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Audit Trail</span>
+            </a>
           </div>
         </div>
       </div>

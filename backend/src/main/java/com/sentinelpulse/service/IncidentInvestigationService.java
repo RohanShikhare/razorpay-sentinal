@@ -80,25 +80,30 @@ public class IncidentInvestigationService {
     private final AiProviderFactory aiProviderFactory;
     private final IncidentInvestigationRepository incidentInvestigationRepository;
     private final ObjectMapper objectMapper;
+    private final AuditEventService auditEventService;
 
     public IncidentInvestigationService(IncidentRepository incidentRepository,
                                         IncidentDiagnosisRepository incidentDiagnosisRepository,
                                         IncidentEvidenceService incidentEvidenceService,
                                         AiProviderFactory aiProviderFactory,
                                         IncidentInvestigationRepository incidentInvestigationRepository,
-                                        ObjectMapper objectMapper) {
+                                        ObjectMapper objectMapper,
+                                        AuditEventService auditEventService) {
         this.incidentRepository = incidentRepository;
         this.incidentDiagnosisRepository = incidentDiagnosisRepository;
         this.incidentEvidenceService = incidentEvidenceService;
         this.aiProviderFactory = aiProviderFactory;
         this.incidentInvestigationRepository = incidentInvestigationRepository;
         this.objectMapper = objectMapper;
+        this.auditEventService = auditEventService;
     }
 
     @Transactional
     public IncidentInvestigationResponse investigateIncident(Long incidentId) {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Incident not found: " + incidentId));
+
+        auditEventService.recordInvestigationRequested(incidentId);
 
         AiEvidenceDto evidence = incidentEvidenceService.buildEvidence(incidentId);
         AiProvider provider = aiProviderFactory.getProvider();
@@ -116,6 +121,8 @@ public class IncidentInvestigationService {
             log.error("AI Provider '{}' failed during root-cause investigation for incident {}: {}",
                     provider.getProviderName(), incidentId, e.getMessage());
 
+            auditEventService.recordInvestigationFailed(incidentId, e.getMessage());
+
             IncidentInvestigation failed = IncidentInvestigation.failed(
                     incidentId, provider.getProviderName(), provider.getModelName(),
                     InvestigationStatus.FAILED, e.getMessage(), null
@@ -130,6 +137,7 @@ public class IncidentInvestigationService {
             parsed = parseAndValidate(rawJson, evidence);
         } catch (SentinelAiException e) {
             log.warn("Invalid AI investigation response for incident {}: {}", incidentId, e.getMessage());
+            auditEventService.recordInvestigationFailed(incidentId, "Invalid response: " + e.getMessage());
             IncidentInvestigation invalid = IncidentInvestigation.failed(
                     incidentId, provider.getProviderName(), provider.getModelName(),
                     InvestigationStatus.INVALID_RESPONSE, e.getMessage(), rawJson
@@ -190,6 +198,8 @@ public class IncidentInvestigationService {
             incident.setStatus(IncidentStatus.INVESTIGATING);
         }
         incidentRepository.save(incident);
+
+        auditEventService.recordInvestigationCompleted(incident, investigation);
 
         return toResponse(investigation, parsed.hypotheses(), parsed.supportingEvidence(), parsed.contradictingEvidence());
     }

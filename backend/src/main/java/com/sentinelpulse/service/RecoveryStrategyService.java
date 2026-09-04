@@ -107,6 +107,7 @@ public class RecoveryStrategyService {
     private final RecoveryStrategyRepository recoveryStrategyRepository;
     private final AiProviderFactory aiProviderFactory;
     private final ObjectMapper objectMapper;
+    private final AuditEventService auditEventService;
 
     public RecoveryStrategyService(IncidentRepository incidentRepository,
                                    FinancialImpactService financialImpactService,
@@ -115,7 +116,8 @@ public class RecoveryStrategyService {
                                    IncidentDiagnosisRepository incidentDiagnosisRepository,
                                    RecoveryStrategyRepository recoveryStrategyRepository,
                                    AiProviderFactory aiProviderFactory,
-                                   ObjectMapper objectMapper) {
+                                   ObjectMapper objectMapper,
+                                   AuditEventService auditEventService) {
         this.incidentRepository = incidentRepository;
         this.financialImpactService = financialImpactService;
         this.incidentEvidenceService = incidentEvidenceService;
@@ -124,6 +126,7 @@ public class RecoveryStrategyService {
         this.recoveryStrategyRepository = recoveryStrategyRepository;
         this.aiProviderFactory = aiProviderFactory;
         this.objectMapper = objectMapper;
+        this.auditEventService = auditEventService;
     }
 
     @Transactional
@@ -236,6 +239,8 @@ public class RecoveryStrategyService {
         );
 
         entity = recoveryStrategyRepository.save(entity);
+
+        auditEventService.recordRecoveryStrategyProposed(incident, entity);
 
         return toResponse(entity, parsed.stoppingConditions(), parsed.alternatives());
     }

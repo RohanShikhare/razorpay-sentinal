@@ -66,23 +66,28 @@ public class AiDiagnosticService {
     private final AiProviderFactory aiProviderFactory;
     private final IncidentDiagnosisRepository incidentDiagnosisRepository;
     private final ObjectMapper objectMapper;
+    private final AuditEventService auditEventService;
 
     public AiDiagnosticService(IncidentRepository incidentRepository,
                                IncidentEvidenceService incidentEvidenceService,
                                AiProviderFactory aiProviderFactory,
                                IncidentDiagnosisRepository incidentDiagnosisRepository,
-                               ObjectMapper objectMapper) {
+                               ObjectMapper objectMapper,
+                               AuditEventService auditEventService) {
         this.incidentRepository = incidentRepository;
         this.incidentEvidenceService = incidentEvidenceService;
         this.aiProviderFactory = aiProviderFactory;
         this.incidentDiagnosisRepository = incidentDiagnosisRepository;
         this.objectMapper = objectMapper;
+        this.auditEventService = auditEventService;
     }
 
     @Transactional
     public AiDiagnosisResponse diagnoseIncident(Long incidentId) {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Incident not found: " + incidentId));
+
+        auditEventService.recordAiDiagnosisRequested(incidentId);
 
         AiEvidenceDto evidence = incidentEvidenceService.buildEvidence(incidentId);
         AiProvider provider = aiProviderFactory.getProvider();
@@ -93,6 +98,8 @@ public class AiDiagnosticService {
         } catch (Exception e) {
             log.error("AI Provider '{}' failed to generate diagnosis for incident {}: {}",
                     provider.getProviderName(), incidentId, e.getMessage());
+
+            auditEventService.recordAiDiagnosisFailed(incidentId, e.getMessage());
 
             IncidentDiagnosis failed = IncidentDiagnosis.failed(
                     incidentId, provider.getProviderName(), provider.getModelName(),
@@ -108,6 +115,7 @@ public class AiDiagnosticService {
             parsed = parseAndValidate(rawJson, evidence);
         } catch (SentinelAiException e) {
             log.warn("Invalid AI diagnosis response for incident {}: {}", incidentId, e.getMessage());
+            auditEventService.recordAiDiagnosisFailed(incidentId, "Invalid response: " + e.getMessage());
             IncidentDiagnosis invalid = IncidentDiagnosis.failed(
                     incidentId, provider.getProviderName(), provider.getModelName(),
                     DiagnosisStatus.INVALID_RESPONSE, e.getMessage(), rawJson
@@ -158,6 +166,8 @@ public class AiDiagnosticService {
             incident.setStatus(IncidentStatus.INVESTIGATING);
         }
         incidentRepository.save(incident);
+
+        auditEventService.recordAiDiagnosisCompleted(incident, diagnosis);
 
         return toResponse(diagnosis, parsed.evidenceList());
     }
