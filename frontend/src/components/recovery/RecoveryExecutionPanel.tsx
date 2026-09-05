@@ -233,7 +233,7 @@ export function RecoveryExecutionPanel({
           <span className="font-mono text-xs uppercase tracking-wider text-emerald-400">
             Module 10 · Recovery Execution Simulator
           </span>
-          <h2 className="text-base font-semibold text-ink">Autonomous Recovery Execution</h2>
+          <h2 className="text-base font-semibold text-ink">Bounded Recovery Execution</h2>
           <p className="mt-0.5 text-xs text-ink-muted">
             Bounded execution engine acting strictly within Module 9 policy guardrails to recover verified revenue.
           </p>
@@ -319,7 +319,7 @@ export function RecoveryExecutionPanel({
           {!isExecutionAllowed && policy && (
             <span className="font-mono text-[11px] text-rose-400">
               {policy.decision === "HUMAN_REVIEW"
-                ? "⚠️ Human sign-off mandatory before autonomous simulation"
+                ? "⚠️ Human sign-off mandatory before recovery simulation"
                 : "🚫 Policy engine has restricted execution for this incident"}
             </span>
           )}
@@ -601,7 +601,7 @@ export function RecoveryExecutionPanel({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h3 className="mt-3 text-sm font-semibold text-ink">Ready for Autonomous Execution</h3>
+            <h3 className="mt-3 text-sm font-semibold text-ink">Ready for Policy-Governed Execution</h3>
             <p className="mx-auto mt-1 max-w-md text-xs text-ink-muted">
               Click &quot;Execute Recovery&quot; above to simulate bounded payment retries according to the policy
               limits established by Module 9.

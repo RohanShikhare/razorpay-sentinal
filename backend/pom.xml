@@ -13,9 +13,9 @@
 
     <groupId>com.sentinelpulse</groupId>
     <artifactId>razorpay-sentinel</artifactId>
-    <version>0.6.0-MODULE5</version>
+    <version>1.0.0</version>
     <name>razorpay-sentinel</name>
-    <description>Razorpay Sentinel - AI Payment Incident Commander (Module 5: Command Center Dashboard)</description>
+    <description>Razorpay Sentinel — AI Payment Incident Commander</description>
 
     <properties>
         <java.version>17</java.version>

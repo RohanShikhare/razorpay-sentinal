@@ -362,7 +362,7 @@ npm run build
 * **No Authentication**: Role-based access control is omitted in this prototype to facilitate immediate reviewer evaluation.
 
 ### Future Scope
-* **Real Payment Gateway Integration**: Pluggable connectors for Razorpay Webhooks and live Route switching APIs.
+* **Real Payment Gateway Integration**: Pluggable connectors for Razorpay Webhooks and live payment routing APIs.
 * **Production Auth & RBAC**: OAuth2 / JWT authentication for payment operations engineers and incident commanders.
 * **Real-Time Stream Processing**: Kafka/Flink event ingestion for sub-second micro-spike detection at scale.
 * **Merchant Self-Service Dashboard**: Multi-tenant visibility enabling merchants to inspect root-cause proofs and recovered revenue for their accounts.

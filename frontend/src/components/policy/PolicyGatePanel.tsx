@@ -297,7 +297,7 @@ export function PolicyGatePanel({
                 {evaluation.executionAllowed ? "Allowed" : "Blocked"}
               </div>
               <div className="text-[10px] text-ink-muted">
-                {evaluation.requiredHumanApproval ? "Human sign-off required" : "Autonomous bounded"}
+                {evaluation.requiredHumanApproval ? "Human sign-off required" : "Policy-governed bounded"}
               </div>
             </div>
 

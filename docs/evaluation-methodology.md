@@ -105,7 +105,7 @@ Sentinel is objectively compared against two standard payment industry baselines
    - No automated intervention, retries, or rerouting.
    - Result: ₹0 recovered (0.0% recovery rate).
 2. **Baseline B: Naive Retry (Blind 2x Execution)**
-   - Blindly retries failed transactions without root-cause diagnosis, gateway switching, or merchant isolation.
+   - Blindly retries failed transactions without root-cause diagnosis, intelligent backoff, or merchant isolation.
    - For gateway outages or merchant key errors, naive retries fail repeatedly, recovering only transient failures (~30–50% recovery rate) while burning retry budgets.
 
 ---

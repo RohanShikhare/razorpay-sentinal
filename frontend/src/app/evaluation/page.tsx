@@ -302,7 +302,7 @@ export default function EvaluationBenchmarkPage() {
                   Comparative Revenue Recovery vs Baselines
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  Benchmarked against Baseline A (Zero Autonomous Action) and Baseline B (Naive Immediate Retry).
+                  Benchmarked against Baseline A (Zero Recovery Action) and Baseline B (Naive Immediate Retry).
                 </p>
               </div>
               <div className="text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">
@@ -475,7 +475,7 @@ export default function EvaluationBenchmarkPage() {
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
-                  <span className="text-slate-400">Autonomous Approvals</span>
+                  <span className="text-slate-400">Policy-Approved Recoveries</span>
                   <div className="text-sm font-mono font-bold text-emerald-400 mt-1">
                     {metrics.policy.approvedCount} APPROVED
                   </div>
