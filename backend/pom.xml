@@ -15,7 +15,7 @@
     <artifactId>razorpay-sentinel</artifactId>
     <version>1.0.0</version>
     <name>razorpay-sentinel</name>
-    <description>Razorpay Sentinel — AI Payment Incident Commander</description>
+    <description>Razorpay Sentinel - AI Payment Incident Commander</description>
 
     <properties>
         <java.version>17</java.version>
