@@ -1,117 +1,144 @@
 import { apiFetch } from "./api";
 
 export interface EvaluationScenarioDescriptorDto {
-  scenarioType: string;
+  scenario: string;
   name: string;
-  category: string;
   description: string;
-  expectedRootCauseKeywords: string[];
+  category: string;
+  incidentExpected: boolean;
   expectedSafeStrategies: string[];
-  expectedPolicyDecision: string;
-  expectedExecutionStatus: string;
+  expectedPolicyBehavior: string;
+  expectedRootCausePattern: string;
+}
+
+export interface EvaluationGroundTruthDto {
+  scenarioType: string;
+  incidentExpected: boolean;
+  expectedTargetBank?: string | null;
+  expectedTargetPaymentMethod?: string | null;
+  expectedTargetMerchantId?: string | null;
+  expectedRootCauseKeywords?: string[];
+  expectedSafeStrategies?: string[];
+  expectedPolicyDecision?: string;
+  expectedExecutionAllowed?: boolean;
+  scenarioSummary?: string;
 }
 
 export interface IncidentEvaluationResultDto {
-  incidentId: number;
+  evaluationIncidentId: string;
   scenarioType: string;
-  scenarioName: string;
+  groundTruth?: EvaluationGroundTruthDto | null;
+  incidentId: number | null;
   detected: boolean;
-  timeToDetectMs: number;
-  revenueAtRisk: number;
-  groundTruthRootCause: string;
-  diagnosedRootCause: string;
-  diagnosisAccurate: boolean;
-  diagnosisConfidence: number;
-  investigationAccurate: boolean;
-  proposedStrategy: string;
+  detectionLatencyMs: number | null;
+  detectedType: string | null;
+  detectedSeverity: string | null;
+  rootCauseObserved: string | null;
+  rootCauseCorrect: boolean;
+  diagnosisConfidence: number | null;
+  strategyProposed: string | null;
   strategySafe: boolean;
-  policyDecision: string;
-  policyCompliant: boolean;
-  policyViolated: boolean;
-  recoveryExecuted: boolean;
-  recoveryStatus: string;
-  recoveredAmount: number;
-  recoverableAmount: number;
-  recoveryRatePercent: number;
-  recoveryLatencyMs: number;
-  baselineNoRecoveryAmount: number;
-  baselineNaiveRetryAmount: number;
-  auditEventsCount: number;
-  auditChainValid: boolean;
-  incidentScore: number;
-  details: string;
+  policyDecision: string | null;
+  executionAllowed: boolean;
+  executionStatus: string | null;
+  revenueAtRisk: number;
+  recoverableRevenue: number;
+  recoveredRevenue: number;
+  naiveRetryRecoveredRevenue: number;
+  stoppingReason: string | null;
+  auditVerified: boolean;
+  status: string;
+  notes: string;
 }
 
 export interface FinancialMetricsDto {
   totalRevenueAtRisk: number;
   totalRecoverableRevenue: number;
-  sentinelRecoveredRevenue: number;
-  baselineNoRecoveryRevenue: number;
-  baselineNaiveRetryRevenue: number;
-  overallRecoveryRatePercent: number;
-  upliftVsNoRecoveryPercent: number;
-  upliftVsNaiveRetryPercent: number;
-  costBenefitRatio: number;
-  netValueAdded: number;
+  totalRecoveredRevenue: number;
+  totalUnrecoveredRevenue: number;
+  financialRecoveryRate: number;
+  baselineNoRecoveryAmount: number;
+  baselineNaiveRetryAmount: number;
+  recoveryUpliftVsNoRecovery: number;
+  recoveryUpliftVsNaiveRetry: number;
+  recoveryEfficiency: number;
 }
 
 export interface DetectionMetricsDto {
-  totalScenarios: number;
-  detectedCount: number;
-  detectionRatePercent: number;
-  falsePositiveCount: number;
-  falsePositiveRatePercent: number;
-  meanTimeToDetectMs: number;
-  medianTimeToDetectMs: number;
-  minTimeToDetectMs: number;
-  maxTimeToDetectMs: number;
+  totalScenariosEvaluated: number;
+  truePositives: number;
+  falsePositives: number;
+  falseNegatives: number;
+  trueNegatives: number;
+  precision: number;
+  recall: number;
+  f1Score: number;
+  averageDetectionLatencyMs: number;
 }
 
 export interface DiagnosisMetricsDto {
-  evaluatedDiagnosesCount: number;
-  accurateDiagnosesCount: number;
-  rootCauseAccuracyPercent: number;
-  meanConfidencePercent: number;
-  accurateInvestigationsCount: number;
-  investigationAccuracyPercent: number;
+  totalDiagnosesEvaluated: number;
+  correctDiagnoses: number;
+  incorrectDiagnoses: number;
+  inconclusiveDiagnoses: number;
+  diagnosisAccuracy: number;
+  averageConfidence: number;
 }
 
 export interface StrategyMetricsDto {
-  proposedStrategiesCount: number;
-  safeStrategiesCount: number;
-  strategySafetyPrecisionPercent: number;
-  strategyAppropriatenessPercent: number;
+  totalStrategiesEvaluated: number;
+  safeStrategiesProposed: number;
+  unsafeStrategiesProposed: number;
+  strategyQualityScore: number;
 }
 
 export interface PolicyMetricsEvaluationDto {
-  evaluatedDecisionsCount: number;
-  compliantDecisionsCount: number;
-  policyComplianceRatePercent: number;
+  totalPolicyEvaluations: number;
   approvedCount: number;
+  approvedWithLimitsCount: number;
   humanReviewCount: number;
   rejectedCount: number;
-  policyBypassesCount: number;
-  boundViolationsCount: number;
+  executionAllowedCount: number;
+  executionBlockedCount: number;
+  policyComplianceRate: number;
 }
 
 export interface RecoveryMetricsEvaluationDto {
-  executedRecoveriesCount: number;
-  successfulRecoveriesCount: number;
-  recoverySuccessRatePercent: number;
-  meanRecoveryLatencyMs: number;
-  totalAttemptsExecuted: number;
-  successfulAttemptsCount: number;
+  eligibleTransactions: number;
+  attemptedTransactions: number;
+  successfulRecoveries: number;
+  failedRecoveries: number;
+  skippedTransactions: number;
+  transactionRecoveryRate: number;
+  averageAttemptsPerRecovery: number;
+  circuitBreakerTrips: number;
 }
 
 export interface SafetyMetricsEvaluationDto {
-  policyCompliancePercent: number;
   safetyScore: number;
-  zeroPolicyBypassVerified: boolean;
-  zeroBoundViolationVerified: boolean;
-  auditChainIntegrityPercent: number;
+  policyBypasses: number;
+  unauthorizedExecutions: number;
+  financialBoundViolations: number;
+  retryLimitViolations: number;
+  resolvedIncidentRetries: number;
+  duplicateRecoveries: number;
+  auditIntegrityFailures: number;
+  safetyScenariosPassed: number;
+  safetyScenariosFailed: number;
 }
 
-export interface EvaluationMetricsDto {
+export interface EvaluationRunResponse {
+  runId: string;
+  evaluatorVersion: string;
+  startedAt: string;
+  completedAt: string;
+  status: string;
+  seed: number;
+  scenarioCount: number;
+  completedScenarios: number;
+  failedScenarios: number;
+  errorScenarios: number;
+  overallSentinelScore: number;
   financial: FinancialMetricsDto;
   detection: DetectionMetricsDto;
   diagnosis: DiagnosisMetricsDto;
@@ -119,21 +146,8 @@ export interface EvaluationMetricsDto {
   policy: PolicyMetricsEvaluationDto;
   recovery: RecoveryMetricsEvaluationDto;
   safety: SafetyMetricsEvaluationDto;
-}
-
-export interface EvaluationRunResponse {
-  runId: string;
-  evaluatorVersion: string;
-  scenarioCount: number;
-  randomSeed: number;
-  includeBaseline: boolean;
-  startedAt: string;
-  completedAt: string;
-  durationMs: number;
-  status: string;
-  overallScore: number;
-  metrics: EvaluationMetricsDto;
   incidents: IncidentEvaluationResultDto[];
+  benchmarkDisclaimer: string;
 }
 
 export interface EvaluationRunRequest {
@@ -163,10 +177,14 @@ export async function runEvaluation(
 }
 
 /**
- * Fetch the latest completed benchmark evaluation run.
+ * Fetch the latest completed benchmark evaluation run. Returns null if no run has been recorded yet (404).
  */
-export async function getLatestEvaluationRun(): Promise<EvaluationRunResponse> {
-  return apiFetch<EvaluationRunResponse>("/api/v1/evaluation/latest");
+export async function getLatestEvaluationRun(): Promise<EvaluationRunResponse | null> {
+  try {
+    return await apiFetch<EvaluationRunResponse>("/api/v1/evaluation/latest");
+  } catch {
+    return null;
+  }
 }
 
 /**

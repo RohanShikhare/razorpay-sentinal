@@ -1391,25 +1391,25 @@ export default function FinalCommandCenterPage() {
                   <div className="p-2 bg-slate-950/60 rounded border border-slate-800">
                     <span className="text-[10px] text-slate-400">Sentinel Score</span>
                     <div className="font-mono font-bold text-purple-400 text-sm mt-0.5">
-                      {latestEvaluation.overallScore.toFixed(1)} / 100
+                      {latestEvaluation.overallSentinelScore != null ? latestEvaluation.overallSentinelScore.toFixed(1) : "0.0"} / 100
                     </div>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded border border-slate-800">
                     <span className="text-[10px] text-slate-400">Recovery Rate</span>
                     <div className="font-mono font-bold text-cyan-400 text-sm mt-0.5">
-                      {latestEvaluation.metrics.financial.overallRecoveryRatePercent.toFixed(1)}%
+                      {latestEvaluation.financial?.financialRecoveryRate != null ? latestEvaluation.financial.financialRecoveryRate.toFixed(1) : "0.0"}%
                     </div>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded border border-slate-800">
                     <span className="text-[10px] text-slate-400">Uplift vs Naive</span>
                     <div className="font-mono font-bold text-emerald-400 text-sm mt-0.5">
-                      +{latestEvaluation.metrics.financial.upliftVsNaiveRetryPercent.toFixed(1)}%
+                      +{formatCurrency(latestEvaluation.financial?.recoveryUpliftVsNaiveRetry)}
                     </div>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded border border-slate-800">
                     <span className="text-[10px] text-slate-400">Root Cause Acc.</span>
                     <div className="font-mono font-bold text-emerald-400 text-sm mt-0.5">
-                      {latestEvaluation.metrics.diagnosis.rootCauseAccuracyPercent.toFixed(0)}%
+                      {latestEvaluation.diagnosis?.diagnosisAccuracy != null ? latestEvaluation.diagnosis.diagnosisAccuracy.toFixed(0) : "0"}%
                     </div>
                   </div>
                 </div>
@@ -1427,7 +1427,7 @@ export default function FinalCommandCenterPage() {
                   <div className="flex justify-between text-[11px] pt-1">
                     <span className="text-amber-300">Baseline B: Naive Retry</span>
                     <span className="font-mono text-amber-300">
-                      {formatCurrency(latestEvaluation.metrics.financial.baselineNaiveRetryRevenue)}
+                      {formatCurrency(latestEvaluation.financial?.baselineNaiveRetryAmount)}
                     </span>
                   </div>
                   <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
@@ -1436,9 +1436,11 @@ export default function FinalCommandCenterPage() {
                       style={{
                         width: `${Math.min(
                           100,
-                          (latestEvaluation.metrics.financial.baselineNaiveRetryRevenue /
-                            Math.max(1, latestEvaluation.metrics.financial.totalRecoverableRevenue)) *
-                            100
+                          latestEvaluation.financial?.totalRecoverableRevenue
+                            ? ((latestEvaluation.financial.baselineNaiveRetryAmount || 0) /
+                                Math.max(1, latestEvaluation.financial.totalRecoverableRevenue)) *
+                              100
+                            : 0
                         )}%`,
                       }}
                     />
@@ -1447,7 +1449,7 @@ export default function FinalCommandCenterPage() {
                   <div className="flex justify-between text-[11px] pt-1">
                     <span className="text-purple-300 font-bold">Sentinel: Policy-Governed AI Recovery</span>
                     <span className="font-mono text-emerald-400 font-bold">
-                      {formatCurrency(latestEvaluation.metrics.financial.sentinelRecoveredRevenue)}
+                      {formatCurrency(latestEvaluation.financial?.totalRecoveredRevenue)}
                     </span>
                   </div>
                   <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-purple-500/30">
@@ -1456,7 +1458,7 @@ export default function FinalCommandCenterPage() {
                       style={{
                         width: `${Math.min(
                           100,
-                          latestEvaluation.metrics.financial.overallRecoveryRatePercent
+                          latestEvaluation.financial?.financialRecoveryRate || 0
                         )}%`,
                       }}
                     />

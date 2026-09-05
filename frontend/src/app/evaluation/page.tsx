@@ -82,14 +82,12 @@ export default function EvaluationBenchmarkPage() {
     }).format(val);
   };
 
-  const metrics = latestRun?.metrics;
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Navigation Breadcrumbs */}
         <div className="flex items-center space-x-2 text-xs text-slate-400">
-          <Link href="/dashboard" className="hover:text-blue-400 transition-colors">
+          <Link href="/command-center" className="hover:text-blue-400 transition-colors">
             Command Center
           </Link>
           <span>/</span>
@@ -107,7 +105,7 @@ export default function EvaluationBenchmarkPage() {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20 mb-3">
                 <span className="h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
-                Track 3 Revenue Recovery Benchmark Engine
+                Revenue Recovery Benchmark Engine
               </div>
               <h1 className="text-3xl font-extrabold text-white tracking-tight">
                 Sentinel Evaluation & Benchmarking Engine
@@ -200,11 +198,21 @@ export default function EvaluationBenchmarkPage() {
                   Engine: {latestRun.evaluatorVersion}
                 </span>
                 <span className="text-slate-400">
-                  Seed: <span className="font-mono text-slate-200">{latestRun.randomSeed}</span>
+                  Seed: <span className="font-mono text-slate-200">{latestRun.seed}</span>
                 </span>
-                <span className="text-slate-400">
-                  Completed in <span className="font-mono text-slate-200">{latestRun.durationMs} ms</span>
-                </span>
+                {latestRun.startedAt && latestRun.completedAt && (
+                  <span className="text-slate-400">
+                    Duration:{" "}
+                    <span className="font-mono text-slate-200">
+                      {Math.max(
+                        0,
+                        new Date(latestRun.completedAt).getTime() -
+                          new Date(latestRun.startedAt).getTime()
+                      )}{" "}
+                      ms
+                    </span>
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-slate-500">Status:</span>
@@ -225,15 +233,26 @@ export default function EvaluationBenchmarkPage() {
           </div>
         )}
 
+        {/* Empty State Banner */}
+        {!latestRun && !loading && (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-8 text-center text-slate-400 space-y-3">
+            <p className="text-sm">No evaluation benchmark run has been recorded yet.</p>
+            <p className="text-xs text-slate-500">
+              Configure scenarios above and click <strong className="text-purple-400">Run Evaluation Benchmark</strong> to execute a reproducible benchmark run.
+            </p>
+          </div>
+        )}
+
         {/* Hero KPI Metric Cards */}
-        {latestRun && metrics && (
+        {latestRun && latestRun.financial && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg">
               <div className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
                 Overall Sentinel Score
               </div>
               <div className="text-2xl font-black text-purple-400 mt-2">
-                {latestRun.overallScore.toFixed(1)} <span className="text-xs text-slate-500 font-normal">/ 100</span>
+                {latestRun.overallSentinelScore != null ? latestRun.overallSentinelScore.toFixed(1) : "0.0"}{" "}
+                <span className="text-xs text-slate-500 font-normal">/ 100</span>
               </div>
               <div className="text-[11px] text-emerald-400 mt-1 font-medium">
                 Weighted across 4 dimensions
@@ -245,10 +264,10 @@ export default function EvaluationBenchmarkPage() {
                 Sentinel Recovered
               </div>
               <div className="text-2xl font-black text-emerald-400 mt-2">
-                {formatCurrency(metrics.financial.sentinelRecoveredRevenue)}
+                {formatCurrency(latestRun.financial?.totalRecoveredRevenue)}
               </div>
               <div className="text-[11px] text-slate-400 mt-1">
-                of {formatCurrency(metrics.financial.totalRecoverableRevenue)} recoverable
+                of {formatCurrency(latestRun.financial?.totalRecoverableRevenue)} recoverable
               </div>
             </div>
 
@@ -257,10 +276,10 @@ export default function EvaluationBenchmarkPage() {
                 Overall Recovery Rate
               </div>
               <div className="text-2xl font-black text-cyan-400 mt-2">
-                {metrics.financial.overallRecoveryRatePercent.toFixed(1)}%
+                {latestRun.financial?.financialRecoveryRate != null ? latestRun.financial.financialRecoveryRate.toFixed(1) : "0.0"}%
               </div>
               <div className="text-[11px] text-slate-400 mt-1">
-                Net value: {formatCurrency(metrics.financial.netValueAdded)}
+                Net Uplift: {formatCurrency(latestRun.financial?.recoveryUpliftVsNaiveRetry)}
               </div>
             </div>
 
@@ -269,7 +288,7 @@ export default function EvaluationBenchmarkPage() {
                 Uplift vs Naive Retry
               </div>
               <div className="text-2xl font-black text-amber-400 mt-2">
-                +{metrics.financial.upliftVsNaiveRetryPercent.toFixed(1)}%
+                +{formatCurrency(latestRun.financial?.recoveryUpliftVsNaiveRetry)}
               </div>
               <div className="text-[11px] text-slate-400 mt-1">
                 vs ₹0 on No Recovery
@@ -281,17 +300,18 @@ export default function EvaluationBenchmarkPage() {
                 Safety Invariant Score
               </div>
               <div className="text-2xl font-black text-emerald-400 mt-2">
-                {metrics.safety.safetyScore.toFixed(0)} <span className="text-xs text-slate-500 font-normal">/ 100</span>
+                {latestRun.safety?.safetyScore != null ? latestRun.safety.safetyScore.toFixed(0) : "100"}{" "}
+                <span className="text-xs text-slate-500 font-normal">/ 100</span>
               </div>
               <div className="text-[11px] text-emerald-400 mt-1 font-medium">
-                0 Policy Bypasses Verified
+                {latestRun.safety?.policyBypasses ?? 0} Policy Bypasses Verified
               </div>
             </div>
           </div>
         )}
 
         {/* Baseline Comparison Visual Section */}
-        {latestRun && metrics && (
+        {latestRun && latestRun.financial && (
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-6 shadow-xl">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
@@ -306,7 +326,10 @@ export default function EvaluationBenchmarkPage() {
                 </p>
               </div>
               <div className="text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">
-                Benefit / Cost Ratio: <span className="text-emerald-400 font-bold">{metrics.financial.costBenefitRatio.toFixed(2)}x</span>
+                Benefit / Cost Efficiency:{" "}
+                <span className="text-emerald-400 font-bold">
+                  {latestRun.financial?.recoveryEfficiency != null ? `${formatCurrency(latestRun.financial.recoveryEfficiency)} / attempt` : "N/A"}
+                </span>
               </div>
             </div>
 
@@ -317,7 +340,7 @@ export default function EvaluationBenchmarkPage() {
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-slate-400 font-medium">Baseline A: No Recovery (Status Quo)</span>
                   <span className="font-mono text-slate-400">
-                    {formatCurrency(metrics.financial.baselineNoRecoveryRevenue)} (0.0%)
+                    {formatCurrency(latestRun.financial?.baselineNoRecoveryAmount)} (0.0%)
                   </span>
                 </div>
                 <div className="w-full h-4 bg-slate-800 rounded-full overflow-hidden">
@@ -330,8 +353,13 @@ export default function EvaluationBenchmarkPage() {
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-amber-300 font-medium">Baseline B: Naive Retry (Blind 2x Execution)</span>
                   <span className="font-mono text-amber-300">
-                    {formatCurrency(metrics.financial.baselineNaiveRetryRevenue)} (
-                    {((metrics.financial.baselineNaiveRetryRevenue / Math.max(1, metrics.financial.totalRecoverableRevenue)) * 100).toFixed(1)}%)
+                    {formatCurrency(latestRun.financial?.baselineNaiveRetryAmount)} (
+                    {(
+                      ((latestRun.financial?.baselineNaiveRetryAmount || 0) /
+                        Math.max(1, latestRun.financial?.totalRecoverableRevenue || 1)) *
+                      100
+                    ).toFixed(1)}
+                    %)
                   </span>
                 </div>
                 <div className="w-full h-4 bg-slate-800 rounded-full overflow-hidden">
@@ -340,7 +368,9 @@ export default function EvaluationBenchmarkPage() {
                     style={{
                       width: `${Math.min(
                         100,
-                        (metrics.financial.baselineNaiveRetryRevenue / Math.max(1, metrics.financial.totalRecoverableRevenue)) * 100
+                        ((latestRun.financial?.baselineNaiveRetryAmount || 0) /
+                          Math.max(1, latestRun.financial?.totalRecoverableRevenue || 1)) *
+                          100
                       )}%`,
                     }}
                   />
@@ -355,15 +385,15 @@ export default function EvaluationBenchmarkPage() {
                     Razorpay Sentinel: Policy-Governed AI Recovery
                   </span>
                   <span className="font-mono text-emerald-400 font-bold">
-                    {formatCurrency(metrics.financial.sentinelRecoveredRevenue)} (
-                    {metrics.financial.overallRecoveryRatePercent.toFixed(1)}%)
+                    {formatCurrency(latestRun.financial?.totalRecoveredRevenue)} (
+                    {latestRun.financial?.financialRecoveryRate != null ? latestRun.financial.financialRecoveryRate.toFixed(1) : "0.0"}%)
                   </span>
                 </div>
                 <div className="w-full h-4 bg-slate-800 rounded-full overflow-hidden border border-purple-500/30">
                   <div
                     className="h-full bg-gradient-to-r from-purple-500 to-emerald-400 rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.min(100, metrics.financial.overallRecoveryRatePercent)}%`,
+                      width: `${Math.min(100, latestRun.financial?.financialRecoveryRate || 0)}%`,
                     }}
                   />
                 </div>
@@ -373,7 +403,7 @@ export default function EvaluationBenchmarkPage() {
         )}
 
         {/* 4-Quadrant Benchmark Dimension Cards */}
-        {latestRun && metrics && (
+        {latestRun && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Quadrant 1: Financial Effectiveness */}
             <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-6 shadow-xl">
@@ -389,25 +419,25 @@ export default function EvaluationBenchmarkPage() {
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Total Revenue at Risk</span>
                   <div className="text-sm font-mono font-bold text-slate-200 mt-1">
-                    {formatCurrency(metrics.financial.totalRevenueAtRisk)}
+                    {formatCurrency(latestRun.financial?.totalRevenueAtRisk)}
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Recoverable Revenue</span>
                   <div className="text-sm font-mono font-bold text-slate-200 mt-1">
-                    {formatCurrency(metrics.financial.totalRecoverableRevenue)}
+                    {formatCurrency(latestRun.financial?.totalRecoverableRevenue)}
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
-                  <span className="text-slate-400">Net Value Added</span>
+                  <span className="text-slate-400">Total Recovered Revenue</span>
                   <div className="text-sm font-mono font-bold text-emerald-400 mt-1">
-                    {formatCurrency(metrics.financial.netValueAdded)}
+                    {formatCurrency(latestRun.financial?.totalRecoveredRevenue)}
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
-                  <span className="text-slate-400">Cost / Benefit Ratio</span>
+                  <span className="text-slate-400">Recovery Efficiency</span>
                   <div className="text-sm font-mono font-bold text-cyan-400 mt-1">
-                    {metrics.financial.costBenefitRatio.toFixed(2)}x
+                    {latestRun.financial?.recoveryEfficiency != null ? `${formatCurrency(latestRun.financial.recoveryEfficiency)} / att` : "N/A"}
                   </div>
                 </div>
               </div>
@@ -425,27 +455,27 @@ export default function EvaluationBenchmarkPage() {
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4 text-xs">
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
-                  <span className="text-slate-400">Detection Rate</span>
+                  <span className="text-slate-400">Detection F1 / Precision</span>
                   <div className="text-sm font-mono font-bold text-cyan-400 mt-1">
-                    {metrics.detection.detectionRatePercent.toFixed(1)}% ({metrics.detection.detectedCount}/{metrics.detection.totalScenarios})
+                    {latestRun.detection?.f1Score != null ? latestRun.detection.f1Score.toFixed(1) : "0.0"}% (P: {latestRun.detection?.precision != null ? latestRun.detection.precision.toFixed(0) : "0"}%)
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Mean Time to Detect (TTD)</span>
                   <div className="text-sm font-mono font-bold text-slate-200 mt-1">
-                    {metrics.detection.meanTimeToDetectMs.toFixed(0)} ms
+                    {latestRun.detection?.averageDetectionLatencyMs != null ? `${latestRun.detection.averageDetectionLatencyMs} ms` : "N/A"}
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Root-Cause Accuracy</span>
                   <div className="text-sm font-mono font-bold text-emerald-400 mt-1">
-                    {metrics.diagnosis.rootCauseAccuracyPercent.toFixed(1)}%
+                    {latestRun.diagnosis?.diagnosisAccuracy != null ? latestRun.diagnosis.diagnosisAccuracy.toFixed(1) : "0.0"}%
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Mean AI Confidence</span>
                   <div className="text-sm font-mono font-bold text-purple-400 mt-1">
-                    {metrics.diagnosis.meanConfidencePercent.toFixed(1)}%
+                    {((latestRun.diagnosis?.averageConfidence || 0) * 100).toFixed(1)}%
                   </div>
                 </div>
               </div>
@@ -465,25 +495,25 @@ export default function EvaluationBenchmarkPage() {
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Strategy Safety Precision</span>
                   <div className="text-sm font-mono font-bold text-emerald-400 mt-1">
-                    {metrics.strategy.strategySafetyPrecisionPercent.toFixed(1)}%
+                    {latestRun.strategy?.strategyQualityScore != null ? latestRun.strategy.strategyQualityScore.toFixed(1) : "0.0"}%
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Policy Compliance Rate</span>
                   <div className="text-sm font-mono font-bold text-purple-400 mt-1">
-                    {metrics.policy.policyComplianceRatePercent.toFixed(1)}%
+                    {latestRun.policy?.policyComplianceRate != null ? latestRun.policy.policyComplianceRate.toFixed(1) : "0.0"}%
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Policy-Approved Recoveries</span>
                   <div className="text-sm font-mono font-bold text-emerald-400 mt-1">
-                    {metrics.policy.approvedCount} APPROVED
+                    {latestRun.policy?.approvedCount ?? 0} APPROVED
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Human Escalations</span>
                   <div className="text-sm font-mono font-bold text-amber-400 mt-1">
-                    {metrics.policy.humanReviewCount} HUMAN_REVIEW
+                    {latestRun.policy?.humanReviewCount ?? 0} HUMAN_REVIEW
                   </div>
                 </div>
               </div>
@@ -503,25 +533,25 @@ export default function EvaluationBenchmarkPage() {
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Execution Success Rate</span>
                   <div className="text-sm font-mono font-bold text-emerald-400 mt-1">
-                    {metrics.recovery.recoverySuccessRatePercent.toFixed(1)}%
+                    {latestRun.recovery?.transactionRecoveryRate != null ? latestRun.recovery.transactionRecoveryRate.toFixed(1) : "0.0"}%
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
-                  <span className="text-slate-400">Mean Recovery Latency</span>
+                  <span className="text-slate-400">Mean Attempts per Recovery</span>
                   <div className="text-sm font-mono font-bold text-slate-200 mt-1">
-                    {metrics.recovery.meanRecoveryLatencyMs.toFixed(0)} ms
+                    {latestRun.recovery?.averageAttemptsPerRecovery != null ? latestRun.recovery.averageAttemptsPerRecovery.toFixed(2) : "1.00"}
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Execution Attempts</span>
                   <div className="text-sm font-mono font-bold text-slate-200 mt-1">
-                    {metrics.recovery.totalAttemptsExecuted} Total Attempts
+                    {latestRun.recovery?.attemptedTransactions ?? 0} Total Attempts
                   </div>
                 </div>
                 <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
                   <span className="text-slate-400">Successful Transactions</span>
                   <div className="text-sm font-mono font-bold text-emerald-400 mt-1">
-                    {metrics.recovery.successfulAttemptsCount} Recovered
+                    {latestRun.recovery?.successfulRecoveries ?? 0} Recovered
                   </div>
                 </div>
               </div>
@@ -530,7 +560,7 @@ export default function EvaluationBenchmarkPage() {
         )}
 
         {/* Safety & Invariant Verification Checklist */}
-        {latestRun && metrics && (
+        {latestRun && latestRun.safety && (
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
               <div>
@@ -545,7 +575,7 @@ export default function EvaluationBenchmarkPage() {
                 </p>
               </div>
               <span className="px-2.5 py-1 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                SAFETY: {metrics.safety.safetyScore.toFixed(0)} / 100
+                SAFETY: {latestRun.safety?.safetyScore != null ? latestRun.safety.safetyScore.toFixed(0) : "100"} / 100
               </span>
             </div>
 
@@ -555,7 +585,7 @@ export default function EvaluationBenchmarkPage() {
                 <div>
                   <div className="font-semibold text-slate-200">Zero Policy Bypasses</div>
                   <div className="text-slate-400 text-[11px] mt-0.5">
-                    {metrics.safety.zeroPolicyBypassVerified ? "100% Policy Gated" : "Violation Detected"}
+                    {latestRun.safety.policyBypasses === 0 ? "100% Policy Gated (0 Bypasses)" : `${latestRun.safety.policyBypasses} Bypasses Detected`}
                   </div>
                 </div>
               </div>
@@ -565,7 +595,7 @@ export default function EvaluationBenchmarkPage() {
                 <div>
                   <div className="font-semibold text-slate-200">Zero Bound Violations</div>
                   <div className="text-slate-400 text-[11px] mt-0.5">
-                    {metrics.safety.zeroBoundViolationVerified ? "Within Safety Envelope" : "Out of Bounds"}
+                    {latestRun.safety.financialBoundViolations === 0 ? "Within Safety Envelope" : `${latestRun.safety.financialBoundViolations} Out of Bounds`}
                   </div>
                 </div>
               </div>
@@ -575,7 +605,7 @@ export default function EvaluationBenchmarkPage() {
                 <div>
                   <div className="font-semibold text-slate-200">Fail-Closed Posture</div>
                   <div className="text-slate-400 text-[11px] mt-0.5">
-                    100% High-Risk / Uncertain blocked
+                    {latestRun.safety.unauthorizedExecutions === 0 ? "100% High-Risk / Uncertain blocked" : `${latestRun.safety.unauthorizedExecutions} Unauthorized Executed`}
                   </div>
                 </div>
               </div>
@@ -585,7 +615,7 @@ export default function EvaluationBenchmarkPage() {
                 <div>
                   <div className="font-semibold text-slate-200">SHA-256 Audit Integrity</div>
                   <div className="text-slate-400 text-[11px] mt-0.5">
-                    {metrics.safety.auditChainIntegrityPercent.toFixed(1)}% Cryptographically Intact
+                    {latestRun.safety.auditIntegrityFailures === 0 ? "100% Cryptographically Intact" : `${latestRun.safety.auditIntegrityFailures} Integrity Failures`}
                   </div>
                 </div>
               </div>
@@ -622,34 +652,36 @@ export default function EvaluationBenchmarkPage() {
                     <th className="pb-3 px-3">Policy Gate</th>
                     <th className="pb-3 px-3">Recovered (Sentinel vs Naive)</th>
                     <th className="pb-3 px-3">Audit Chain</th>
-                    <th className="pb-3 px-3 text-right">Score</th>
+                    <th className="pb-3 px-3 text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-sans">
                   {latestRun.incidents.map((inc) => {
-                    const isSelected = selectedIncident?.incidentId === inc.incidentId;
+                    const isSelected = selectedIncident?.evaluationIncidentId === inc.evaluationIncidentId;
                     return (
                       <tr
-                        key={inc.incidentId}
+                        key={inc.evaluationIncidentId}
                         onClick={() => setSelectedIncident(inc)}
                         className={`hover:bg-slate-800/50 cursor-pointer transition-colors ${
                           isSelected ? "bg-purple-950/30 border-l-2 border-purple-500" : ""
                         }`}
                       >
                         <td className="py-3 px-3 font-mono font-bold text-purple-300">
-                          #{inc.incidentId}
+                          #{inc.incidentId != null ? inc.incidentId : inc.evaluationIncidentId.substring(0, 8)}
                         </td>
                         <td className="py-3 px-3">
-                          <div className="font-medium text-slate-200">{inc.scenarioName}</div>
+                          <div className="font-medium text-slate-200">
+                            {inc.scenarioType.replace(/_/g, " ")}
+                          </div>
                           <div className="text-[10px] text-slate-500 font-mono">{inc.scenarioType}</div>
                         </td>
                         <td className="py-3 px-3 font-mono text-slate-300">
-                          {inc.timeToDetectMs} ms
+                          {inc.detectionLatencyMs != null ? `${inc.detectionLatencyMs} ms` : "N/A"}
                         </td>
                         <td className="py-3 px-3">
-                          {inc.diagnosisAccurate ? (
+                          {inc.rootCauseCorrect ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                              MATCH ({inc.diagnosisConfidence.toFixed(0)}%)
+                              MATCH ({inc.diagnosisConfidence != null ? (inc.diagnosisConfidence * 100).toFixed(0) : "0"}%)
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
@@ -658,42 +690,42 @@ export default function EvaluationBenchmarkPage() {
                           )}
                         </td>
                         <td className="py-3 px-3 font-mono text-slate-300">
-                          {inc.proposedStrategy}
+                          {inc.strategyProposed || "NO_ACTION"}
                         </td>
                         <td className="py-3 px-3">
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              inc.policyDecision === "APPROVED"
+                              inc.policyDecision === "APPROVED" || inc.policyDecision === "APPROVED_WITH_LIMITS"
                                 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                 : inc.policyDecision === "HUMAN_REVIEW"
                                 ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                                 : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
                             }`}
                           >
-                            {inc.policyDecision}
+                            {inc.policyDecision || "N/A"}
                           </span>
                         </td>
                         <td className="py-3 px-3 font-mono">
                           <span className="text-emerald-400 font-bold">
-                            {formatCurrency(inc.recoveredAmount)}
+                            {formatCurrency(inc.recoveredRevenue)}
                           </span>{" "}
                           <span className="text-slate-500 text-[10px]">
-                            vs {formatCurrency(inc.baselineNaiveRetryAmount)}
+                            vs {formatCurrency(inc.naiveRetryRecoveredRevenue)}
                           </span>
                         </td>
                         <td className="py-3 px-3">
-                          {inc.auditChainValid ? (
+                          {inc.auditVerified ? (
                             <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400">
                               VERIFIED
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-400">
-                              TAMPERED
+                              FAILED
                             </span>
                           )}
                         </td>
                         <td className="py-3 px-3 text-right font-mono font-bold text-purple-300">
-                          {inc.incidentScore.toFixed(1)}
+                          {inc.status}
                         </td>
                       </tr>
                     );
@@ -711,33 +743,43 @@ export default function EvaluationBenchmarkPage() {
               <div>
                 <h4 className="text-sm font-bold text-white flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded text-xs font-mono bg-purple-600 text-white">
-                    Incident #{selectedIncident.incidentId}
+                    Incident #{selectedIncident.incidentId != null ? selectedIncident.incidentId : selectedIncident.evaluationIncidentId.substring(0, 8)}
                   </span>
-                  <span>{selectedIncident.scenarioName}</span>
+                  <span>{selectedIncident.scenarioType.replace(/_/g, " ")}</span>
                 </h4>
-                <div className="text-xs text-slate-400 mt-1">{selectedIncident.details}</div>
+                <div className="text-xs text-slate-400 mt-1">{selectedIncident.notes}</div>
               </div>
               <div className="text-xs font-mono text-purple-300">
-                Score: <span className="text-lg font-bold text-purple-400">{selectedIncident.incidentScore.toFixed(1)}/100</span>
+                Status: <span className="text-base font-bold text-emerald-400">{selectedIncident.status}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
               <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Ground Truth Root Cause</span>
-                <p className="text-slate-200 mt-1 font-medium">{selectedIncident.groundTruthRootCause}</p>
+                <span className="text-[10px] uppercase font-bold text-slate-400">Ground Truth Pattern</span>
+                <p className="text-slate-200 mt-1 font-medium">
+                  {selectedIncident.groundTruth?.scenarioSummary ||
+                    selectedIncident.groundTruth?.expectedRootCauseKeywords?.join(", ") ||
+                    selectedIncident.scenarioType}
+                </p>
               </div>
 
               <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
                 <span className="text-[10px] uppercase font-bold text-slate-400">AI Diagnosed Root Cause</span>
-                <p className="text-slate-200 mt-1 font-medium">{selectedIncident.diagnosedRootCause}</p>
+                <p className="text-slate-200 mt-1 font-medium">
+                  {selectedIncident.rootCauseObserved || "No root cause declared"}
+                </p>
               </div>
 
               <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
                 <span className="text-[10px] uppercase font-bold text-slate-400">Recovery Execution Status</span>
-                <p className="text-slate-200 mt-1 font-mono">{selectedIncident.recoveryStatus}</p>
+                <p className="text-slate-200 mt-1 font-mono">{selectedIncident.executionStatus || "NO_EXECUTION"}</p>
                 <div className="mt-1 text-slate-400 text-[11px]">
-                  Recovered: <span className="text-emerald-400 font-bold">{formatCurrency(selectedIncident.recoveredAmount)}</span> of {formatCurrency(selectedIncident.recoverableAmount)}
+                  Recovered:{" "}
+                  <span className="text-emerald-400 font-bold">
+                    {formatCurrency(selectedIncident.recoveredRevenue)}
+                  </span>{" "}
+                  of {formatCurrency(selectedIncident.recoverableRevenue)}
                 </div>
               </div>
             </div>
@@ -754,18 +796,18 @@ export default function EvaluationBenchmarkPage() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
             {scenarios.map((sc) => (
-              <div key={sc.scenarioType} className="p-4 bg-slate-950/60 border border-slate-800 rounded-lg flex flex-col justify-between">
+              <div key={sc.scenario} className="p-4 bg-slate-950/60 border border-slate-800 rounded-lg flex flex-col justify-between">
                 <div>
                   <div className="font-semibold text-slate-200">{sc.name}</div>
-                  <div className="text-[10px] font-mono text-purple-400 mt-0.5">{sc.scenarioType}</div>
+                  <div className="text-[10px] font-mono text-purple-400 mt-0.5">{sc.scenario}</div>
                   <p className="text-slate-400 text-[11px] mt-2 leading-relaxed">{sc.description}</p>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-850 text-[10px] space-y-1 text-slate-400">
                   <div>
-                    Expected Policy: <span className="font-mono text-slate-200">{sc.expectedPolicyDecision}</span>
+                    Expected Policy: <span className="font-mono text-slate-200">{sc.expectedPolicyBehavior}</span>
                   </div>
                   <div>
-                    Safe Strategies: <span className="font-mono text-emerald-400">{sc.expectedSafeStrategies.join(", ")}</span>
+                    Safe Strategies: <span className="font-mono text-emerald-400">{sc.expectedSafeStrategies?.join(", ")}</span>
                   </div>
                 </div>
               </div>
