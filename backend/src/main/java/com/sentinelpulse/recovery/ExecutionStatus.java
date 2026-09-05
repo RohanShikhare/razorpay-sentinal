@@ -1,7 +1,7 @@
 package com.sentinelpulse.recovery;
 
 /**
- * Lifecycle status of a recovery execution run (Module 10).
+ * Lifecycle status of a recovery execution run.
  */
 public enum ExecutionStatus {
     REQUESTED,

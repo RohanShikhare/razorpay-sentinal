@@ -9,14 +9,14 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Structured response containing the full results of a recovery execution simulation (Module 10).
+ * Structured response containing the full results of a recovery execution simulation.
  *
  * <p>Exposes the complete comparison:
  * <ul>
- *   <li>Authoritative Truth (Module 4)</li>
- *   <li>AI Proposed Estimate (Module 8)</li>
- *   <li>Policy Enforced Bounds (Module 9)</li>
- *   <li>Actual Simulated Recovery (Module 10)</li>
+ *   <li>Authoritative Truth</li>
+ *   <li>AI Proposed Estimate</li>
+ *   <li>Policy Enforced Bounds</li>
+ *   <li>Actual Simulated Recovery</li>
  * </ul>
  */
 public record RecoveryExecutionResponse(
@@ -51,5 +51,5 @@ public record RecoveryExecutionResponse(
         String simulationDisclaimer
 ) {
     public static final String DEFAULT_SIMULATION_DISCLAIMER =
-            "Simulation environment only. No real Razorpay APIs or live payment gateways were invoked. Recovery amounts are measured from synthetic payment replay simulation obeying Module 9 Policy Gate limits.";
+            "Simulation environment only. No real Razorpay APIs or live payment gateways were invoked. Recovery amounts are measured from synthetic payment replay simulation obeying Policy Gate limits.";
 }

@@ -81,7 +81,7 @@ export interface RecoveryExecutionResponse {
 }
 
 /**
- * Triggers bounded recovery execution simulation for an incident obeying Module 9 Policy Gate limits.
+ * Triggers bounded recovery execution simulation for an incident obeying Policy Gate limits.
  * POST /api/v1/incidents/{incidentId}/recovery-execute
  */
 export async function executeRecovery(incidentId: number): Promise<RecoveryExecutionResponse> {

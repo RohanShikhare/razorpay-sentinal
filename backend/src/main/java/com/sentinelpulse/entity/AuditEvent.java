@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Persisted Audit Event (Module 11: Audit Trail & Decision History).
+ * Persisted Audit Event (Audit Trail & Decision History).
  *
  * <p>Captures an immutable, tamper-evident record of each incident response lifecycle step,
  * recording what occurred, which actor initiated it, what evidence was evaluated, and

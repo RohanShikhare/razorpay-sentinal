@@ -84,7 +84,7 @@ export default function PaymentsPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="font-mono text-xs text-signal-wire">Module 1 · Payment Data Engine</p>
+      <p className="font-mono text-xs text-signal-wire">Payment Data Engine</p>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Payments</h1>
         {simulationStatus?.active && (
@@ -97,7 +97,7 @@ export default function PaymentsPage() {
         )}
       </div>
       <p className="mt-2 max-w-xl text-sm text-ink-muted">
-        Synthetic payment traffic used as the baseline for every later module — incident
+        Synthetic payment traffic used as the baseline — incident
         detection, revenue-at-risk, and recovery all read from this dataset.
       </p>
 

@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * Central place where every unhandled exception in the API is converted into
- * a consistent {@link ErrorResponse}. Later modules should throw
+ * a consistent {@link ErrorResponse}. Domain components should throw
  * {@link SentinelException} subclasses so they are handled automatically
  * without needing their own try/catch blocks in controllers.
  */

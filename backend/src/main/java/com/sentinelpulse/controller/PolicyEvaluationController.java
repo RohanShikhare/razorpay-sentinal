@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller exposing deterministic policy and safety guardrail evaluation endpoints (Module 9).
+ * REST controller exposing deterministic policy and safety guardrail evaluation endpoints.
  *
  * <p>Strict Architectural Boundary:
- * Module 9 evaluates whether proposed recovery actions are legally and operationally permissible.
+ * The Policy Gate evaluates whether proposed recovery actions are legally and operationally permissible.
  * This controller executes ZERO AI/LLM calls and executes ZERO money movement / retry operations.
- * Execution is delegated strictly to Module 10.
+ * Execution is delegated strictly to the Recovery Execution Simulator.
  */
 @RestController
 @RequestMapping("/api/v1/incidents")

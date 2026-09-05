@@ -2,7 +2,7 @@
   "name": "razorpay-sentinel-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Razorpay Sentinel - AI Payment Incident Commander (frontend, Module 3)",
+  "description": "Razorpay Sentinel - AI Payment Incident Commander (frontend)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

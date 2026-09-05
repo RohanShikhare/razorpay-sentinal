@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * REST Controller for the Sentinel Safety & Failure Lab (Module 12).
+ * REST Controller for the Sentinel Safety & Failure Lab.
  *
  * <p><strong>DEMO / TEST / SIMULATION ONLY:</strong>
  * Exercises controlled synthetic failure scenarios demonstrating that Sentinel fails closed,

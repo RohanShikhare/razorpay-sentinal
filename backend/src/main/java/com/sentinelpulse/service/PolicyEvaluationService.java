@@ -41,13 +41,13 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Deterministic Policy and Guardrail Engine (Module 9).
+ * Deterministic Policy and Guardrail Engine.
  *
  * <p>Architectural Invariant:
  * <ul>
- *   <li>AI proposes recovery actions (Modules 6, 7, 8).</li>
- *   <li>Policy decides whether actions are permitted (Module 9).</li>
- *   <li>Execution obeys policy (Module 10).</li>
+ *   <li>AI proposes recovery actions.</li>
+ *   <li>Policy decides whether actions are permitted.</li>
+ *   <li>Execution obeys policy.</li>
  * </ul>
  *
  * <p>Zero LLM calls are made during policy evaluation. All evaluations are 100% deterministic,
@@ -388,7 +388,7 @@ public class PolicyEvaluationService {
         } else {
             checks.add(PolicyCheckDto.pass(
                     "POLICY-008", "Financial Safety Bounds",
-                    "Strategy recovery estimates strictly conform to Module 4 authoritative financial boundaries.",
+                    "Strategy recovery estimates strictly conform to authoritative financial boundaries.",
                     "₹" + estimatedRecoveryAmount + " <= ₹" + authoritativeRecoverable
             ));
         }
@@ -495,13 +495,13 @@ public class PolicyEvaluationService {
             overallAllowed = true;
             executionAllowed = (strategyType != RecoveryStrategyType.NO_ACTION && strategyType != RecoveryStrategyType.MONITOR_ONLY);
             summary = "Strategy proposal APPROVED WITH LIMITS: execution permitted under " + appliedLimits.size() + " enforced constraint(s).";
-            nextStep = "Proceed to Module 10 Recovery Execution Simulator under enforced limits.";
+            nextStep = "Proceed to Recovery Execution Simulator under enforced limits.";
         } else {
             decision = PolicyDecision.APPROVED;
             overallAllowed = true;
             executionAllowed = (strategyType != RecoveryStrategyType.NO_ACTION && strategyType != RecoveryStrategyType.MONITOR_ONLY);
             summary = "Strategy proposal satisfies all mandatory safety policies and is APPROVED for execution.";
-            nextStep = "Proceed to Module 10 Recovery Execution Simulator.";
+            nextStep = "Proceed to Recovery Execution Simulator.";
         }
 
         // Calculate deterministic policy score (0-100)

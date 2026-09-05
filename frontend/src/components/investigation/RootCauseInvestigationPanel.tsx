@@ -87,7 +87,7 @@ export function RootCauseInvestigationPanel({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs text-signal-wire font-medium">
-              Module 7 · Deep Root-Cause Investigation
+              Deep Root-Cause Investigation
             </span>
             {investigation && (
               <span className="border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 font-mono text-[11px] text-blue-400">

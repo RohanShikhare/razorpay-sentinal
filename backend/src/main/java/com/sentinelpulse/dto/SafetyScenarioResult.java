@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Structured outcome resulting from the execution of a safety scenario (Module 12).
+ * Structured outcome resulting from the execution of a safety scenario.
  */
 public record SafetyScenarioResult(
         SafetyScenarioType scenario,

@@ -24,8 +24,8 @@ import java.util.Random;
  * "Realistic" here means: a healthy baseline. Payment methods, banks,
  * statuses, and error codes are all drawn from weighted distributions
  * rather than being uniform or forced, so the resulting dataset does not
- * already look like an incident - that manipulation is Module 2's job
- * (Incident Simulator), not this generator's.
+ * already look like an incident - that manipulation is the Incident
+ * Simulator's job, not this generator's.
  */
 @Service
 public class PaymentGeneratorService {
@@ -91,7 +91,7 @@ public class PaymentGeneratorService {
     /**
      * Builds {@code count} synthetic payments in memory without touching the
      * database. Split out from {@link #generateAndPersist} so the
-     * distribution logic can be tested directly, and so later modules can
+     * distribution logic can be tested directly, and so other components can
      * reuse it to build payments without necessarily persisting them.
      */
     public List<Payment> generate(int count, Long seed) {

@@ -42,14 +42,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Service for managing the immutable, tamper-evident Sentinel Audit Trail (Module 11).
+ * Service for managing the immutable, tamper-evident Sentinel Audit Trail.
  *
  * <p>Architectural Invariants:
  * <ul>
- *   <li>AI proposes (Modules 6, 7, 8).</li>
- *   <li>Policy decides (Module 9).</li>
- *   <li>Execution obeys policy (Module 10).</li>
- *   <li>Audit records what occurred without making business decisions (Module 11).</li>
+ *   <li>AI proposes recovery actions.</li>
+ *   <li>Policy decides whether actions are permitted.</li>
+ *   <li>Execution obeys policy.</li>
+ *   <li>Audit records what occurred without making business decisions.</li>
  *   <li>Zero AI calls and zero business logic mutations.</li>
  *   <li>SHA-256 cryptographic hash-chaining per incident.</li>
  * </ul>

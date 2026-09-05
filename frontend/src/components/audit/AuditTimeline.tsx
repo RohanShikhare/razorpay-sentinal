@@ -380,7 +380,7 @@ export function AuditTimeline({ incidentId }: AuditTimelineProps) {
                   Audit Trail &amp; Decision History
                 </h2>
                 <span className="text-xs px-2 py-0.5 rounded-full font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  MODULE 11
+                  AUDIT TRAIL
                 </span>
               </div>
               <p className="text-xs text-ink-muted mt-0.5">

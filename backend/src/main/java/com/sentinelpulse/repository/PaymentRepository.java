@@ -15,7 +15,7 @@ import java.util.List;
  * Extends {@link JpaSpecificationExecutor} so callers can combine filters
  * (status, payment method, bank, error code, time window) freely via
  * {@link PaymentSpecifications} without a bespoke query per combination -
- * this is what lets later modules (e.g. the Incident Simulator) query
+ * this is what lets services (e.g. the Incident Simulator) query
  * arbitrary subsets of payments without changing this repository.
  */
 public interface PaymentRepository extends JpaRepository<Payment, Long>, JpaSpecificationExecutor<Payment> {
@@ -50,7 +50,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long>, JpaSpec
      * Row counts and summed amounts of FAILED payments only, grouped by
      * payment method. Combined with {@link #aggregateByPaymentMethod()} in
      * {@code PaymentService} to expose a failure rate per segment - used by
-     * the Module 5 dashboard's payment-method breakdown.
+     * the monitoring dashboard's payment-method breakdown.
      * Each result is {@code [PaymentMethod, Long, BigDecimal]}.
      */
     @Query("select p.paymentMethod, count(p), sum(p.amount) from Payment p where p.status = com.sentinelpulse.entity.PaymentStatus.FAILED group by p.paymentMethod")

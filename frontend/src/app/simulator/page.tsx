@@ -78,12 +78,12 @@ export default function SimulatorPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="font-mono text-xs text-signal-wire">Module 2 · Incident Simulator</p>
+      <p className="font-mono text-xs text-signal-wire">Incident Simulator</p>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Incident Simulator</h1>
       <p className="mt-2 max-w-2xl text-sm text-ink-muted">
         Deliberately degrades the synthetic payment dataset in controlled, reproducible ways. This
         only creates conditions in the data — it does not detect or declare an incident. That&apos;s
-        the Monitoring &amp; Incident Detection Engine&apos;s job, coming in a later module.
+        the Monitoring &amp; Incident Detection Engine&apos;s job.
       </p>
 
       <div className="mt-6">

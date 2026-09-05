@@ -25,8 +25,8 @@ public record PaymentSummaryResponse(
         List<CountBreakdown> byErrorCode
 ) {
     /**
-     * A segment's totals plus its own failure count/value/rate - added in
-     * Module 5 so the dashboard's bank and payment-method breakdown tables
+     * A segment's totals plus its own failure count/value/rate so the
+     * dashboard's bank and payment-method breakdown tables
      * can show a failure rate per segment without extra round trips.
      */
     public record CountValueBreakdown(

@@ -1,7 +1,7 @@
 package com.sentinelpulse.evaluation;
 
 /**
- * Deterministic scenario types evaluated by the Evaluation & Benchmarking Engine (Module 13).
+ * Deterministic scenario types evaluated by the Evaluation & Benchmarking Engine.
  */
 public enum EvaluationScenarioType {
 

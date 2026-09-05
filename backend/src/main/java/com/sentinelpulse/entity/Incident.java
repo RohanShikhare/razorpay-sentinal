@@ -21,7 +21,7 @@ import java.time.Instant;
  * records *what was statistically observed* (which segment, how much the
  * failure rate moved, how many transactions and how much revenue are
  * implicated). {@link #rootCause} stays null here - assigning it is the
- * future AI investigation module's job, not the deterministic detector's.
+ * AI investigation engine's job, not the deterministic detector's.
  */
 @Entity
 @Table(
@@ -74,7 +74,7 @@ public class Incident {
     private double confidence;
 
     /**
-     * Null until the AI investigation module (a later module) assigns one.
+     * Null until the AI investigation engine assigns one.
      * The deterministic detector never guesses a root cause.
      */
     @Column(length = 512)

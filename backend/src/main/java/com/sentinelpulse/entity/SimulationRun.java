@@ -18,7 +18,7 @@ import java.time.Instant;
  * This is deliberately a lightweight simulation record, not a detected
  * incident - it says "the simulator applied this scenario to the data",
  * never "the system detected an incident". Incident detection and
- * persistence belong to a later module.
+ * persistence belong to the incident detection engine.
  *
  * At most one row should be {@code active = true} at a time; {@link
  * com.sentinelpulse.service.IncidentSimulationService} enforces that by

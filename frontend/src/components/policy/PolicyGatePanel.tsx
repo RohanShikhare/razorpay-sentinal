@@ -155,7 +155,7 @@ export function PolicyGatePanel({
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-ink-primary tracking-tight">Policy Gate & Guardrail Engine</h2>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
-                MODULE 9
+                POLICY GATE
               </span>
               {evaluation && (
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-base-raised text-ink-muted border border-base-border">
@@ -221,7 +221,7 @@ export function PolicyGatePanel({
           <div className="text-3xl">⚖️</div>
           <h3 className="text-sm font-semibold text-ink-primary">No Policy Evaluation Performed Yet</h3>
           <p className="text-xs text-ink-muted max-w-md mx-auto">
-            Run the deterministic Policy Gate to test the proposed Module 8 recovery strategy against hard financial bounds, retry limits, merchant protections, and safety invariants.
+            Run the deterministic Policy Gate to test the proposed recovery strategy against hard financial bounds, retry limits, merchant protections, and safety invariants.
           </p>
           <button
             onClick={handleEvaluate}

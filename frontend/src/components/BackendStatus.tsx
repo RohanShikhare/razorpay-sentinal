@@ -61,7 +61,7 @@ export function BackendStatus() {
               service <span className="text-ink">{connection.data.service}</span>
             </div>
             <div>
-              module <span className="text-ink">{connection.data.module}</span>
+              component <span className="text-ink">{connection.data.module}</span>
             </div>
             <div>
               checked <span className="text-ink">{new Date(connection.data.timestamp).toLocaleTimeString()}</span>

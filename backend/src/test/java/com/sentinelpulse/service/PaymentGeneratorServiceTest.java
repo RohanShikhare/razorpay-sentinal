@@ -86,7 +86,7 @@ class PaymentGeneratorServiceTest {
 
         // No bank should carry more than half the traffic, and every
         // configured bank should actually appear (including Bank X, which
-        // later modules will target for incident simulation).
+        // incident scenarios will target for simulation).
         for (long count : byBank.values()) {
             assertTrue(count < 5_000 * 0.5, "a single bank should not dominate the dataset");
         }

@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * Deterministic structured evidence object constructed for AI consumption.
- * Encapsulates observed facts from Module 3 (Detection) and Module 4 (Financial Impact).
+ * Encapsulates observed facts from Detection and Financial Impact engines.
  */
 public record AiEvidenceDto(
         // Incident Metadata & Core Metrics
@@ -30,7 +30,7 @@ public record AiEvidenceDto(
         PaymentMethod targetPaymentMethod,
         String targetMerchantId,
 
-        // Authoritative Financial Impact (Module 4)
+        // Authoritative Financial Impact
         BigDecimal affectedTransactionValue,
         BigDecimal failedTransactionValue,
         BigDecimal revenueAtRisk,

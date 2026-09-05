@@ -430,7 +430,7 @@ export default function FinalCommandCenterPage() {
                   Track 3: AI Revenue Recovery
                 </span>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                  Module 14 — Final Command Center
+                  Consolidated Operations Command Center
                 </span>
               </div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
@@ -579,9 +579,9 @@ export default function FinalCommandCenterPage() {
                 Financial Exposure & Recovery Performance
               </h2>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                Authoritative distinction: <strong className="text-slate-200">Revenue at Risk</strong> (Module 4 Exposure) ≠{" "}
-                <strong className="text-slate-200">Recoverable Revenue</strong> (Module 4 Ceiling) ≠{" "}
-                <strong className="text-emerald-400">Revenue Recovered</strong> (Module 10 Simulated Outcome).
+                Authoritative distinction: <strong className="text-slate-200">Revenue at Risk</strong> (Authoritative Exposure) ≠{" "}
+                <strong className="text-slate-200">Recoverable Revenue</strong> (Theoretical Ceiling) ≠{" "}
+                <strong className="text-emerald-400">Revenue Recovered</strong> (Simulated Outcome).
               </p>
             </div>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
@@ -898,13 +898,13 @@ export default function FinalCommandCenterPage() {
         {/* E. 6-CARD OPERATIONAL CONTROL ROOM PANELS GRID            */}
         {/* ========================================================= */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {/* Card 1: AI Diagnostic Agent (Module 6) */}
+          {/* Card 1: AI Diagnostic Agent */}
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-cyan-400" />
-                  AI Diagnostic Agent (Module 6)
+                  AI Diagnostic Agent
                 </span>
                 <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800">
                   Advisory Only
@@ -959,13 +959,13 @@ export default function FinalCommandCenterPage() {
             </div>
           </div>
 
-          {/* Card 2: Root-Cause Investigation (Module 7) */}
+          {/* Card 2: Root-Cause Investigation */}
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-indigo-400" />
-                  Deep Investigation (Module 7)
+                  Deep Investigation
                 </span>
                 <span className="text-[10px] font-mono text-indigo-300 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800">
                   Hypothesis Ranking
@@ -1017,13 +1017,13 @@ export default function FinalCommandCenterPage() {
             </div>
           </div>
 
-          {/* Card 3: Recovery Strategy Proposal (Module 8) */}
+          {/* Card 3: Recovery Strategy Proposal */}
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  Recovery Strategy (Module 8)
+                  Recovery Strategy
                 </span>
                 <span className="text-[10px] font-mono text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800">
                   Proposal Engine
@@ -1079,17 +1079,17 @@ export default function FinalCommandCenterPage() {
             </div>
 
             <div className="mt-4 pt-2.5 border-t border-slate-800/80 text-[10px] text-slate-500">
-              Proposals are bounded by Module 4 financial recoverability caps.
+              Proposals are bounded by authoritative financial recoverability caps.
             </div>
           </div>
 
-          {/* Card 4: Deterministic Policy Gate (Module 9) */}
+          {/* Card 4: Deterministic Policy Gate */}
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-purple-400" />
-                  Deterministic Policy Gate (Module 9)
+                  Deterministic Policy Gate
                 </span>
                 <span className="text-[10px] font-mono text-purple-300 bg-purple-950/60 px-2 py-0.5 rounded border border-purple-800">
                   Zero AI • 12 Policies
@@ -1161,13 +1161,13 @@ export default function FinalCommandCenterPage() {
             </div>
           </div>
 
-          {/* Card 5: Recovery Execution Simulator (Module 10) */}
+          {/* Card 5: Recovery Execution Simulator */}
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Recovery Execution (Module 10)
+                  Recovery Execution
                 </span>
                 <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
                   Simulated Outcome
@@ -1231,17 +1231,17 @@ export default function FinalCommandCenterPage() {
             </div>
 
             <div className="mt-4 pt-2.5 border-t border-slate-800/80 text-[10px] text-slate-500">
-              Executes strictly under Module 9 Policy limits; guarded by failure circuit breakers.
+              Executes strictly under Policy Gate limits; guarded by failure circuit breakers.
             </div>
           </div>
 
-          {/* Card 6: Cryptographic Audit Proof (Module 11) */}
+          {/* Card 6: Cryptographic Audit Proof */}
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-cyan-400" />
-                  Audit Trail &amp; SHA-256 Proof (Module 11)
+                  Audit Trail &amp; SHA-256 Proof
                 </span>
                 <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
                   Tamper-Evident
@@ -1305,10 +1305,10 @@ export default function FinalCommandCenterPage() {
         </div>
 
         {/* ========================================================= */}
-        {/* F. SAFETY PROOF & BENCHMARK SNAPSHOT (MODULES 12 & 13)    */}
+        {/* F. SAFETY PROOF & BENCHMARK SNAPSHOT                      */}
         {/* ========================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Module 12 Safety Invariant Verification */}
+          {/* Safety Invariant Verification */}
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
               <div>
@@ -1316,7 +1316,7 @@ export default function FinalCommandCenterPage() {
                   <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  Safety Invariant Proofs (Module 12)
+                  Safety Invariant Proofs
                 </h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Proves that Sentinel fails closed under AI failure, invalid schemas, and policy rejections.
@@ -1363,7 +1363,7 @@ export default function FinalCommandCenterPage() {
             </div>
           </div>
 
-          {/* Module 13 Benchmark Snapshot & Baseline Comparison */}
+          {/* Benchmark Snapshot & Baseline Comparison */}
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
               <div>
@@ -1371,7 +1371,7 @@ export default function FinalCommandCenterPage() {
                   <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  Benchmark Performance Proof (Module 13)
+                  Benchmark Performance Proof
                 </h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Reproducible multi-scenario benchmark evaluated against standard payment baselines.

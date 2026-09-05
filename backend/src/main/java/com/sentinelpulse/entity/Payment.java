@@ -17,10 +17,10 @@ import java.util.Objects;
 /**
  * A single payment transaction, synthetic or otherwise.
  *
- * This is the shared data foundation for every later module: incident
+ * This is the shared data foundation: incident
  * detection, revenue-at-risk, AI diagnosis, and recovery all read and
- * (eventually) act on rows in this table. Indexes are declared on the
- * columns those modules will filter by most - status, bank, payment
+ * act on rows in this table. Indexes are declared on the
+ * columns queries filter by most - status, bank, payment
  * method, error code, and time - so those queries stay cheap as the
  * dataset grows.
  */

@@ -41,7 +41,7 @@ public class PaymentService {
     /**
      * Finds payments matching any combination of the given filters. Any
      * argument may be null to skip that filter - this is also the entry
-     * point later modules should use to fetch an arbitrary subset of
+     * point downstream components use to fetch an arbitrary subset of
      * payments (by bank, method, status, error code, or time window).
      */
     public Page<PaymentDto> findPayments(PaymentStatus status, PaymentMethod paymentMethod, String bank,

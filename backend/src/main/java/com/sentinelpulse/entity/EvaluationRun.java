@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Persisted record of an evaluation benchmark run (Module 13).
+ * Persisted record of an evaluation benchmark run.
  */
 @Entity
 @Table(name = "evaluation_runs", indexes = {

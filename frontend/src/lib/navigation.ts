@@ -5,10 +5,10 @@ export interface NavItem {
 }
 
 /**
- * Primary navigation. "Command Center" (Module 5) is the flagship
- * consolidated operations view; "Home" (formerly "Dashboard", Module 0) is
- * preserved as the project overview/foundation page. The focused
- * single-purpose pages (Payments, Simulator, Monitoring, Incidents) all
+ * Primary navigation. "Command Center" is the flagship
+ * consolidated operations view; "Home" provides
+ * the project overview. The focused
+ * single-purpose pages (Payments, Simulator, Monitoring, Incidents, Safety Lab, Evaluation) all
  * remain available for drill-down.
  */
 export const NAV_ITEMS: NavItem[] = [

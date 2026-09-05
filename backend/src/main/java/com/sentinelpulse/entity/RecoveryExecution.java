@@ -17,10 +17,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Persisted entity recording a bounded recovery execution simulation run (Module 10).
+ * Persisted entity recording a bounded recovery execution simulation run.
  *
  * <p>Strict Safety Invariant:
- * Module 10 executes ONLY within bounds explicitly approved by Module 9 Policy Gate.
+ * The Recovery Execution Simulator executes ONLY within bounds explicitly approved by the Policy Gate.
  * This entity captures both the authoritative baseline, AI proposal, policy limits,
  * and the actual simulated recovery outcome.
  */

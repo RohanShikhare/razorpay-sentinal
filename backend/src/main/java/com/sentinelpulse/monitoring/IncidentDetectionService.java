@@ -84,8 +84,8 @@ import java.util.Objects;
  *
  * <h2>What this engine does not do</h2>
  * It never calls an LLM, never assigns {@code rootCause}, never recommends
- * or executes recovery. Root-cause diagnosis is a future AI investigation
- * module's job; this engine only ever states what it statistically observed.
+ * or executes recovery. Root-cause diagnosis is the AI investigation
+ * engine's job; this engine only ever states what it statistically observed.
  */
 @Service
 public class IncidentDetectionService {

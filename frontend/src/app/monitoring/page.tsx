@@ -54,7 +54,7 @@ export default function MonitoringPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="font-mono text-xs text-signal-wire">Module 3 · Monitoring &amp; Incident Detection</p>
+      <p className="font-mono text-xs text-signal-wire">Monitoring &amp; Incident Detection</p>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Command Center</h1>
         <button

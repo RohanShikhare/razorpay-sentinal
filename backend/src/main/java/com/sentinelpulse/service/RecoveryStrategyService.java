@@ -43,11 +43,11 @@ import java.util.Optional;
 /**
  * Core engine for generating, ranking, bounding, and persisting recovery strategy proposals.
  *
- * <p>Consumes outputs from Module 4 (Financial Impact), Module 6 (AI Diagnosis),
- * Module 7 (Root-Cause Investigation), and deterministic incident telemetry.
+ * <p>Consumes outputs from Financial Impact, AI Diagnosis,
+ * Root-Cause Investigation, and deterministic incident telemetry.
  *
- * <p>Strict Module Boundary: Generates bounded strategy proposals only. Does NOT execute retries,
- * modify transaction statuses, or perform policy approval (deferred to Module 9 and Module 10).
+ * <p>Strict Architectural Boundary: Generates bounded strategy proposals only. Does NOT execute retries,
+ * modify transaction statuses, or perform policy approval (deferred to Policy Gate and Recovery Execution Simulator).
  */
 @Service
 public class RecoveryStrategyService {
@@ -134,7 +134,7 @@ public class RecoveryStrategyService {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Incident not found: " + incidentId));
 
-        // 1. Authoritative financial metrics (Module 4)
+        // 1. Authoritative financial metrics
         FinancialImpactResponse financialImpact = financialImpactService.getFinancialImpact(incidentId);
         BigDecimal authoritativeRevenueAtRisk = financialImpact.revenueAtRisk();
         BigDecimal authoritativeRecoverableAmount = financialImpact.estimatedRecoverableRevenue();

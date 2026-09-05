@@ -49,7 +49,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Available evaluation scenarios are complete and describe ground truth")
+    @DisplayName("Evaluation Engine: Available evaluation scenarios are complete and describe ground truth")
     void testGetAvailableScenarios() {
         List<EvaluationScenarioDescriptorDto> scenarios = evaluationService.getAvailableScenarios();
 
@@ -65,7 +65,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Batch evaluation runs deterministically across multi-scenarios")
+    @DisplayName("Evaluation Engine: Batch evaluation runs deterministically across multi-scenarios")
     void testRunEvaluation_deterministicAndComplete() {
         EvaluationRunRequest request = new EvaluationRunRequest(8, 42L, true, null);
         EvaluationRunResponse response = evaluationService.runEvaluation(request);
@@ -106,7 +106,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Detection metrics accurately capture confusion matrix and F1 score")
+    @DisplayName("Evaluation Engine: Detection metrics accurately capture confusion matrix and F1 score")
     void testDetectionMetrics_confusionMatrix() {
         EvaluationRunRequest request = new EvaluationRunRequest(8, 42L, true, null);
         EvaluationRunResponse response = evaluationService.runEvaluation(request);
@@ -122,7 +122,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Diagnostic accuracy evaluates root-cause keywords against ground truth")
+    @DisplayName("Evaluation Engine: Diagnostic accuracy evaluates root-cause keywords against ground truth")
     void testDiagnosisMetrics_accuracyAndGroundTruth() {
         EvaluationRunRequest request = new EvaluationRunRequest(8, 42L, true, null);
         EvaluationRunResponse response = evaluationService.runEvaluation(request);
@@ -135,7 +135,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Policy compliance verifies zero unauthorized recovery bypasses")
+    @DisplayName("Evaluation Engine: Policy compliance verifies zero unauthorized recovery bypasses")
     void testPolicyCompliance_andSafetyScore() {
         EvaluationRunRequest request = new EvaluationRunRequest(6, 42L, true, null);
         EvaluationRunResponse response = evaluationService.runEvaluation(request);
@@ -156,7 +156,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Baseline comparisons compute positive uplift over No Recovery")
+    @DisplayName("Evaluation Engine: Baseline comparisons compute positive uplift over No Recovery")
     void testBaselineComparison_upliftCalculation() {
         EvaluationRunRequest request = new EvaluationRunRequest(6, 42L, true, null);
         EvaluationRunResponse response = evaluationService.runEvaluation(request);
@@ -169,7 +169,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Seed reproducibility produces identical benchmark results")
+    @DisplayName("Evaluation Engine: Seed reproducibility produces identical benchmark results")
     void testSeedReproducibility() {
         EvaluationRunRequest req1 = new EvaluationRunRequest(4, 777L, true, null);
         EvaluationRunResponse resp1 = evaluationService.runEvaluation(req1);
@@ -193,7 +193,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Merchant degradation blocks autonomous retries to protect merchant")
+    @DisplayName("Evaluation Engine: Merchant degradation blocks autonomous retries to protect merchant")
     void testMerchantProtection_blocksAutomatedExecution() {
         EvaluationRunRequest request = new EvaluationRunRequest(
                 1, 42L, true, List.of(EvaluationScenarioType.MERCHANT_SPECIFIC_DEGRADATION)
@@ -210,7 +210,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Normal random noise avoids false positive alerts")
+    @DisplayName("Evaluation Engine: Normal random noise avoids false positive alerts")
     void testNegativeScenario_normalNoiseAvoidsFalsePositive() {
         EvaluationRunRequest request = new EvaluationRunRequest(
                 1, 42L, true, List.of(EvaluationScenarioType.NORMAL_RANDOM_FAILURES)
@@ -226,7 +226,7 @@ public class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Module 13: Cryptographic audit verification passes for evaluated incidents")
+    @DisplayName("Evaluation Engine: Cryptographic audit verification passes for evaluated incidents")
     void testAuditIntegrity_verifiedAcrossEvaluation() {
         EvaluationRunRequest request = new EvaluationRunRequest(4, 42L, true, null);
         EvaluationRunResponse response = evaluationService.runEvaluation(request);

@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller exposing bounded recovery execution simulation endpoints (Module 10).
+ * REST controller exposing bounded recovery execution simulation endpoints.
  *
  * <p>Strict Safety Boundary:
- * Module 10 executes strictly what Module 9 Policy Gate permits.
+ * The Recovery Execution Simulator executes strictly what the Policy Gate permits.
  * This controller simulates retries on synthetic payment data only.
  * No money movement, no external gateway calls, and no real customer transactions are executed.
  */
@@ -29,7 +29,7 @@ public class RecoveryExecutionController {
     }
 
     /**
-     * Executes bounded recovery simulation for an incident obeying Module 9 Policy Gate limits.
+     * Executes bounded recovery simulation for an incident obeying Policy Gate limits.
      */
     @PostMapping("/incidents/{id}/recovery-execute")
     public ResponseEntity<RecoveryExecutionResponse> executeRecovery(@PathVariable("id") Long incidentId) {

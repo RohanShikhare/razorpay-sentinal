@@ -1,7 +1,7 @@
 package com.sentinelpulse.dto;
 
 /**
- * Aggregate recovery efficiency and performance metrics (Module 10).
+ * Aggregate recovery efficiency and performance metrics.
  */
 public record RecoveryMetricsDto(
         double recoveryRate,

@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 /**
  * Deterministic financial-impact and recoverability engine, built on top of
- * the revenue-at-risk figure Module 3's {@code IncidentDetectionService}
+ * the revenue-at-risk figure {@code IncidentDetectionService}
  * already computes and persists on each {@link Incident}.
  *
  * <h2>Why revenueAtRisk is read, not recomputed</h2>
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * only {@code IncidentDetectionService.refresh} (a genuine re-detection
  * event) updates it. That's what keeps the top-line financial-impact
  * numbers explainable even if the underlying payment data changes later
- * (e.g. a future recovery module, or a simulation reset).
+ * (e.g. recovery execution, or a simulation reset).
  *
  * <h2>Affected batch reconstruction</h2>
  * No transactions are duplicated into a second table. The population is

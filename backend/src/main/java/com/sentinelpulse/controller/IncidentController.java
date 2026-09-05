@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Read-only REST endpoints for incidents detected by the Monitoring &
  * Incident Detection Engine, plus the deterministic financial-impact views
- * built on top of them (Module 4). No update endpoints yet - those belong
- * to the future AI investigation and recovery modules.
+ * built on top of them.
  */
 @RestController
 @RequestMapping("/api/v1/incidents")

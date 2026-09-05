@@ -108,7 +108,7 @@ public class IncidentInvestigationService {
         AiEvidenceDto evidence = incidentEvidenceService.buildEvidence(incidentId);
         AiProvider provider = aiProviderFactory.getProvider();
 
-        // Optional context: latest Module 6 diagnosis
+        // Optional context: latest AI diagnosis
         String diagnosisSummary = incidentDiagnosisRepository.findFirstByIncidentIdOrderByCreatedAtDesc(incidentId)
                 .map(d -> String.format("Root Cause: %s | Action: %s | Confidence: %.2f | Reasoning: %s",
                         d.getRootCause(), d.getRecommendedAction(), d.getConfidence(), d.getReasoning()))

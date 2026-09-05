@@ -1,5 +1,5 @@
 /**
- * Deterministic revenue-at-risk and recoverability engine (Module 4).
+ * Deterministic revenue-at-risk and recoverability engine.
  *
  * Builds on the revenue-at-risk figure {@link com.sentinelpulse.monitoring.IncidentDetectionService}
  * already computes and persists on each {@link com.sentinelpulse.entity.Incident}

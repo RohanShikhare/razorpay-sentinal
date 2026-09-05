@@ -28,7 +28,7 @@ export function Header() {
             ) : (
               <span
                 key={item.href}
-                title="Planned for a later module"
+                title="Planned feature"
                 className="cursor-default rounded px-3 py-1.5 text-sm text-ink-faint"
               >
                 {item.label}

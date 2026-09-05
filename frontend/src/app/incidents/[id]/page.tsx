@@ -89,7 +89,7 @@ export default function IncidentDetailPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="font-mono text-xs text-signal-wire">Module 3-4, 6-11 · Monitoring, Financial Impact, AI Diagnosis, Investigation, Strategy, Policy Gate, Recovery Execution &amp; Audit Trail</p>
+      <p className="font-mono text-xs text-signal-wire">Incident Operations · Monitoring, Financial Impact, AI Diagnosis, Investigation, Strategy, Policy Gate, Recovery Execution &amp; Audit Trail</p>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Incident #{incident.id}</h1>
         <span className="bg-signal-critical/15 px-2 py-0.5 text-xs font-semibold text-signal-critical">

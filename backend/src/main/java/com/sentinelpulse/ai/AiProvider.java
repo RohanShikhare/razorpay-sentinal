@@ -31,7 +31,7 @@ public interface AiProvider {
      * deterministic evidence and returns the raw JSON investigation response.
      *
      * @param evidence          structured deterministic evidence
-     * @param diagnosisSummary  summary of prior Module 6 diagnosis if available
+     * @param diagnosisSummary  summary of prior AI diagnosis if available
      * @param systemInstruction prompt guidelines and constraints
      * @return raw JSON string from the AI provider
      */
@@ -44,8 +44,8 @@ public interface AiProvider {
      * bounds, stopping conditions, and alternatives against deterministic evidence and investigation findings.
      *
      * @param evidence             structured deterministic evidence
-     * @param diagnosisSummary     summary of prior Module 6 diagnosis if available
-     * @param investigationSummary summary of prior Module 7 investigation if available
+     * @param diagnosisSummary     summary of prior AI diagnosis if available
+     * @param investigationSummary summary of prior root-cause investigation if available
      * @param systemInstruction    prompt guidelines and constraints
      * @return raw JSON string from the AI provider
      */

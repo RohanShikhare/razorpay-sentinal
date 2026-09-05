@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * Structured API response representing a generated recovery strategy proposal.
- * Includes authoritative financial metrics from Module 4 alongside bounded strategy estimates.
+ * Includes authoritative financial metrics alongside bounded strategy estimates.
  */
 public record RecoveryStrategyResponse(
         Long strategyId,

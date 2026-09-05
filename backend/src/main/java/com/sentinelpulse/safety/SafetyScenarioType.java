@@ -1,7 +1,7 @@
 package com.sentinelpulse.safety;
 
 /**
- * Controlled types for Sentinel Safety & Failure Scenarios (Module 12).
+ * Controlled types for Sentinel Safety & Failure Scenarios.
  */
 public enum SafetyScenarioType {
     AI_PROVIDER_FAILURE,

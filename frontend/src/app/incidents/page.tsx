@@ -28,7 +28,7 @@ export default function IncidentsPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="font-mono text-xs text-signal-wire">Module 3 · Monitoring &amp; Incident Detection</p>
+      <p className="font-mono text-xs text-signal-wire">Monitoring &amp; Incident Detection</p>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Incidents</h1>
       <p className="mt-2 max-w-xl text-sm text-ink-muted">
         Every incident the detection engine has found, most recent first. See the{" "}

@@ -3,8 +3,7 @@ package com.sentinelpulse.ai;
 /**
  * Controlled, bounded recovery strategy types that Sentinel can propose.
  * Arbitrary or unvetted actions are strictly prohibited.
- *
- * All strategy proposals are advisory and subject to downstream Module 9 policy evaluation.
+ * All strategy proposals are advisory and subject to downstream deterministic policy evaluation.
  */
 public enum RecoveryStrategyType {
     IMMEDIATE_RETRY,

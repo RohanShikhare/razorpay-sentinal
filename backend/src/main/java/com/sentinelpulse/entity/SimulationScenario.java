@@ -6,7 +6,7 @@ package com.sentinelpulse.entity;
  *
  * The simulator only ever creates these conditions - it never declares that
  * an incident has been detected. That judgment belongs to the Monitoring &
- * Incident Detection Engine (a later module), which will read the same
+ * Incident Detection Engine, which will read the same
  * {@code payments} table this scenario modifies.
  */
 public enum SimulationScenario {

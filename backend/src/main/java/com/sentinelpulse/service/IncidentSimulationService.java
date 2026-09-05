@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
  * controlled, reproducible payment-degradation scenarios.
  *
  * This service creates incidents in the data. It never declares that an
- * incident has been detected - that judgment is the future Monitoring &
- * Incident Detection Engine's job (Module 3), which will read the same
+ * incident has been detected - that judgment is the Monitoring &
+ * Incident Detection Engine's job, which will read the same
  * {@code payments} table this service mutates. To keep that boundary
  * clean, nothing here writes to an "Incident" entity; {@link SimulationRun}
  * and {@link SimulationChange} are explicitly simulation records, not
@@ -238,7 +238,7 @@ public class IncidentSimulationService {
      * When {@code concentrateInRecentTraffic} is true, the most recent
      * eligible payments are chosen first - a real incident degrades recent
      * traffic, not transactions from days ago, and this is also what makes
-     * the degradation visible to a time-window-based detector (Module 3)
+     * the degradation visible to a time-window-based detector
      * comparing a recent window against an older baseline. When false (the
      * "normal random failures" control scenario), the affected payments are
      * spread uniformly across the whole timeline instead, representing

@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 /**
  * Base unchecked exception for domain-level failures.
  *
- * Later modules (monitoring, AI, policy, recovery, audit) should extend this
+ * Domain components (monitoring, AI, policy, recovery, audit) should extend this
  * rather than throwing raw exceptions, so all domain errors flow through the
  * same {@link GlobalExceptionHandler} and produce a consistent response.
  */

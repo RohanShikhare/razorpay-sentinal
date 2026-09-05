@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Service orchestrating the Sentinel Safety & Failure Lab (Module 12).
+ * Service orchestrating the Sentinel Safety & Failure Lab.
  *
  * <p>Executes controlled, deterministic resilience scenarios testing all safety invariants:
  * <ul>
@@ -69,7 +69,7 @@ import java.util.Map;
  *   <li>INVARIANT-008: Resolved incidents cannot continue recovery.</li>
  *   <li>INVARIANT-009: Stale strategies cannot execute autonomously.</li>
  *   <li>INVARIANT-010: Idempotent execution cannot double-count recovery.</li>
- *   <li>INVARIANT-011: Actual recovery cannot exceed Module 4 authoritative recoverable revenue.</li>
+ *   <li>INVARIANT-011: Actual recovery cannot exceed authoritative recoverable revenue.</li>
  *   <li>INVARIANT-012: Audit failures do not corrupt the primary business workflow.</li>
  *   <li>INVARIANT-013: Audit tampering is detectable via SHA-256 hash chains.</li>
  *   <li>INVARIANT-014: No scenario can bypass the Policy Engine.</li>
@@ -153,7 +153,7 @@ public class SafetyScenarioService {
                         "POLICY_GATE",
                         "Simulates an unsafe recovery proposal (e.g. CRITICAL risk or automated retries on merchant degradation).",
                         "INVARIANT-002: Policy rejection cannot be bypassed by downstream execution.",
-                        "Policy Gate evaluates to REJECTED; executionAllowed = false; Module 10 refuses execution."
+                        "Policy Gate evaluates to REJECTED; executionAllowed = false; recovery execution refused."
                 ),
                 new SafetyScenarioDto(
                         SafetyScenarioType.HUMAN_REVIEW_REQUIRED,
@@ -420,7 +420,7 @@ public class SafetyScenarioService {
                 SafetyScenarioType.POLICY_REJECTION,
                 "Policy Gate Rejection",
                 "POLICY_GATE",
-                "Policy Gate evaluates to REJECTED; executionAllowed = false; Module 10 refuses execution.",
+                "Policy Gate evaluates to REJECTED; executionAllowed = false; recovery execution refused.",
                 "Policy decision = " + policy.decision() + " (" + policy.violations().size() + " violations); execution status = " + execution.status() + " (" + execution.stoppingReason() + ").",
                 "INVARIANT-002: Policy rejection cannot be bypassed by downstream execution.",
                 incident.getId(),

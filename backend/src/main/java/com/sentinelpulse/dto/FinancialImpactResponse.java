@@ -15,14 +15,14 @@ import java.math.BigDecimal;
  *   <li>{@code failedTransactionValue} = sum of amount over the FAILED
  *       subset of that population - the simple "money attached to a failed
  *       transaction" figure.</li>
- *   <li>{@code revenueAtRisk} = the value already computed by the Module 3
+ *   <li>{@code revenueAtRisk} = the value already computed by the
  *       detection engine at (re)detection time: {@code failedTransactionValue
  *       × max(0, (currentFailureRate − baselineFailureRate) / currentFailureRate)}
  *       - i.e. only the *excess* failed value attributable to the incident,
- *       not baseline "normal" failures. This module reads it rather than
+ *       not baseline "normal" failures. This engine reads it rather than
  *       recomputing it, which is what makes it a stable, explainable
- *       snapshot even if live payment data changes later (e.g. a future
- *       recovery module, or a simulation reset).</li>
+ *       snapshot even if live payment data changes later (e.g.
+ *       recovery simulation, or a simulation reset).</li>
  *   <li>{@code estimatedRecoverableRevenue} = {@code revenueAtRisk} ×
  *       (value-weighted average recoverability rate across the failed
  *       population's actual error-code mix). See {@code RecoverabilityClassifier}

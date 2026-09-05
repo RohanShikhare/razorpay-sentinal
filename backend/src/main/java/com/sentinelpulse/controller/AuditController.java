@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST Controller for Sentinel Audit Trail & Decision History (Module 11).
+ * REST Controller for Sentinel Audit Trail & Decision History.
  *
  * <p>Endpoints provide read-only chronological timelines and cryptographic hash chain verification.
  * No GET endpoint ever mutates audit state or domain data.

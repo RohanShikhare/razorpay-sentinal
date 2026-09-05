@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * REST Controller for the Evaluation & Benchmarking Engine (Module 13).
+ * REST Controller for the Evaluation & Benchmarking Engine.
  *
  * <p><strong>BENCHMARK / EVALUATION ONLY:</strong>
  * Runs reproducible synthetic benchmark experiments comparing Sentinel against ground truth

@@ -110,7 +110,7 @@ export function RecoveryStrategyPanel({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs text-signal-wire font-medium">
-              Module 8 · Recovery Strategy Engine
+              Recovery Strategy Engine
             </span>
             {strategy && (
               <span className="border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] text-emerald-400">
@@ -172,8 +172,8 @@ export function RecoveryStrategyPanel({
           </div>
           <h3 className="text-sm font-semibold text-ink">No Recovery Strategy Formulated Yet</h3>
           <p className="mx-auto mt-1 max-w-md text-xs text-ink-muted">
-            The Recovery Strategy Engine evaluates incident telemetry, Module 4 financial impact,
-            and Module 7 root causes to synthesize a bounded recovery strategy with strict stopping conditions.
+            The Recovery Strategy Engine evaluates incident telemetry, authoritative financial impact,
+            and root causes to synthesize a bounded recovery strategy with strict stopping conditions.
           </p>
           <button
             onClick={handleGenerate}
@@ -278,7 +278,7 @@ export function RecoveryStrategyPanel({
           {/* Authoritative Financial Baseline vs Strategy Estimate */}
           <div className="border border-base-border bg-base-subtle p-4">
             <h3 className="font-mono text-xs font-semibold text-ink uppercase tracking-wider mb-3">
-              Authoritative Financial Anchor (Module 4) vs Strategy Proposal
+              Authoritative Financial Anchor vs Strategy Proposal
             </h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="border border-base-border/70 bg-base-panel p-3">
@@ -286,7 +286,7 @@ export function RecoveryStrategyPanel({
                 <div className="mt-1 font-mono text-base font-bold text-ink">
                   {formatINR(strategy.authoritativeRevenueAtRisk)}
                 </div>
-                <div className="text-[10px] text-ink-muted mt-1">Module 4 historical snapshot</div>
+                <div className="text-[10px] text-ink-muted mt-1">Authoritative historical snapshot</div>
               </div>
               <div className="border border-base-border/70 bg-base-panel p-3">
                 <div className="font-mono text-[11px] text-ink-muted">Authoritative Recoverable</div>
@@ -366,7 +366,7 @@ export function RecoveryStrategyPanel({
               <p className="text-xs mt-1 leading-relaxed opacity-90 font-sans">
                 {strategy.requiresHumanApproval
                   ? "Because of risk level, merchant boundary, or confidence constraints, Sentinel recommends that a human incident commander explicitly inspect and authorize this recovery plan before execution."
-                  : "This strategy proposal is deterministic and within automated safety thresholds. It remains subject to Module 9 Policy Gate validation prior to any simulation."}
+                  : "This strategy proposal is deterministic and within automated safety thresholds. It remains subject to Policy Gate validation prior to any simulation."}
               </p>
             </div>
           </div>

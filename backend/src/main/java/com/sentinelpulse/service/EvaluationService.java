@@ -69,7 +69,7 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * Core Evaluation & Benchmarking Engine Service (Module 13).
+ * Core Evaluation & Benchmarking Engine Service.
  *
  * <p>Orchestrates deterministic synthetic experiments across payment degradation scenarios,
  * measuring actual system performance against known ground truth and baselines.
@@ -314,14 +314,14 @@ public class EvaluationService {
                     continue;
                 }
 
-                // 4. Financial Impact Evaluation (Module 4)
+                // 4. Financial Impact Evaluation
                 FinancialImpactResponse financialImpact = financialImpactService.getFinancialImpact(incident.getId());
                 BigDecimal rar = financialImpact.revenueAtRisk();
                 BigDecimal recoverable = financialImpact.estimatedRecoverableRevenue();
                 totalRevenueAtRisk = totalRevenueAtRisk.add(rar);
                 totalRecoverableRevenue = totalRecoverableRevenue.add(recoverable);
 
-                // 5. AI Diagnosis & Root Cause Investigation (Modules 6 & 7)
+                // 5. AI Diagnosis & Root Cause Investigation
                 AiDiagnosisResponse diagnosis = aiDiagnosticService.diagnoseIncident(incident.getId());
                 IncidentInvestigationResponse investigation = incidentInvestigationService.investigateIncident(incident.getId());
 
@@ -340,7 +340,7 @@ public class EvaluationService {
                     incorrectDiagnoses++;
                 }
 
-                // 6. Strategy Formulation (Module 8)
+                // 6. Strategy Formulation
                 RecoveryStrategyResponse strategyResponse = recoveryStrategyService.generateStrategy(incident.getId());
                 totalStrategies++;
                 RecoveryStrategyType proposedStrategy = strategyResponse.selectedStrategy();
@@ -351,7 +351,7 @@ public class EvaluationService {
                     unsafeStrategies++;
                 }
 
-                // 7. Policy Gate Evaluation (Module 9)
+                // 7. Policy Gate Evaluation
                 PolicyEvaluationResponse policyResponse = policyEvaluationService.evaluatePolicy(incident.getId());
                 totalPolicyEvaluations++;
                 PolicyDecision policyDecision = policyResponse.decision();
@@ -376,7 +376,7 @@ public class EvaluationService {
                     policyBypasses++;
                 }
 
-                // 8. Recovery Execution Simulation (Module 10)
+                // 8. Recovery Execution Simulation
                 RecoveryExecutionResponse executionResponse = recoveryExecutionService.executeRecovery(incident.getId());
                 ExecutionStatus execStatus = executionResponse.status();
                 BigDecimal recoveredAmount = executionResponse.recoveredAmount() != null
@@ -408,7 +408,7 @@ public class EvaluationService {
                 BigDecimal naiveRetryAmount = calculateNaiveRetryBaseline(incident, recoverable, scenarioType);
                 totalNaiveRetryRevenue = totalNaiveRetryRevenue.add(naiveRetryAmount);
 
-                // 10. Audit Chain Verification (Module 11)
+                // 10. Audit Chain Verification
                 AuditVerificationResponse auditVerification = auditEventService.verifyIncidentAuditChain(incident.getId());
                 boolean auditVerified = auditVerification != null && auditVerification.valid();
                 if (!auditVerified) {

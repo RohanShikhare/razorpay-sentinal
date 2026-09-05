@@ -11,7 +11,7 @@ import java.time.Instant;
 
 /**
  * API representation of an {@link Incident}. {@code rootCause} is null
- * until a future AI investigation module assigns one.
+ * until the AI investigation engine assigns one.
  */
 public record IncidentDto(
         Long id,

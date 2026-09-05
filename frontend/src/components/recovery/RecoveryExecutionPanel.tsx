@@ -231,11 +231,11 @@ export function RecoveryExecutionPanel({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-border px-5 py-4">
         <div>
           <span className="font-mono text-xs uppercase tracking-wider text-emerald-400">
-            Module 10 · Recovery Execution Simulator
+            Recovery Execution Simulator
           </span>
           <h2 className="text-base font-semibold text-ink">Bounded Recovery Execution</h2>
           <p className="mt-0.5 text-xs text-ink-muted">
-            Bounded execution engine acting strictly within Module 9 policy guardrails to recover verified revenue.
+            Bounded execution engine acting strictly within policy guardrails to recover verified revenue.
           </p>
         </div>
 
@@ -341,30 +341,30 @@ export function RecoveryExecutionPanel({
               Authoritative vs. Estimated vs. Measured Revenue
             </h3>
             <span className="text-[11px] font-mono text-ink-faint">
-              Module 4 Baseline → Module 8 Proposal → Module 10 Actual Outcome
+              Financial Baseline → Strategy Proposal → Actual Outcome
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {/* Revenue at Risk (Module 4) */}
+            {/* Revenue at Risk */}
             <div className="border border-base-border bg-base-surface p-3.5">
               <div className="text-[11px] font-mono uppercase text-ink-muted">1. Revenue at Risk</div>
               <div className="mt-1 text-lg font-bold font-mono text-ink">
                 {formatInr(execution?.authoritativeRevenueAtRisk ?? incident?.revenueAtRisk)}
               </div>
-              <div className="mt-1 text-[10px] text-ink-faint">Module 4 Detected Exposure</div>
+              <div className="mt-1 text-[10px] text-ink-faint">Authoritative Detected Exposure</div>
             </div>
 
-            {/* Authoritative Recoverable (Module 4) */}
+            {/* Authoritative Recoverable */}
             <div className="border border-base-border bg-base-surface p-3.5">
               <div className="text-[11px] font-mono uppercase text-ink-muted">2. Recoverable Bound</div>
               <div className="mt-1 text-lg font-bold font-mono text-blue-400">
                 {formatInr(execution?.authoritativeRecoverableAmount ?? 0)}
               </div>
-              <div className="mt-1 text-[10px] text-ink-faint">Module 4 Maximum Theoretical Cap</div>
+              <div className="mt-1 text-[10px] text-ink-faint">Authoritative Maximum Theoretical Cap</div>
             </div>
 
-            {/* AI Estimated Recovery (Module 8) */}
+            {/* AI Estimated Recovery */}
             <div className="border border-base-border bg-base-surface p-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-mono uppercase text-ink-muted">3. AI Estimate</span>
@@ -379,12 +379,12 @@ export function RecoveryExecutionPanel({
               </div>
               <div className="mt-1 text-[10px] text-ink-faint">
                 {execution?.expectedRecoveryPercentage
-                  ? `~${execution.expectedRecoveryPercentage.toFixed(0)}% projected by Module 8`
+                  ? `~${execution.expectedRecoveryPercentage.toFixed(0)}% projected by recovery strategy`
                   : "AI Model Hypothesis"}
               </div>
             </div>
 
-            {/* Actual Simulated Recovery (Module 10) */}
+            {/* Actual Simulated Recovery */}
             <div className="border border-emerald-500/40 bg-emerald-950/20 p-3.5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-mono uppercase text-emerald-400 font-semibold">
@@ -475,7 +475,7 @@ export function RecoveryExecutionPanel({
             {/* Enforced Policy Guardrail Limits */}
             <div className="border border-base-border bg-base-raised/40 p-3">
               <div className="text-[11px] font-semibold text-ink uppercase tracking-wider mb-2">
-                Enforced Module 9 Policy Parameters
+                Enforced Policy Guardrail Parameters
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
                 <div className="bg-base-surface border border-base-border p-2">
@@ -604,7 +604,7 @@ export function RecoveryExecutionPanel({
             <h3 className="mt-3 text-sm font-semibold text-ink">Ready for Policy-Governed Execution</h3>
             <p className="mx-auto mt-1 max-w-md text-xs text-ink-muted">
               Click &quot;Execute Recovery&quot; above to simulate bounded payment retries according to the policy
-              limits established by Module 9.
+              limits established by the Policy Gate.
             </p>
           </div>
         )}
@@ -615,7 +615,7 @@ export function RecoveryExecutionPanel({
         <span>
           🔒 SIMULATION ONLY · No real payment processing, Razorpay API calls, or monetary movement occur.
         </span>
-        <span>Bounded by Module 4 Authoritative Financial Engine</span>
+        <span>Bounded by Authoritative Financial Engine</span>
       </div>
     </div>
   );

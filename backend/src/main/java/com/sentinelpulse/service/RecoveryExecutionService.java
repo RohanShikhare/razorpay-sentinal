@@ -48,13 +48,13 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Bounded Recovery Execution Simulator Service (Module 10).
+ * Bounded Recovery Execution Simulator Service.
  *
  * <p>Strict Architectural Boundary:
  * <ul>
- *   <li>AI Proposes recovery actions (Modules 6, 7, 8).</li>
- *   <li>Policy Gate Decides whether actions are permitted (Module 9).</li>
- *   <li>Execution Simulator strictly Obeys policy (Module 10).</li>
+ *   <li>AI Proposes recovery actions.</li>
+ *   <li>Policy Gate Decides whether actions are permitted.</li>
+ *   <li>Execution Simulator strictly Obeys policy.</li>
  * </ul>
  *
  * <p>Zero live gateway API calls or money movements are performed. All executions are simulated
@@ -113,7 +113,7 @@ public class RecoveryExecutionService {
 
         PolicyEvaluation policyEvaluation = policyEvaluationRepository
                 .findFirstByIncidentIdOrderByEvaluatedAtDesc(incidentId)
-                .orElseThrow(() -> new ResourceNotFoundException("No policy evaluation found for incident: " + incidentId + ". Run Module 9 Policy Gate first."));
+                .orElseThrow(() -> new ResourceNotFoundException("No policy evaluation found for incident: " + incidentId + ". Run Policy Gate first."));
 
         FinancialImpactResponse financialImpact = financialImpactService.getFinancialImpact(incidentId);
 
@@ -199,7 +199,7 @@ public class RecoveryExecutionService {
             }
         }
 
-        // 5. Parse Enforced Policy Limits (Module 9 applied limits override Module 8 proposals)
+        // 5. Parse Enforced Policy Limits (Policy Gate applied limits override strategy proposals)
         StoppingConditionsDto proposedConditions = null;
         if (strategy.getStoppingConditionsJson() != null && !strategy.getStoppingConditionsJson().isBlank()) {
             try {
@@ -222,7 +222,7 @@ public class RecoveryExecutionService {
         double circuitBreakerThreshold = (proposedConditions != null && proposedConditions.failureRateThreshold() > 0)
                 ? proposedConditions.failureRateThreshold() : DEFAULT_CIRCUIT_BREAKER_FAILURE_RATE;
 
-        // Apply clamped limits from Module 9 Policy Gate
+        // Apply clamped limits from Policy Gate
         for (AppliedLimitDto limit : appliedLimits) {
             if ("maxRetryAttempts".equals(limit.parameter())) {
                 try {

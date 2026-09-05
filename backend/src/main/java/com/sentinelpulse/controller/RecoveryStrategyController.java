@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST controller exposing recovery strategy proposal endpoints for payment incidents.
  *
- * <p>Strict Module Boundary:
+ * <p>Strict Architectural Boundary:
  * All recovery strategies produced are advisory proposals with bounded stopping conditions.
  * This controller does NOT execute retries, approve policies, or alter payment records.
  */

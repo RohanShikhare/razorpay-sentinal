@@ -14,7 +14,7 @@ spring:
   jpa:
     hibernate:
       # 'update' is intentional while the schema is still taking shape
-      # across modules; revisit (e.g. a migration tool) once it stabilizes.
+      # across components; revisit (e.g. a migration tool) once it stabilizes.
       ddl-auto: update
     show-sql: false
     open-in-view: false
@@ -38,7 +38,7 @@ sentinel:
     allowed-origins: ${SENTINEL_CORS_ALLOWED_ORIGINS:http://localhost:3000}
   payments:
     # How far back synthetic payment timestamps are spread. Wide enough for
-    # later modules to compute a meaningful baseline vs. current failure rate.
+    # the incident detection engine to compute a meaningful baseline vs. current failure rate.
     generation-window-hours: ${SENTINEL_PAYMENT_GENERATION_WINDOW_HOURS:48}
   monitoring:
     default-window-minutes: ${SENTINEL_MONITORING_DEFAULT_WINDOW_MINUTES:60}

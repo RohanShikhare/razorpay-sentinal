@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Persisted entity representing an individual transaction-level recovery attempt (Module 10).
+ * Persisted entity representing an individual transaction-level recovery attempt.
  *
  * <p>Preserves source payment immutability while tracking granular retry timeline steps.
  */

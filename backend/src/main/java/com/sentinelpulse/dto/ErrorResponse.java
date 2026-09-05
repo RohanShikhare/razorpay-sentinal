@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Standard shape for every error returned by the API.
  *
- * Kept as a plain record so future modules (payments, AI, policy, recovery)
+ * Kept as a plain record so domain services (payments, AI, policy, recovery)
  * can throw domain exceptions and rely on one consistent error contract.
  */
 public record ErrorResponse(

@@ -98,7 +98,7 @@ export default function SafetyLabPage() {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Resilience & Failure Mode Test Harness (Module 12)
+                Resilience & Failure Mode Test Harness
               </div>
               <h1 className="text-3xl font-extrabold text-white tracking-tight">
                 Sentinel Safety & Failure Lab

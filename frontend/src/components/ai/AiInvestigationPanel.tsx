@@ -128,7 +128,7 @@ export function AiInvestigationPanel({ incidentId, incident, onDiagnosed }: AiIn
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-border bg-base-subtle/50 px-5 py-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-signal-wire font-medium">Module 6 · Advisory Intelligence</span>
+            <span className="font-mono text-xs text-signal-wire font-medium">Advisory Intelligence</span>
             {diagnosis && (
               <span className="border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] text-emerald-400">
                 DIAGNOSIS ACTIVE

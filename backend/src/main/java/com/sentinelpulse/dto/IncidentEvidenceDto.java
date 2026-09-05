@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 /**
- * Structured evidence for a detected incident, shaped for a future AI
- * root-cause investigation module to consume directly - no LLM call happens
+ * Structured evidence for a detected incident, shaped for the AI
+ * root-cause investigation engine to consume directly - no LLM call happens
  * here, this is just packaging the same deterministic numbers the other
  * financial-impact endpoints expose into map-keyed breakdowns instead of
  * lists, which tends to be a more convenient shape for prompt construction.

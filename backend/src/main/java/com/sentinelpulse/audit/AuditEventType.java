@@ -1,7 +1,7 @@
 package com.sentinelpulse.audit;
 
 /**
- * Controlled event types for the Sentinel Audit Trail (Module 11).
+ * Controlled event types for the Sentinel Audit Trail.
  *
  * <p>Every lifecycle event across detection, diagnosis, investigation, strategy,
  * policy evaluation, and recovery execution is assigned a discrete, controlled type.
@@ -15,29 +15,29 @@ public enum AuditEventType {
     // Financial Impact
     FINANCIAL_IMPACT_CALCULATED,
 
-    // AI Diagnosis (Module 6)
+    // AI Diagnosis
     AI_DIAGNOSIS_REQUESTED,
     AI_DIAGNOSIS_COMPLETED,
     AI_DIAGNOSIS_FAILED,
 
-    // Root-Cause Investigation (Module 7)
+    // Root-Cause Investigation
     INVESTIGATION_REQUESTED,
     INVESTIGATION_COMPLETED,
     INVESTIGATION_FAILED,
 
-    // Recovery Strategy Proposal (Module 8)
+    // Recovery Strategy Proposal
     RECOVERY_STRATEGY_PROPOSED,
     RECOVERY_STRATEGY_REJECTED,
     RECOVERY_STRATEGY_SUPERSEDED,
 
-    // Policy Evaluation & Gate Decisions (Module 9)
+    // Policy Evaluation & Gate Decisions
     POLICY_EVALUATED,
     POLICY_APPROVED,
     POLICY_APPROVED_WITH_LIMITS,
     POLICY_HUMAN_REVIEW,
     POLICY_REJECTED,
 
-    // Recovery Execution Simulator (Module 10)
+    // Recovery Execution Simulator
     RECOVERY_EXECUTION_REQUESTED,
     RECOVERY_EXECUTION_BLOCKED,
     RECOVERY_EXECUTION_STARTED,

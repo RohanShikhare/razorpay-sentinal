@@ -3,7 +3,7 @@ package com.sentinelpulse.policy;
 /**
  * Immutable deterministic decisions rendered by the Sentinel Policy Engine.
  *
- * <p>AI proposes strategies (Module 8). Policy decides (Module 9). Execution obeys policy (Module 10).
+ * <p>AI proposes strategies. Policy decides. Execution obeys policy.
  */
 public enum PolicyDecision {
     /**

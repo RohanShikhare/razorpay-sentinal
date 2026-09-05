@@ -107,7 +107,7 @@ export default function EvaluationBenchmarkPage() {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20 mb-3">
                 <span className="h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
-                Track 3 Revenue Recovery Benchmark Engine (Module 13)
+                Track 3 Revenue Recovery Benchmark Engine
               </div>
               <h1 className="text-3xl font-extrabold text-white tracking-tight">
                 Sentinel Evaluation & Benchmarking Engine
