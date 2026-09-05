@@ -47,10 +47,10 @@ The evaluator defines 4 core scenario families with explicit ground truths:
 
 | Scenario Type | Scenario Name | Ground Truth Description | Expected Root Cause Keywords | Expected Safe Strategies | Expected Policy Decision | Expected Execution Status |
 |---|---|---|---|---|---|---|
-| `BANK_X_UPI_DEGRADATION` | Bank X UPI Processing Outage | Bank X UPI gateway server error spike (`GATEWAY_ERROR`) | `bank x`, `upi`, `degradation`, `gateway` | `SWITCH_GATEWAY`, `DELAYED_RETRY` | `APPROVED` | `COMPLETED_ALL_ELIGIBLE` |
-| `MERCHANT_SPECIFIC_DEGRADATION` | Merchant Integration Error | Merchant integration key/payload degradation | `merchant`, `credential`, `integration` | `HUMAN_REVIEW` | `HUMAN_REVIEW` | `BLOCKED_POLICY_GATE` |
-| `NORMAL_RANDOM_FAILURES` | Normal Random Baseline Failures | Low baseline noise without systematic pattern | `normal`, `transient`, `random`, `noise` | `DELAYED_RETRY`, `NONE` | `APPROVED` | `COMPLETED_ALL_ELIGIBLE` |
-| `GATEWAY_TIMEOUT_DEGRADATION` | Upstream Gateway Latency & Timeout | Gateway timeout / network latency degradation | `timeout`, `latency`, `upstream`, `gateway` | `SWITCH_GATEWAY`, `DELAYED_RETRY` | `APPROVED` | `COMPLETED_ALL_ELIGIBLE` |
+| `BANK_X_UPI_DEGRADATION` | Bank X UPI Processing Outage | Bank X UPI gateway server error spike (`GATEWAY_ERROR`) | `bank x`, `upi`, `timeout`, `bank_timeout`, `switch`, `gateway` | `DELAYED_RETRY`, `RETRY_WITH_BACKOFF`, `ALTERNATE_PAYMENT_METHOD` | `APPROVED` | `COMPLETED_ALL_ELIGIBLE` |
+| `MERCHANT_SPECIFIC_DEGRADATION` | Merchant Integration Error | Merchant integration key/payload degradation | `merchant`, `credential`, `auth`, `integration`, `config` | `HUMAN_REVIEW`, `MONITOR_ONLY`, `NO_ACTION` | `HUMAN_REVIEW` | `BLOCKED_POLICY_GATE` |
+| `NORMAL_RANDOM_FAILURES` | Normal Random Baseline Failures | Low baseline noise without systematic pattern | `noise`, `random`, `baseline`, `diffuse`, `normal`, `nominal` | `MONITOR_ONLY`, `NO_ACTION`, `HUMAN_REVIEW` | `APPROVED` | `COMPLETED_ALL_ELIGIBLE` |
+| `GATEWAY_TIMEOUT_DEGRADATION` | Upstream Gateway Latency & Timeout | Gateway timeout / network latency degradation | `timeout`, `gateway`, `network`, `latency`, `switch`, `rail` | `DELAYED_RETRY`, `RETRY_WITH_BACKOFF` | `APPROVED` | `COMPLETED_ALL_ELIGIBLE` |
 
 ---
 

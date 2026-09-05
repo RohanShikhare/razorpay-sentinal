@@ -52,6 +52,7 @@ import {
   SimulationScenario,
   SimulationStatusResponse,
 } from "../../lib/simulations";
+import { generatePayments } from "../../lib/payments";
 
 const SEVERITY_RANK: Record<Incident["severity"], number> = {
   LOW: 0,
@@ -308,20 +309,26 @@ export default function FinalCommandCenterPage() {
     }
   }
 
-  // 1-Click Guided Incident Commander Demo Workflow
+  // 1-Click Guided Incident Commander Demo Workflow (10 Steps)
   async function handleRunGuidedDemo() {
     if (demoRunning) return;
     setDemoRunning(true);
     setDemoStep(1);
-    setDemoStatusText("Step 1/9: Injecting Bank X UPI outage simulation...");
+    setDemoStatusText("Step 1/10: Ingesting multi-bank payment telemetry baseline...");
     try {
-      // Step 1: Simulate
+      // Step 1: Traffic Ingestion
+      await generatePayments({ count: 500, seed: 42 });
+      await new Promise((r) => setTimeout(r, 600));
+
+      // Step 2: Incident Injection
+      setDemoStep(2);
+      setDemoStatusText("Step 2/10: Injecting Bank X UPI outage degradation simulation...");
       await runSimulation("BANK_X_UPI_DEGRADATION");
       await new Promise((r) => setTimeout(r, 600));
 
-      // Step 2: Detect
-      setDemoStep(2);
-      setDemoStatusText("Step 2/9: Monitoring Engine detecting failure anomaly & segment spike...");
+      // Step 3: Anomaly Detection
+      setDemoStep(3);
+      setDemoStatusText("Step 3/10: Monitoring Engine detecting failure anomaly & segment spike...");
       const detectRes = await runDetection();
       await new Promise((r) => setTimeout(r, 600));
 
@@ -333,49 +340,49 @@ export default function FinalCommandCenterPage() {
       // Refresh to grab the active incident
       await loadCommandCenter(incId);
 
-      // Step 3: Quantify Financials
-      setDemoStep(3);
-      setDemoStatusText("Step 3/9: Quantifying Revenue at Risk and Authoritative Recoverable amount...");
+      // Step 4: Financial Quantification
+      setDemoStep(4);
+      setDemoStatusText("Step 4/10: Quantifying Revenue at Risk and Authoritative Recoverable ceiling...");
       await fetchFinancialImpact(incId);
       await new Promise((r) => setTimeout(r, 600));
 
-      // Step 4: AI Diagnosis
-      setDemoStep(4);
-      setDemoStatusText("Step 4/9: AI Diagnostic Agent analyzing structured telemetry...");
+      // Step 5: Advisory AI Diagnosis
+      setDemoStep(5);
+      setDemoStatusText("Step 5/10: Advisory AI Diagnostic Agent analyzing structured telemetry...");
       await diagnoseIncident(incId);
       await new Promise((r) => setTimeout(r, 600));
 
-      // Step 5: Root Cause Investigation
-      setDemoStep(5);
-      setDemoStatusText("Step 5/9: Deep Root-Cause Investigation comparing competing hypotheses...");
+      // Step 6: Root Cause Investigation
+      setDemoStep(6);
+      setDemoStatusText("Step 6/10: Deep Root-Cause Investigation comparing competing hypotheses...");
       await investigateIncident(incId);
       await new Promise((r) => setTimeout(r, 600));
 
-      // Step 6: Strategy Formulation
-      setDemoStep(6);
-      setDemoStatusText("Step 6/9: Proposing bounded recovery strategy with stopping conditions...");
+      // Step 7: Bounded Recovery Strategy Formulation
+      setDemoStep(7);
+      setDemoStatusText("Step 7/10: Proposing bounded recovery strategy with stopping conditions...");
       await generateRecoveryStrategy(incId);
       await new Promise((r) => setTimeout(r, 600));
 
-      // Step 7: Deterministic Policy Gate
-      setDemoStep(7);
-      setDemoStatusText("Step 7/9: Evaluating 12 Deterministic Policy Rules & applying safety clamps...");
+      // Step 8: Deterministic Policy Gate
+      setDemoStep(8);
+      setDemoStatusText("Step 8/10: Evaluating 12 Deterministic Policy Rules & applying safety clamps...");
       const polRes = await evaluatePolicy(incId);
       await new Promise((r) => setTimeout(r, 600));
 
-      // Step 8: Recovery Execution (Strictly obeying Policy Gate)
-      setDemoStep(8);
+      // Step 9: Recovery Execution (Strictly obeying Policy Gate)
+      setDemoStep(9);
       if (polRes.executionAllowed) {
-        setDemoStatusText("Step 8/9: Simulating policy-approved recovery retries on unaffected rails...");
+        setDemoStatusText("Step 9/10: Simulating policy-approved recovery retries on healthy rails...");
         await executeRecovery(incId);
       } else {
-        setDemoStatusText("Step 8/9: Recovery BLOCKED by Policy Gate (Safety Invariant Enforced)...");
+        setDemoStatusText("Step 9/10: Recovery BLOCKED by Policy Gate (Safety Invariant Enforced)...");
       }
       await new Promise((r) => setTimeout(r, 600));
 
-      // Step 9: Audit Verification & Complete Refresh
-      setDemoStep(9);
-      setDemoStatusText("Step 9/9: Cryptographically verifying SHA-256 tamper-evident audit chain...");
+      // Step 10: Cryptographic Audit Verification & Complete Refresh
+      setDemoStep(10);
+      setDemoStatusText("Step 10/10: Cryptographically verifying SHA-256 tamper-evident audit chain...");
       await verifyIncidentAuditChain(incId);
       await loadCommandCenter(incId);
       await new Promise((r) => setTimeout(r, 800));
@@ -452,7 +459,7 @@ export default function FinalCommandCenterPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                     </svg>
-                    Executing Step {demoStep}/9...
+                    Executing Step {demoStep}/10...
                   </>
                 ) : (
                   <>
@@ -767,7 +774,7 @@ export default function FinalCommandCenterPage() {
                 <span className="text-slate-300 font-semibold">Audit Records</span>.
               </p>
             </div>
-            <span className="text-xs font-mono text-slate-400">8 Pipeline Stages</span>
+            <span className="text-xs font-mono text-slate-400">8 Operational Stages (Per Incident)</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 text-xs">

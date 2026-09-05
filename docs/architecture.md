@@ -108,14 +108,14 @@ $$\Large \text{Actual Recovered Revenue} \le \text{Authoritative Recoverable Rev
 
 ### 6. Recovery Strategy Formulation Engine
 * **Component**: `RecoveryStrategyService`
-* Formulates bounded recovery proposals (`SWITCH_GATEWAY`, `DELAYED_RETRY`, `HUMAN_REVIEW`) with explicit stopping conditions and maximum retry counts.
+* Formulates bounded recovery proposals (`DELAYED_RETRY`, `RETRY_WITH_BACKOFF`, `ALTERNATE_PAYMENT_METHOD`, `HUMAN_REVIEW`, `NO_ACTION`) with explicit stopping conditions and maximum retry counts.
 * Caps expected recovery estimates to authoritative recoverable revenue.
 
 ### 7. Deterministic Policy Gate & Safety Guardrails
 * **Component**: `PolicyEvaluationService` (Zero AI calls)
 * Evaluates proposals against **12 hard safety policies**:
   - `POLICY-001`: Strategy Validity Check
-  - `POLICY-002`: Confidence Threshold ($\ge 0.70$ for autonomous action)
+  - `POLICY-002`: Confidence Threshold ($\ge 0.70$ for automated execution)
   - `POLICY-003`: Maximum Financial Exposure Limit ($\le \text{₹500,000}$)
   - `POLICY-004`: Critical Risk Exclusion (Forces `HUMAN_REVIEW`)
   - `POLICY-005`: Merchant Protection Guard (Forces `HUMAN_REVIEW` / `REJECTED`)
@@ -149,7 +149,7 @@ $$\Large \text{Actual Recovered Revenue} \le \text{Authoritative Recoverable Rev
 
 ### 12. Flagship Unified Command Center
 * **Component**: `frontend/src/app/command-center/page.tsx`
-* Consolidated control room providing real-time subsystem telemetry, financial impact hierarchy, 8-stage decision pipeline, 6-card diagnostic grid, safety proofs, and a 1-Click Guided Demo runner.
+* Consolidated control room providing real-time subsystem telemetry, financial impact hierarchy, 8-stage operational decision pipeline, 6-card diagnostic grid, safety proofs, and a 10-step Guided Demo runner.
 
 ---
 

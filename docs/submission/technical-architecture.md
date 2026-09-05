@@ -81,7 +81,7 @@ graph TB
 | **Cryptographic Audit Trail** | Authoritative | Chronological SHA-256 hash-chain across all lifecycle events | Cryptographically tamper-evident |
 | **Safety & Resilience Lab** | Authoritative | Exercises 12 controlled failure scenarios & 15 safety invariants | Proves fail-closed behavior |
 | **Evaluation & Benchmark Engine** | Authoritative | Seeded multi-scenario benchmark against Baselines A & B | Objective Ground Truth comparison |
-| **Unified Command Center** | Presentation | Flagship operational control room & 1-Click Guided Demo runner | Pure composition layer |
+| **Unified Command Center** | Presentation | Flagship operational control room & 10-step Guided Demo runner | Pure composition layer |
 
 ---
 
@@ -113,7 +113,7 @@ Verification iterates through the event list, computing expected hashes from `pr
 - **`INVARIANT-001` (AI Non-Execution)**: AI outputs are strictly advisory; the recovery execution service directly checks policy evaluation records before processing.
 - **`INVARIANT-002` (Policy Gate Enforcement)**: If `PolicyEvaluation.executionAllowed == false`, execution is rejected and throws `PolicyViolationException`.
 - **`INVARIANT-003` (Financial Boundedness)**:
-  $$\text{Simulated Recovered Revenue} \le \text{Authoritative Recoverable Revenue} \le \text{Total Revenue at Risk}$$
+  $$\text{Actual Recovered Revenue} \le \text{Authoritative Recoverable Revenue} \le \text{Total Revenue at Risk}$$
 - **`INVARIANT-004` (Circuit Breaker Protection)**: Execution halts immediately with `STOPPED_CIRCUIT_BREAKER` if downstream retry failure rate exceeds 50%.
 - **`INVARIANT-005` (Strategy Freshness)**: Proposals older than 30 minutes are automatically rejected by `POLICY-009`.
 - **`INVARIANT-006` (Idempotent Execution)**: Re-invoking execution for an already executed incident returns the original execution record without double-counting recovered revenue.

@@ -21,7 +21,7 @@ Traditional payment recovery systems rely on blind retries that re-attempt faile
 2. **Cascading failures worsen**, amplifying load on degraded banking infrastructure and increasing duplicate charge risks.
 3. **Recovery rates plateau at background transient noise (~30–50%)**, leaving significant recoverable revenue unrecovered while risking merchant relationships.
 
-**Razorpay Sentinel** is an autonomous, policy-governed **AI Payment Incident Commander**. It continuously monitors payment telemetry, isolates degraded segments, quantifies revenue at risk, formulates bounded recovery recommendations, subjects every recommendation to a deterministic safety gate, executes simulated recovery with circuit breakers, and cryptographically proves every decision in a tamper-evident audit trail.
+**Razorpay Sentinel** is an AI-assisted, policy-governed **AI Payment Incident Commander**. It continuously monitors payment telemetry, isolates degraded segments, quantifies revenue at risk, formulates bounded recovery recommendations, subjects every recommendation to a deterministic safety gate, executes simulated recovery with circuit breakers, and cryptographically proves every decision in a tamper-evident audit trail.
 
 ---
 
@@ -52,7 +52,7 @@ flowchart LR
 | **2. Quantify** | Financial Impact Engine | Calculates Total Revenue at Risk (exposure) and sets the authoritative Recoverable Revenue ceiling based on failure classification. |
 | **3. Diagnose** | AI Diagnostic Agent | Analyzes structured factual telemetry to identify the underlying root cause, assess risk level, and assign a confidence score. |
 | **4. Investigate** | Evidence Investigation Engine | Compares competing hypotheses against observed database facts to corroborate or refute the AI diagnosis. |
-| **5. Strategize** | Recovery Strategy Engine | Proposes bounded operational recovery actions (`SWITCH_GATEWAY`, `DELAYED_RETRY`, `HUMAN_REVIEW`) with explicit stopping limits. |
+| **5. Strategize** | Recovery Strategy Engine | Proposes bounded operational recovery actions (`DELAYED_RETRY`, `RETRY_WITH_BACKOFF`, `ALTERNATE_PAYMENT_METHOD`, `HUMAN_REVIEW`) with explicit stopping limits. |
 | **6. Gate** | Deterministic Policy Gate | Evaluates proposals against 12 hard deterministic safety rules with zero AI calls, guaranteeing fail-closed safety. |
 | **7. Recover** | Bounded Recovery Simulator | Simulates retry attempts strictly within policy limits, monitors circuit breakers, and records actual simulated recovered revenue ($\text{₹}$). |
 | **8. Audit** | Cryptographic Audit Trail | Chains every proposal, policy check, retry attempt, and recovered amount into a tamper-evident SHA-256 hash-chain. |
@@ -155,21 +155,21 @@ pie title Revenue Outcome (Total Revenue At Risk: ₹147,350.00)
 
 | Dimension | Metric | Measured Value | Comparison / Invariant | Status |
 |---|---|---|---|---|
-| **Overall** | **Sentinel Score** | **91.51 / 100** | Track 3 Target: $> 85.0$ | Measured |
+| **Overall** | **Sentinel Score** | **91.51 / 100** | Sentinel benchmark criterion: $> 85.0$ | Measured |
 | **Financial** | **Total Revenue at Risk** | **₹147,350.00** | Affected Exposure | Measured |
 | **Financial** | **Total Recoverable Revenue** | **₹112,350.00** | Authoritative Cap | Measured |
 | **Financial** | **Sentinel Recovered Revenue** | **₹77,350.00** | Net Positive Recovery | Measured |
 | **Financial** | Baseline A (No Recovery) | ₹0.00 (0.0%) | Status Quo | Baseline |
 | **Financial** | Baseline B (Naive Retry) | ₹55,250.00 (49.2%) | Blind 2x Retries | Baseline |
 | **Financial** | **Uplift vs Naive Retry** | **+40.0%** | $+₹22,100.00$ Net Value Added | Measured |
-| **Financial** | **Benefit / Cost Ratio** | **15.47x** | Target: $> 5.0\text{x}$ | Measured |
+| **Financial** | **Benefit / Cost Ratio** | **15.47x** | Internal evaluation threshold: $> 5.0\text{x}$ | Measured |
 | **Detection** | Incident Detection Rate | 100.0% (4/4) | 0% False Positive Rate | Measured |
-| **Detection** | False Positive Rate | 0.0% | Target: $< 5.0\%$ | Measured |
-| **Detection** | Mean Time to Detect (TTD) | 142 ms | Target: $< 5000\text{ ms}$ | Measured |
-| **Diagnosis** | Root-Cause Accuracy | 100.0% | Target: $> 90.0\%$ | Measured |
-| **Diagnosis** | Mean AI Confidence | 91.8% | Target: $> 85.0\%$ | Measured |
-| **Strategy** | Strategy Safety Precision | 100.0% | Target: $100.0\%$ | Measured |
-| **Policy** | Policy Compliance Rate | 100.0% | Target: $100.0\%$ | Measured |
+| **Detection** | False Positive Rate | 0.0% | Internal evaluation threshold: $< 5.0\%$ | Measured |
+| **Detection** | Mean Time to Detect (TTD) | 142 ms | Internal evaluation threshold: $< 5000\text{ ms}$ | Measured |
+| **Diagnosis** | Root-Cause Accuracy | 100.0% | Internal evaluation threshold: $> 90.0\%$ | Measured |
+| **Diagnosis** | Mean AI Confidence | 91.8% | Internal evaluation threshold: $> 85.0\%$ | Measured |
+| **Strategy** | Strategy Safety Precision | 100.0% | Sentinel benchmark criterion: $100.0\%$ | Measured |
+| **Policy** | Policy Compliance Rate | 100.0% | Sentinel benchmark criterion: $100.0\%$ | Measured |
 | **Safety** | **Zero Policy Bypasses** | **0** | Deterministic Policy Gate | Verified |
 | **Safety** | **Zero Bound Violations** | **0** | Retry & Financial Caps | Verified |
 | **Safety** | **SHA-256 Audit Integrity** | **100.0% Verified** | Tamper-Evident Hash Chain | Verified |
@@ -202,15 +202,15 @@ journey
 
 ### 1-Click Guided Demo Flow
 1. **Open Command Center**: Navigate to [`http://localhost:3000/command-center`](http://localhost:3000/command-center).
-2. **Run Guided Demo**: Click **`Run Full Sentinel Demo Flow`** in the guided demo panel.
+2. **Run Guided Demo**: Click **`Run 1-Click Guided Demo`** in the guided demo panel.
 3. **Observe the End-to-End Workflow**:
-   - **Ingests** multi-bank transactions.
+   - **Ingests** multi-bank transactions baseline.
    - **Injects** Bank X UPI gateway degradation.
    - **Detects** anomaly (+34.2% failure rate surge).
    - **Quantifies** Revenue at Risk (₹147,350) and Authoritative Recoverable Revenue (₹112,350).
    - **Diagnoses** root cause (`Bank X UPI Gateway Downtime`, 92% confidence).
    - **Investigates** telemetry evidence against competing hypotheses.
-   - **Proposes** bounded `SWITCH_GATEWAY` / `DELAYED_RETRY` strategy.
+   - **Proposes** bounded `DELAYED_RETRY` / `ALTERNATE_PAYMENT_METHOD` strategy.
    - **Evaluates** 12 deterministic policy rules $\to$ sets decision to **`APPROVED WITH LIMITS`**.
    - **Executes** simulated retries under policy limits $\to$ recovers **₹77,350.00**.
    - **Verifies** SHA-256 hash-chain integrity $\to$ **`AUDIT INTEGRITY: VERIFIED`**.
@@ -272,14 +272,11 @@ razorpay-sentinel/
 │   ├── architecture.md              # Technical architecture specification
 │   ├── evaluation-methodology.md    # Benchmark formulas & ground truths
 │   ├── working-flow.md              # End-to-end incident lifecycle guide
-│   └── submission/                  # Submission dossier & judge guides
-│       ├── project-overview.md      # Executive briefing
-│       ├── judge-demo.md            # 3-minute demonstration script
+│   └── submission/                  # Submission dossier & technical specifications
+│       ├── project-overview.md      # Executive briefing & Track 3 alignment
 │       ├── technical-architecture.md# Deep technical subsystem specification
 │       ├── benchmark-results.md     # Measured empirical benchmark report
-│       ├── api-overview.md          # REST API reference catalog
-│       ├── visual-checklist.md      # UI screens and reviewer checklist
-│       └── submission-checklist.md  # Final verification checklist
+│       └── api-overview.md          # REST API reference catalog
 ├── .env.example                     # Environment template (zero secrets)
 └── README.md                        # Primary project documentation
 ```
@@ -289,7 +286,7 @@ razorpay-sentinel/
 ## 10. Quickstart & Setup Guide
 
 ### Prerequisites
-* **Java 17+** (JDK 17 or higher)
+* **Java 17+** (JDK 17 or higher target compatibility)
 * **Maven 3.8+** (or bundled wrapper)
 * **Node.js 18+** & `npm`
 * **PostgreSQL 15+** (optional; default `application.yml` connects to `localhost:5432/razorpay_sentinel`)
@@ -351,7 +348,7 @@ npm run build
 ## 12. Safety, Security & Ethical Boundaries
 
 1. **Zero Real Payment Processing**: All transactions, banks, card numbers, and UPI handles are entirely synthetic. No live customer data is stored or processed.
-2. **Zero Direct AI Execution**: AI components only produce structured advisory JSON. Autonomous execution requires explicit approval from the deterministic policy gate.
+2. **Zero Direct AI Execution**: AI components only produce structured advisory JSON. Simulated recovery execution requires explicit approval from the deterministic policy gate.
 3. **Fail-Closed Default**: Under unknown errors, network timeouts, or schema corruption, Sentinel halts and escalates to human review.
 4. **Zero Secrets Committed**: All API keys, database credentials, and ports are injected via environment variables.
 

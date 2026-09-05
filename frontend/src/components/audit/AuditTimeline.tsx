@@ -384,7 +384,7 @@ export function AuditTimeline({ incidentId }: AuditTimelineProps) {
                 </span>
               </div>
               <p className="text-xs text-ink-muted mt-0.5">
-                Immutable, tamper-evident chronological timeline of all AI proposals, policy decisions, and execution outcomes
+                Tamper-evident chronological timeline of all AI proposals, policy decisions, and execution outcomes with verifiable SHA-256 hash chains
               </p>
             </div>
           </div>

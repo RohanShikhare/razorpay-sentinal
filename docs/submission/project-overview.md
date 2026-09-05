@@ -9,7 +9,7 @@
 
 Payment failures cost online businesses billions annually in abandoned checkouts, broken consumer trust, and lost merchant revenue. While transient network hiccups can occasionally be resolved by blind retries, real payment incidents—such as bank gateway outages, acquirer latency spikes, or merchant credential misconfigurations—cannot be solved by blind retrying. In fact, blind retries during an upstream bank outage degrade system health, burn through customer retry limits, amplify load on failing infrastructure, and often lead to duplicate charges or chargebacks.
 
-**Razorpay Sentinel** is an autonomous, policy-governed **AI Payment Incident Commander**. It detects abnormal payment failure spikes, isolates the affected segment, calculates the exact **revenue at risk**, conducts an advisory **AI root-cause diagnosis**, formulates a bounded **recovery strategy**, subjects it to a **100% deterministic safety policy gate**, executes simulated recovery safely with circuit breakers, and verifies every decision via a **tamper-evident SHA-256 cryptographic audit trail**.
+**Razorpay Sentinel** is an AI-assisted, policy-governed **AI Payment Incident Commander**. It detects abnormal payment failure spikes, isolates the affected segment, calculates the exact **revenue at risk**, conducts an advisory **AI root-cause diagnosis**, formulates a bounded **recovery strategy**, subjects it to a **100% deterministic safety policy gate**, executes simulated recovery safely with circuit breakers, and verifies every decision via a **tamper-evident SHA-256 cryptographic audit trail**.
 
 ---
 
@@ -19,7 +19,7 @@ Payment failures cost online businesses billions annually in abandoned checkouts
 |---|---|
 | **Revenue-at-Risk Quantification** | The Financial Impact Engine calculates Total Revenue at Risk (exposure) and caps recovery at empirical Recoverability Tiers. |
 | **Intelligent Root-Cause Diagnosis** | The Advisory AI Diagnostic Agent and Evidence Investigation Engine analyze factual telemetry to isolate bank gateway downtime vs merchant configuration issues. |
-| **Bounded Recovery Interventions** | The Recovery Strategy Engine proposes bounded actions (`SWITCH_GATEWAY`, `DELAYED_RETRY`, `HUMAN_REVIEW`) with explicit stopping conditions and backoff windows. |
+| **Bounded Recovery Interventions** | The Recovery Strategy Engine proposes bounded actions (`DELAYED_RETRY`, `RETRY_WITH_BACKOFF`, `ALTERNATE_PAYMENT_METHOD`, `HUMAN_REVIEW`) with explicit stopping conditions and backoff windows. |
 | **Hard Safety & Guardrails** | The Deterministic Policy Gate evaluates 12 hard safety policies with zero AI calls, guaranteeing fail-closed safety. |
 | **Measurable Recovered Revenue** | The Bounded Recovery Simulator executes retries within policy limits, enforces circuit breakers, and records actual simulated recovered revenue ($\text{₹}$). |
 | **Cryptographic Accountability** | The SHA-256 hash-chained audit trail cryptographically proves every proposal, policy decision, retry attempt, and recovered rupee. |
@@ -48,12 +48,12 @@ $$\Large \text{Actual Recovered Revenue} \le \text{Authoritative Recoverable Rev
 
 ---
 
-## 5. Measured Benchmark Highlights (Seed = 42, 4 Scenarios)
+## 5. Measured Benchmark Highlights (EVAL_V1, Seed = 42, 4 Scenarios)
 
 > [!NOTE]
-> All results below are measured empirically from Sentinel's deterministic synthetic evaluation benchmark. They are not live Razorpay production customer data.
+> **Synthetic Benchmark Specification**: All results below are measured empirically from Sentinel's deterministic synthetic evaluation engine (`EVAL_V1`, seed = `42`, four scenarios) in a simulated test environment. They do NOT represent live Razorpay production customer data, real payment traffic, or actual monetary movement.
 
-- **Overall Sentinel Score**: **91.51 / 100**
+- **Overall Sentinel Score**: **91.51 / 100** (Sentinel benchmark criterion: $> 85.0$)
 - **Sentinel Recovered Revenue**: **₹77,350.00** (out of ₹112,350.00 recoverable)
 - **Baseline B (Naive Retry) Revenue**: **₹55,250.00**
 - **Recovery Uplift vs Naive Retry**: **+40.0%**

@@ -1,20 +1,17 @@
-const MODULES = [
-  { name: "Project Foundation", state: "done" as const },
+const SUBSYSTEMS = [
   { name: "Payment Data Engine", state: "done" as const },
   { name: "Incident Simulator", state: "done" as const },
-  { name: "Monitoring & Incident Detection", state: "done" as const },
+  { name: "Monitoring & Anomaly Detection", state: "done" as const },
   { name: "Revenue-at-Risk & Financial Impact", state: "done" as const },
-  { name: "Command Center Dashboard", state: "done" as const },
   { name: "AI Diagnostic Agent", state: "done" as const },
-  { name: "Root-Cause Investigation", state: "done" as const },
+  { name: "Root-Cause Investigation Engine", state: "done" as const },
   { name: "Recovery Strategy Engine", state: "done" as const },
-  { name: "Deterministic Policy Engine", state: "done" as const },
+  { name: "Deterministic Policy Gate", state: "done" as const },
   { name: "Recovery Execution Simulator", state: "done" as const },
-  { name: "Audit Trail & Decision History", state: "done" as const },
-  { name: "Safety & Failure Scenarios", state: "done" as const },
-  { name: "Evaluation & Benchmarking", state: "done" as const },
-  { name: "Final Command Center", state: "done" as const },
-  { name: "Submission Package", state: "done" as const },
+  { name: "Tamper-Evident SHA-256 Audit Trail", state: "done" as const },
+  { name: "Safety & Resilience Lab", state: "done" as const },
+  { name: "Evaluation & Benchmarking Engine", state: "done" as const },
+  { name: "Incident Command Center", state: "done" as const },
 ];
 
 
@@ -35,11 +32,11 @@ export function ModuleStatus() {
         <span className="text-sm font-medium text-ink">Subsystem Status</span>
       </div>
       <ul className="divide-y divide-base-border">
-        {MODULES.map((module) => (
-          <li key={module.name} className="flex items-center justify-between px-4 py-2.5">
-            <span className="text-sm text-ink-muted">{module.name}</span>
-            <span className={`font-mono text-[11px] ${STATE_COLOR[module.state]}`}>
-              {STATE_LABEL[module.state]}
+        {SUBSYSTEMS.map((subsystem) => (
+          <li key={subsystem.name} className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-sm text-ink-muted">{subsystem.name}</span>
+            <span className={`font-mono text-[11px] ${STATE_COLOR[subsystem.state]}`}>
+              {STATE_LABEL[subsystem.state]}
             </span>
           </li>
         ))}

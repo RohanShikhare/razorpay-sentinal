@@ -86,7 +86,7 @@ export default function DashboardPage() {
     <main className="mx-auto max-w-7xl px-6 py-8">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <p className="font-mono text-xs text-signal-wire">Module 5 - Command Center</p>
+          <p className="font-mono text-xs text-signal-wire">Operations Overview Dashboard</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink">Razorpay Sentinel</h1>
           <p className="text-sm text-ink-muted">AI Payment Incident Commander</p>
         </div>

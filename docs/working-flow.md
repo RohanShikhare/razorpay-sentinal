@@ -129,10 +129,12 @@ flowchart TD
 * **Subsystem**: Recovery Strategy Engine (`RecoveryStrategyService`)
 * **Purpose**: Proposes an operational recovery strategy with explicit stopping limits and bounded recovery targets.
 * **Supported Strategies**:
-  - `SWITCH_GATEWAY`: Re-route traffic away from degraded upstream acquirer.
-  - `DELAYED_RETRY`: Schedule retries with exponential backoff.
-  - `IMMEDIATE_RETRY`: Quick retry for transient network drops.
-  - `HUMAN_REVIEW`: Escalate to payment operations engineer.
+  - `DELAYED_RETRY`: Schedule retries after transient degradation clears.
+  - `RETRY_WITH_BACKOFF`: Space retry attempts with exponential backoff windows.
+  - `ALTERNATE_PAYMENT_METHOD`: Recommend prompting consumer with an alternate payment rail.
+  - `IMMEDIATE_RETRY`: Quick single retry for isolated network blips.
+  - `MONITOR_ONLY`: Continue observing telemetry without active retrying.
+  - `HUMAN_REVIEW`: Escalate to payment operations engineer for manual authorization.
   - `NO_ACTION`: Abort recovery when underlying issue is unrecoverable (e.g. merchant credential misconfiguration).
 * **Input**: Validated diagnosis and authoritative financial impact.
 * **Output**: `RecoveryStrategyProposal` with expected recovery amount, stopping conditions, max retry attempts, and backoff window.
@@ -146,7 +148,7 @@ flowchart TD
 * **Purpose**: Evaluates proposed recovery strategies against **12 hard safety policies**.
 * **12 Deterministic Policy Rules**:
   1. `POLICY-001`: Strategy Must Be Valid & Recognizable
-  2. `POLICY-002`: Minimum Confidence Threshold ($\ge 0.70$ required for autonomous action)
+  2. `POLICY-002`: Minimum Confidence Threshold ($\ge 0.70$ required for automated execution)
   3. `POLICY-003`: Maximum Financial Exposure Limit ($\le \text{₹500,000}$)
   4. `POLICY-004`: Critical Risk Exclusion (CRITICAL risk forces `HUMAN_REVIEW`)
   5. `POLICY-005`: Merchant Protection Guard (Merchant degradation forces `HUMAN_REVIEW` / `REJECTED`)
@@ -217,5 +219,5 @@ flowchart TD
 
 ### Stage 13: Unified Incident Command Center Orchestration
 * **Subsystem**: Flagship Final Command Center (`frontend/src/app/command-center/page.tsx`)
-* **Purpose**: Consolidated operational control room presenting real-time telemetry, authoritative financial impact, 8-stage decision pipeline, 6-card diagnostic grid, safety proofs, and benchmark snapshots.
-* **1-Click Guided Demo**: Automatically steps reviewers through Ingestion $\to$ Detection $\to$ Quantification $\to$ Diagnosis $\to$ Investigation $\to$ Strategy $\to$ Policy Gate $\to$ Recovery $\to$ Audit in under 30 seconds.
+* **Purpose**: Consolidated operational control room presenting real-time telemetry, authoritative financial impact, 8-stage operational decision pipeline, 6-card diagnostic grid, safety proofs, and benchmark snapshots.
+* **1-Click Guided Demo**: Automatically steps reviewers through 10 stages: Ingestion $\to$ Injection $\to$ Detection $\to$ Quantification $\to$ Diagnosis $\to$ Investigation $\to$ Strategy $\to$ Policy Gate $\to$ Recovery $\to$ Audit in under 30 seconds.
